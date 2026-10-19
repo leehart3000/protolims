@@ -8,10 +8,10 @@ authors = [
     { name = "Lee", email = "264464762+leehart3000@users.noreply.github.com" }
 ]
 requires-python = ">=3.13"
-dependencies = []
-
-[project.scripts]
-protolims-api = "protolims_api:main"
+dependencies = [
+    "fastapi>=0.149.0",
+    "uvicorn[standard]>=0.54.0",
+]
 
 [build-system]
 requires = ["uv_build>=0.12.23,<0.13.0"]
