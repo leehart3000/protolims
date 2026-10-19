@@ -1,0 +1,52 @@
+# --- Secrets (never commit) ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# --- macOS ---
+.DS_Store
+
+# --- VS Code (share only project settings and suggested extensions) ---
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+.venv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+*.egg-info/
+build/
+dist/
+
+# --- JavaScript / Node ---
+node_modules/
+.vite/
+coverage/
+*.log
+*.tsbuildinfo
+
+# --- Playwright ---
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+
+# --- Cloudflare ---
+.wrangler/
+
+# --- Docs ---
+docs/_build/
+
+# --- Large data (keep in protolims_resources instead) ---
+data/raw/
+*.gctx
+*.h5
