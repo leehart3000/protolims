@@ -8,12 +8,14 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from protolims_api.db import get_session
+from protolims_api.routers import projects
 
 app = FastAPI(
     title="ProtoLIMS API",
     version="0.1.0",
     description="Multi-omics LIMS: sample tracking, provenance, assay metadata and results.",
 )
+app.include_router(projects.router, prefix="/api/v1")
 
 
 @app.get("/health", tags=["system"])
