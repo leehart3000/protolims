@@ -121,6 +121,10 @@ An append-only `audit_event` table records who changed what, and when.
 
 - **IDs:** UUIDv7 primary keys (PostgreSQL 18 `uuidv7()`), plus a
   human-readable `accession` on samples.
+- **Codes** (projects, studies) are unique across the whole system, so a code
+  works on its own in URLs, labels and conversation. The UI pre-fills the
+  project code as a prefix for new studies (e.g. `TCGA-…`), but other codes are
+  allowed if they don't clash. To revisit if this causes problems.
 - **Cell lines** are Subjects with `subject_type = cell_line`; reference IDs
   (e.g. Cellosaurus) go in `attributes`.
 - **Sample lineage:** one Sample table with `material_type` and a parent link
