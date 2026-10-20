@@ -5,7 +5,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field
 
-CODE_PATTERN = r"^[A-Za-z0-9][A-Za-z0-9._-]*$"
+from protolims_api.schemas.common import Code
 
 
 class ProjectCreate(BaseModel):
@@ -13,7 +13,7 @@ class ProjectCreate(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    code: str = Field(min_length=1, max_length=64, pattern=CODE_PATTERN)
+    code: Code
     name: str = Field(min_length=1, max_length=200)
     description: str | None = None
     source_repository: str | None = None

@@ -1,14 +1,11 @@
 """FastAPI application entry point."""
 
-from typing import Annotated
-
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from protolims_api.db import get_session
-from protolims_api.routers import projects
+from protolims_api.db import SessionDep
+from protolims_api.routers import projects, studies
 
 app = FastAPI(
     title="ProtoLIMS API",
@@ -16,6 +13,7 @@ app = FastAPI(
     description="Multi-omics LIMS: sample tracking, provenance, assay metadata and results.",
 )
 app.include_router(projects.router, prefix="/api/v1")
+app.include_router(studies.router, prefix="/api/v1")
 
 
 @app.get("/health", tags=["system"])
@@ -25,7 +23,7 @@ def health() -> dict[str, str]:
 
 
 @app.get("/health/db", tags=["system"])
-async def health_db(session: Annotated[AsyncSession, Depends(get_session)]) -> dict[str, str]:
+async def health_db(session: SessionDep) -> dict[str, str]:
     """Report whether the API can reach the database."""
     try:
         await session.execute(text("select 1"))

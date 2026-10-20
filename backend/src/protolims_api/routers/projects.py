@@ -2,19 +2,28 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, HTTPException, Query, status
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from protolims_api.audit import record_event
-from protolims_api.db import get_session
+from protolims_api.db import SessionDep
 from protolims_api.models import Project
 from protolims_api.schemas.project import ProjectCreate, ProjectRead
 
 router = APIRouter(prefix="/projects", tags=["projects"])
 
-SessionDep = Annotated[AsyncSession, Depends(get_session)]
+
+async def get_project_or_404(session: AsyncSession, code: str) -> Project:
+    """Find a project by code, or stop the request with 404 Not Found."""
+    project = await session.scalar(select(Project).where(Project.code == code))
+    if project is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Project {code!r} not found",
+        )
+    return project
 
 
 @router.post("", status_code=status.HTTP_201_CREATED)
@@ -58,10 +67,4 @@ async def list_projects(
 @router.get("/{code}")
 async def get_project(code: str, session: SessionDep) -> ProjectRead:
     """Get one project by its code."""
-    project = await session.scalar(select(Project).where(Project.code == code))
-    if project is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Project {code!r} not found",
-        )
-    return ProjectRead.model_validate(project)
+    return ProjectRead.model_validate(await get_project_or_404(session, code))
