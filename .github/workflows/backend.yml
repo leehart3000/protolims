@@ -27,6 +27,24 @@ jobs:
       run:
         working-directory: backend
 
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: protolims
+          POSTGRES_PASSWORD: protolims_dev
+          POSTGRES_DB: protolims
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U protolims -d protolims"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+
+    env:
+      PROTOLIMS_DATABASE_URL: postgresql+psycopg://protolims:protolims_dev@127.0.0.1:5433/protolims
+
     steps:
       - name: Check out code
         uses: actions/checkout@v7
@@ -47,6 +65,17 @@ jobs:
 
       - name: Mypy
         run: uv run mypy src tests
+
+      - name: Apply migrations
+        run: uv run alembic upgrade head
+
+      - name: Check migrations match models
+        run: uv run alembic check
+
+      - name: Check migrations can be reversed
+        run: |
+          uv run alembic downgrade base
+          uv run alembic upgrade head
 
       - name: Pytest
         run: uv run pytest -v
