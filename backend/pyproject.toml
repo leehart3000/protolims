@@ -16,3 +16,33 @@ dependencies = [
 [build-system]
 requires = ["uv_build>=0.12.23,<0.13.0"]
 build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1",
+    "mypy>=2.4.0",
+    "pytest>=9.1.1",
+    "ruff>=0.17.1",
+]
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = [
+    "E", "W",  # pycodestyle (style errors and warnings)
+    "F",       # pyflakes (unused imports, undefined names)
+    "I",       # isort (import order)
+    "B",       # flake8-bugbear (likely bugs)
+    "UP",      # pyupgrade (modern Python syntax)
+    "SIM",     # flake8-simplify
+    "N",       # pep8-naming
+    "RUF",     # Ruff's own rules
+]
+
+[tool.mypy]
+strict = true
+plugins = ["pydantic.mypy"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
