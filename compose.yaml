@@ -1,0 +1,21 @@
+# Local development services only. Never used in production.
+
+services:
+  db:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: protolims
+      POSTGRES_PASSWORD: protolims_dev
+      POSTGRES_DB: protolims
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U protolims -d protolims"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  pgdata:
