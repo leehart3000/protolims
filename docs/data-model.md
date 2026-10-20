@@ -21,13 +21,15 @@ omics types fit the same structure.
 erDiagram
     PROJECT ||--o{ STUDY : contains
     STUDY ||--o{ SUBJECT : enrols
-    SUBJECT ||--o{ SAMPLE : provides
-    SAMPLE ||--o{ SAMPLE : "derived into"
+    SUBJECT |o--o{ SAMPLE : provides
+    SAMPLE |o--o{ SAMPLE : "derived into"
     STUDY ||--o{ ASSAY : includes
     ASSAY ||--o{ ASSAY_SAMPLE : measures
     SAMPLE ||--o{ ASSAY_SAMPLE : "measured in"
-    ASSAY ||--o{ DATA_FILE : produces
-    SAMPLE |o--o{ DATA_FILE : "about (optional)"
+    STUDY ||--o{ DATA_FILE : holds
+    ASSAY |o--o{ DATA_FILE : produces
+    DATA_FILE ||--o{ DATA_FILE_SAMPLE : contains
+    SAMPLE ||--o{ DATA_FILE_SAMPLE : "appears in"
     DATA_FILE ||--o{ DATA_FILE_INPUT : "derived from"
 
     PROJECT {
@@ -56,6 +58,7 @@ erDiagram
     SAMPLE {
         uuid id PK
         text accession UK
+        text external_id
         uuid subject_id FK
         uuid parent_sample_id FK
         text material_type
@@ -66,29 +69,48 @@ erDiagram
     ASSAY {
         uuid id PK
         uuid study_id FK
+        text name
+        text external_id
         text measurement_type
         text technology_type
         text platform
         jsonb parameters
     }
     ASSAY_SAMPLE {
-        uuid assay_id FK
-        uuid sample_id FK
+        uuid assay_id PK, FK
+        uuid sample_id PK, FK
         text label
     }
     DATA_FILE {
         uuid id PK
+        uuid study_id FK
         uuid assay_id FK
-        uuid sample_id FK
+        text name
+        text external_id
         text level
         text format
-        text uri
+        text uri UK
+        bigint size_bytes
         text sha256
         jsonb summary
     }
+    DATA_FILE_SAMPLE {
+        uuid data_file_id PK, FK
+        uuid sample_id PK, FK
+        text label
+    }
     DATA_FILE_INPUT {
-        uuid data_file_id FK
-        uuid input_data_file_id FK
+        uuid data_file_id PK, FK
+        uuid input_data_file_id PK, FK
+    }
+    AUDIT_EVENT {
+        uuid id PK
+        timestamptz occurred_at
+        text actor
+        text action
+        text entity_type
+        uuid entity_id
+        jsonb changes
     }
 ```
 
@@ -108,6 +130,10 @@ An append-only `audit_event` table records who changed what, and when.
   it), validated by Pydantic per type.
 - **Data files** are stored in object storage, not the database. `uri` uses a
   scheme per backend (`r2://…`, `gs://…`), so storage can be R2, GCS or both.
+- **Data files belong to a Study**; the Assay is optional, because analysis
+  outputs may combine several assays.
+- **Files can contain many samples** (e.g. TMT channels, matrix columns);
+  `data_file_sample.label` records where each sample is within the file.
 - **No hard deletes:** samples change `status` instead.
 - **Audit trail:** recorded by the application (to revisit later).
 
