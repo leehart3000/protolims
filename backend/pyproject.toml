@@ -44,6 +44,9 @@ select = [
     "RUF",     # Ruff's own rules
 ]
 
+[tool.ruff.lint.per-file-ignores]
+"migrations/versions/*.py" = ["E501"]
+
 [tool.mypy]
 strict = true
 plugins = ["pydantic.mypy"]
