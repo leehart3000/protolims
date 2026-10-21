@@ -17,7 +17,12 @@ permissions:
 
 concurrency:
   group: backend-${{ github.ref }}
-  cancel-in-progress: true
+  # Cancel superseded pull request runs, but never interrupt a deployment.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  REGION: europe-west2
+  IMAGE: europe-west2-docker.pkg.dev/protolims/protolims/api:${{ github.sha }}
 
 jobs:
   checks:
@@ -79,3 +84,56 @@ jobs:
 
       - name: Pytest
         run: uv run pytest -v
+
+  deploy-staging:
+    name: Deploy to staging
+    needs: checks
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: staging
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: protolims
+          workload_identity_provider: projects/516499981468/locations/global/workloadIdentityPools/github/providers/protolims-repo
+          service_account: protolims-deployer@protolims.iam.gserviceaccount.com
+
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v3
+
+      - name: Build and push image
+        run: |
+          gcloud auth configure-docker "$REGION-docker.pkg.dev" --quiet
+          docker build -t "$IMAGE" backend
+          docker push "$IMAGE"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v10.3.0
+
+      - name: Run migrations on staging
+        working-directory: backend
+        run: |
+          DB_URL="$(gcloud secrets versions access latest --secret=staging-database-url-direct)"
+          echo "::add-mask::$DB_URL"
+          PROTOLIMS_DATABASE_URL="$DB_URL" uv run --locked --no-dev alembic upgrade head
+
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy protolims-api-staging \
+            --image="$IMAGE" --region="$REGION" --quiet
+
+      - name: Smoke test
+        run: |
+          URL="$(gcloud run services describe protolims-api-staging \
+            --region="$REGION" --format='value(status.url)')"
+          curl --fail --silent --show-error "$URL/health/db"
