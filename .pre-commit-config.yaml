@@ -36,3 +36,24 @@ repos:
         types: [python]
         files: ^backend/
         pass_filenames: false
+
+      - id: prettier
+        name: prettier (frontend)
+        entry: pnpm --dir frontend format
+        language: system
+        files: ^frontend/
+        pass_filenames: false
+
+      - id: eslint
+        name: eslint (frontend)
+        entry: pnpm --dir frontend lint
+        language: system
+        files: ^frontend/.*\.(ts|tsx|js)$
+        pass_filenames: false
+
+      - id: tsc
+        name: tsc (frontend)
+        entry: pnpm --dir frontend typecheck
+        language: system
+        files: ^frontend/.*\.(ts|tsx)$
+        pass_filenames: false

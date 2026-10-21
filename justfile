@@ -1,6 +1,7 @@
 # ProtoLIMS task runner. Run `just` on its own to list the recipes.
 
 uvb := "uv run --directory backend"
+web := "pnpm --dir frontend"
 
 # List available recipes
 default:
@@ -44,6 +45,34 @@ makemigration message:
     {{uvb}} ruff check --fix migrations
     {{uvb}} ruff format migrations
 
+# Install frontend packages
+web-install:
+    {{web}} install
+
+# Run the frontend development server
+web-dev:
+    {{web}} dev
+
+# Lint the frontend with ESLint
+web-lint:
+    {{web}} lint
+
+# Format the frontend with Prettier
+web-format:
+    {{web}} format
+
+# Type-check the frontend
+web-typecheck:
+    {{web}} typecheck
+
+# Run the frontend tests; extra arguments go to Vitest
+web-test *args:
+    {{web}} test {{args}}
+
+# Build the frontend for production
+web-build:
+    {{web}} build
+
 # Run every check CI runs, without changing any files
 check:
     uv --directory backend lock --check
@@ -52,6 +81,11 @@ check:
     {{uvb}} mypy src tests
     {{uvb}} alembic check
     {{uvb}} pytest
+    {{web}} install --frozen-lockfile
+    {{web}} format:check
+    {{web}} lint
+    {{web}} typecheck
+    {{web}} coverage
 
 # Promote whatever is running on staging to production, e.g. `just release v0.1.0`
 release version:
