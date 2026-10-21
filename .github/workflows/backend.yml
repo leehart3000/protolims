@@ -127,10 +127,21 @@ jobs:
           echo "::add-mask::$DB_URL"
           PROTOLIMS_DATABASE_URL="$DB_URL" uv run --locked --no-dev alembic upgrade head
 
+      # Public access (--allow-unauthenticated) was granted once, by hand.
+      # The deployer can't change access settings, and doesn't need to.
       - name: Deploy to Cloud Run
         run: |
           gcloud run deploy protolims-api-staging \
-            --image="$IMAGE" --region="$REGION" --quiet
+            --image="$IMAGE" \
+            --region="$REGION" \
+            --service-account=protolims-api-staging@protolims.iam.gserviceaccount.com \
+            --set-secrets=PROTOLIMS_DATABASE_URL=staging-database-url:latest \
+            --port=8080 \
+            --cpu=1 \
+            --memory=512Mi \
+            --min-instances=0 \
+            --max-instances=2 \
+            --quiet
 
       - name: Smoke test
         run: |
