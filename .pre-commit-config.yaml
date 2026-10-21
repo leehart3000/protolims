@@ -5,8 +5,10 @@ repos:
       - id: end-of-file-fixer
       - id: trailing-whitespace
       - id: check-yaml
+        exclude: (^|/)pnpm-lock\.yaml$
       - id: check-toml
       - id: check-json
+        exclude: (^|/)tsconfig[^/]*\.json$
       - id: check-added-large-files
       - id: check-merge-conflict
       - id: detect-private-key
