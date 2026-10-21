@@ -1,0 +1,79 @@
+name: Deploy to production
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+env:
+  REGION: europe-west2
+  IMAGE: europe-west2-docker.pkg.dev/protolims/protolims/api:${{ github.sha }}
+
+jobs:
+  deploy-production:
+    name: Deploy to production
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: protolims
+          workload_identity_provider: projects/516499981468/locations/global/workloadIdentityPools/github-production/providers/protolims-tags
+          service_account: protolims-deployer-production@protolims.iam.gserviceaccount.com
+
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v3
+
+      - name: Check this commit was built and tested for staging
+        run: |
+          if ! gcloud artifacts docker images describe "$IMAGE" --quiet > /dev/null; then
+            echo "::error::No image for commit $GITHUB_SHA. Tag a commit that staging has deployed (use 'just release')."
+            exit 1
+          fi
+
+      - name: Run migrations on production
+        run: |
+          gcloud run jobs deploy migrate-production \
+            --image="$IMAGE" \
+            --region="$REGION" \
+            --service-account=protolims-migrator-production@protolims.iam.gserviceaccount.com \
+            --set-secrets=PROTOLIMS_DATABASE_URL=production-database-url-direct:latest \
+            --command=alembic \
+            --args=upgrade,head \
+            --max-retries=0 \
+            --task-timeout=10m \
+            --quiet
+          gcloud run jobs execute migrate-production --region="$REGION" --wait
+
+      # Public access (--allow-unauthenticated) was granted once, by hand.
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy protolims-api-production \
+            --image="$IMAGE" \
+            --region="$REGION" \
+            --service-account=protolims-api-production@protolims.iam.gserviceaccount.com \
+            --set-secrets=PROTOLIMS_DATABASE_URL=production-database-url:latest \
+            --port=8080 \
+            --cpu=1 \
+            --memory=512Mi \
+            --min-instances=0 \
+            --max-instances=2 \
+            --quiet
+
+      - name: Smoke test
+        run: |
+          URL="$(gcloud run services describe protolims-api-production \
+            --region="$REGION" --format='value(status.url)')"
+          curl --fail --silent --show-error "$URL/health/db"

@@ -52,3 +52,20 @@ check:
     {{uvb}} mypy src tests
     {{uvb}} alembic check
     {{uvb}} pytest
+
+# Promote whatever is running on staging to production, e.g. `just release v0.1.0`
+release version:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [[ ! "{{version}}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+        echo "Version must look like v1.2.3" >&2
+        exit 1
+    fi
+    image="$(gcloud run services describe protolims-api-staging \
+        --project=protolims --region=europe-west2 \
+        --format='value(spec.template.spec.containers[0].image)')"
+    sha="${image##*:}"
+    git fetch origin --quiet
+    echo "Tagging ${sha} (currently on staging) as {{version}}"
+    git tag -a "{{version}}" "${sha}" -m "Release {{version}}"
+    git push origin "{{version}}"
