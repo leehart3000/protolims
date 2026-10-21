@@ -59,6 +59,7 @@ addopts = "--cov --cov-report=term-missing"
 [tool.coverage.run]
 branch = true
 source = ["protolims_api"]
+concurrency = ["thread", "greenlet"]
 
 [tool.coverage.report]
 show_missing = true
