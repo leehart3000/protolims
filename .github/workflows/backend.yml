@@ -117,15 +117,19 @@ jobs:
           docker build -t "$IMAGE" backend
           docker push "$IMAGE"
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@v10.3.0
-
       - name: Run migrations on staging
-        working-directory: backend
         run: |
-          DB_URL="$(gcloud secrets versions access latest --secret=staging-database-url-direct)"
-          echo "::add-mask::$DB_URL"
-          PROTOLIMS_DATABASE_URL="$DB_URL" uv run --locked --no-dev alembic upgrade head
+          gcloud run jobs deploy migrate-staging \
+            --image="$IMAGE" \
+            --region="$REGION" \
+            --service-account=protolims-migrator-staging@protolims.iam.gserviceaccount.com \
+            --set-secrets=PROTOLIMS_DATABASE_URL=staging-database-url-direct:latest \
+            --command=alembic \
+            --args=upgrade,head \
+            --max-retries=0 \
+            --task-timeout=10m \
+            --quiet
+          gcloud run jobs execute migrate-staging --region="$REGION" --wait
 
       # Public access (--allow-unauthenticated) was granted once, by hand.
       # The deployer can't change access settings, and doesn't need to.
