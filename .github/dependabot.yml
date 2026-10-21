@@ -36,3 +36,15 @@ updates:
         patterns: ["*"]
     commit-message:
       prefix: "build(deps)"
+
+  - package-ecosystem: "npm"
+    directory: "/frontend"
+    schedule:
+      interval: "weekly"
+    cooldown:
+      default-days: 7
+    groups:
+      frontend-dependencies:
+        patterns: ["*"]
+    commit-message:
+      prefix: "chore(deps)"
