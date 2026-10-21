@@ -70,3 +70,7 @@ def test_create_study_records_audit_event(client: TestClient, database: Engine) 
             text("SELECT entity_type FROM audit_event ORDER BY occurred_at, id")
         ).all()
     assert [row[0] for row in rows] == ["project", "study"]
+
+
+def test_unknown_study_returns_404(client: TestClient) -> None:
+    assert client.get(f"{API}/studies/NOPE").status_code == 404
