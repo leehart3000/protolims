@@ -11,6 +11,9 @@ app = FastAPI(
     title="ProtoLIMS API",
     version="0.1.0",
     description="Multi-omics LIMS: sample tracking, provenance, assay metadata and results.",
+    docs_url="/api/docs",
+    redoc_url=None,
+    openapi_url="/api/openapi.json",
 )
 app.include_router(projects.router, prefix="/api/v1")
 app.include_router(studies.router, prefix="/api/v1")
