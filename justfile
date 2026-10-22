@@ -73,19 +73,25 @@ web-test *args:
 web-build:
     {{web}} build
 
-# Run every check CI runs, without changing any files
-check:
+# Run every backend check CI runs, without changing any files
+backend-check:
     uv --directory backend lock --check
     {{uvb}} ruff check .
     {{uvb}} ruff format --check .
     {{uvb}} mypy src tests
     {{uvb}} alembic check
     {{uvb}} pytest
+
+# Run every frontend check CI runs, without changing any files
+web-check:
     {{web}} install --frozen-lockfile
     {{web}} format:check
     {{web}} lint
     {{web}} typecheck
     {{web}} coverage
+
+# Run every check CI runs, for both backend and frontend
+check: backend-check web-check
 
 # Promote whatever is running on staging to production, e.g. `just release v0.1.0`
 release version:
