@@ -19,7 +19,7 @@
 
   --color-page: #fafafc;
   --color-panel: #ffffff;
-  --color-fg: #0e1b33;
+  --color-fg: #24304a;
   --color-muted: #4a5468;
   --color-line: #e1e3ee;
   --color-link: #1d5fd1;
@@ -34,7 +34,7 @@
     color-scheme: dark;
     --color-page: #0e1b33;
     --color-panel: #13233f;
-    --color-fg: #eef1f8;
+    --color-fg: #d9e0ee;
     --color-muted: #b4bfd6;
     --color-line: #26375a;
     --color-link: #9dbdf5;

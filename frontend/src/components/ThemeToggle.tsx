@@ -50,7 +50,7 @@ export default function ThemeToggle() {
       }}
       aria-label={label}
       title={label}
-      className="rounded-md p-2 text-muted hover:bg-line/60 hover:text-fg"
+      className="rounded-md p-2.5 text-muted hover:bg-line/60 hover:text-fg"
     >
       {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
     </button>

@@ -17,7 +17,7 @@ export default function App() {
       </header>
 
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-10">
-        <h1 className="text-3xl font-semibold">Welcome to ProtoLIMS</h1>
+        <h1 className="text-2xl font-semibold sm:text-3xl">Welcome to ProtoLIMS</h1>
         <p className="mt-3 max-w-2xl text-lg text-muted">
           A prototype laboratory information management system for multi-omics research: samples,
           experiments, assays and results, with full provenance.
