@@ -9,7 +9,7 @@ export default function App() {
             <img src="/brand/protolims-mark.svg" alt="" className="size-8 dark:hidden" />
             <img src="/brand/protolims-mark-dark.svg" alt="" className="hidden size-8 dark:block" />
             <span className="font-brand text-2xl tracking-tight">
-              Proto<span className="font-bold text-link">LIMS</span>
+              Proto<span className="font-bold text-primary">LIMS</span>
             </span>
           </a>
           <ThemeToggle />

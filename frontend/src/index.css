@@ -11,6 +11,7 @@
     'Manrope Variable', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 
   --color-ink: #0e1b33;
+  --color-primary: #1d5fd1;
   --color-cobalt: #1d5fd1;
   --color-sky: #9dbdf5;
   --color-gold: #f2b33d;
@@ -38,10 +39,17 @@
     --color-muted: #b4bfd6;
     --color-line: #26375a;
     --color-link: #9dbdf5;
+    --color-primary: #9dbdf5;
   }
 
   body {
     background-color: var(--color-page);
     color: var(--color-fg);
+  }
+
+  h1,
+  h2,
+  h3 {
+    color: var(--color-primary);
   }
 }
