@@ -1,5 +1,7 @@
 @import 'tailwindcss';
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --font-sans:
     'IBM Plex Sans Variable', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial,
@@ -14,11 +16,32 @@
   --color-gold: #f2b33d;
   --color-haze: #e1e3ee;
   --color-snow: #fafafc;
+
+  --color-page: #fafafc;
+  --color-panel: #ffffff;
+  --color-fg: #0e1b33;
+  --color-muted: #4a5468;
+  --color-line: #e1e3ee;
+  --color-link: #1d5fd1;
 }
 
 @layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  .dark {
+    color-scheme: dark;
+    --color-page: #0e1b33;
+    --color-panel: #13233f;
+    --color-fg: #eef1f8;
+    --color-muted: #b4bfd6;
+    --color-line: #26375a;
+    --color-link: #9dbdf5;
+  }
+
   body {
-    background-color: var(--color-snow);
-    color: var(--color-ink);
+    background-color: var(--color-page);
+    color: var(--color-fg);
   }
 }
