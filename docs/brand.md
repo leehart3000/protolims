@@ -36,6 +36,24 @@ Always write the name as **ProtoLIMS**.
 | Haze | `#E1E3EE` | Borders, dividers |
 | Snow | `#FAFAFC` | Page background |
 
+### Role colours in the app
+
+Pages use role-based colours, so the same page works in light and dark mode.
+They are defined in `frontend/src/index.css`.
+
+| Role | Light | Dark | Use |
+| --- | --- | --- | --- |
+| `page` | `#FAFAFC` | `#0E1B33` | Page background |
+| `panel` | `#FFFFFF` | `#13233F` | Header, cards |
+| `fg` | `#24304A` | `#D9E0EE` | Main text |
+| `muted` | `#4A5468` | `#B4BFD6` | Secondary text |
+| `line` | `#E1E3EE` | `#26375A` | Borders, dividers |
+| `link` | `#1D5FD1` | `#9DBDF5` | Links (always underlined) |
+| `primary` | `#1D5FD1` | `#9DBDF5` | Headings, "LIMS" in the wordmark |
+
+Dark mode follows the visitor's system setting until they use the toggle in
+the header; their choice is then remembered in the browser.
+
 Empty wells in the mark use the primary colour at 30% opacity on light
 backgrounds and 35% on dark backgrounds.
 
