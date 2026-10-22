@@ -7,7 +7,7 @@ import { defineConfig, globalIgnores } from 'eslint/config'
 import eslintConfigPrettier from 'eslint-config-prettier/flat'
 
 export default defineConfig([
-  globalIgnores(['dist', 'coverage', 'worker-configuration.d.ts']),
+  globalIgnores(['dist', 'coverage', 'worker-configuration.d.ts', 'src/api/schema.d.ts']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [

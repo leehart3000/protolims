@@ -73,6 +73,11 @@ web-test *args:
 web-build:
     {{web}} build
 
+# Regenerate frontend/openapi.json and the frontend's API types from the backend code
+api-types:
+    {{uvb}} python -c "import json; from protolims_api.main import app; print(json.dumps(app.openapi(), indent=2))" > frontend/openapi.json
+    {{web}} exec openapi-typescript openapi.json -o src/api/schema.d.ts
+
 # Run every backend check CI runs, without changing any files
 backend-check:
     uv --directory backend lock --check
