@@ -1,16 +1,21 @@
 import { render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 
 import App from './App'
 
 describe('App', () => {
-  it('increments the counter when clicked', async () => {
-    const user = userEvent.setup()
+  it('shows the ProtoLIMS name as a link to the home page', () => {
     render(<App />)
 
-    await user.click(screen.getByRole('button', { name: /count is 0/i }))
+    expect(screen.getByRole('link', { name: 'ProtoLIMS' })).toHaveAttribute('href', '/')
+  })
 
-    expect(screen.getByRole('button', { name: /count is 1/i })).toBeInTheDocument()
+  it('links to the source code', () => {
+    render(<App />)
+
+    expect(screen.getByRole('link', { name: /source code/i })).toHaveAttribute(
+      'href',
+      'https://github.com/leehart3000/protolims',
+    )
   })
 })
