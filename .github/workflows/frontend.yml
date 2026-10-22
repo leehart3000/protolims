@@ -3,10 +3,6 @@ name: Frontend CI
 on:
   push:
     branches: [main]
-    paths:
-      - "frontend/**"
-      - ".node-version"
-      - ".github/workflows/frontend.yml"
   pull_request:
     paths:
       - "frontend/**"
@@ -20,6 +16,9 @@ permissions:
 concurrency:
   group: frontend-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  CLOUDFLARE_ACCOUNT_ID: 5cee0fb1868d6127bb4c6039b5a9b290
 
 jobs:
   checks:
@@ -64,3 +63,42 @@ jobs:
 
       - name: Production build
         run: pnpm build
+
+  deploy-staging:
+    name: Deploy website to staging
+    needs: checks
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    environment: staging
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          package_json_file: frontend/package.json
+
+      - name: Install Node
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
+      - name: Deploy to Cloudflare
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: pnpm wrangler deploy --env=""

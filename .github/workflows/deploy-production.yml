@@ -15,10 +15,11 @@ concurrency:
 env:
   REGION: europe-west2
   IMAGE: europe-west2-docker.pkg.dev/protolims/protolims/api:${{ github.sha }}
+  CLOUDFLARE_ACCOUNT_ID: 5cee0fb1868d6127bb4c6039b5a9b290
 
 jobs:
   deploy-production:
-    name: Deploy to production
+    name: Deploy API to production
     runs-on: ubuntu-latest
     environment: production
     permissions:
@@ -77,3 +78,46 @@ jobs:
           URL="$(gcloud run services describe protolims-api-production \
             --region="$REGION" --format='value(status.url)')"
           curl --fail --silent --show-error "$URL/health/db"
+
+  deploy-web:
+    name: Deploy website to production
+    needs: deploy-production
+    runs-on: ubuntu-latest
+    environment: production
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          package_json_file: frontend/package.json
+
+      - name: Install Node
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
+      - name: Deploy to Cloudflare
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: pnpm wrangler deploy --env production
+
+      - name: Smoke test
+        run: |
+          curl --fail --silent --show-error --output /dev/null https://protolims.org/
+          curl --fail --silent --show-error https://protolims.org/api/v1/projects
