@@ -17,9 +17,6 @@ concurrency:
   group: frontend-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
-env:
-  CLOUDFLARE_ACCOUNT_ID: 5cee0fb1868d6127bb4c6039b5a9b290
-
 jobs:
   checks:
     name: Format, lint, type-check, test and build
@@ -101,4 +98,5 @@ jobs:
       - name: Deploy to Cloudflare
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: pnpm wrangler deploy --env=""
