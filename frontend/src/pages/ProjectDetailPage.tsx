@@ -3,7 +3,8 @@ import { Link, useParams } from 'react-router'
 
 import { api } from '../api/client'
 import type { components } from '../api/schema'
-import { errorBox, primaryButton } from '../styles'
+import { formatDate } from '../format'
+import { errorBox, primaryButton, textLink } from '../styles'
 
 type Project = components['schemas']['ProjectRead']
 
@@ -28,14 +29,6 @@ async function fetchStudies(projectCode: string) {
     throw new Error('Could not load studies')
   }
   return data
-}
-
-function formatDate(value: string) {
-  return new Date(value).toLocaleDateString('en-GB', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  })
 }
 
 function StudyList({ projectCode }: { projectCode: string }) {
@@ -78,7 +71,14 @@ function StudyList({ projectCode }: { projectCode: string }) {
           {studies.map((study) => (
             <tr key={study.id}>
               <td className="px-4 py-3 align-top font-mono whitespace-nowrap">{study.code}</td>
-              <td className="px-4 py-3 align-top">{study.title}</td>
+              <td className="px-4 py-3 align-top">
+                <Link
+                  to={`/projects/${encodeURIComponent(projectCode)}/studies/${encodeURIComponent(study.code)}`}
+                  className={textLink}
+                >
+                  {study.title}
+                </Link>
+              </td>
             </tr>
           ))}
         </tbody>

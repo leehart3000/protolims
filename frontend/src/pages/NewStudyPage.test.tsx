@@ -34,6 +34,7 @@ function renderPage() {
       <Routes>
         <Route path="/projects/:code/studies/new" element={<NewStudyPage />} />
         <Route path="/projects/:code" element={<h1>Project page</h1>} />
+        <Route path="/projects/:code/studies/:studyCode" element={<h1>Study page</h1>} />
       </Routes>
     </TestProviders>,
   )
@@ -48,7 +49,7 @@ async function fillInAndSubmit(user: UserEvent) {
 }
 
 describe('NewStudyPage', () => {
-  it('creates the study and goes back to the project', async () => {
+  it('creates the study and goes to its page', async () => {
     let sentPath = ''
     let sentBody: unknown
     vi.stubGlobal(
@@ -64,7 +65,7 @@ describe('NewStudyPage', () => {
 
     await fillInAndSubmit(user)
 
-    expect(await screen.findByRole('heading', { name: 'Project page' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Study page' })).toBeInTheDocument()
     expect(sentPath).toBe('/api/v1/projects/TCGA-BRCA/studies')
     expect(sentBody).toEqual({
       code: 'TCGA-BRCA-RNASEQ',

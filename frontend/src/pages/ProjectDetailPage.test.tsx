@@ -80,6 +80,10 @@ describe('ProjectDetailPage', () => {
       'href',
       '/projects/TCGA-BRCA/studies/new',
     )
+    expect(screen.getByRole('link', { name: 'RNA-seq of primary tumours' })).toHaveAttribute(
+      'href',
+      '/projects/TCGA-BRCA/studies/TCGA-BRCA-RNASEQ',
+    )
   })
 
   it('says when the project has no studies', async () => {

@@ -40,9 +40,9 @@ export default function NewStudyPage() {
   const queryClient = useQueryClient()
   const mutation = useMutation({
     mutationFn: (body: StudyCreate) => createStudy(projectCode, body),
-    onSuccess: async () => {
+    onSuccess: async (study) => {
       await queryClient.invalidateQueries({ queryKey: ['projects', projectCode, 'studies'] })
-      await navigate(projectPath)
+      await navigate(`${projectPath}/studies/${encodeURIComponent(study.code)}`)
     },
   })
 

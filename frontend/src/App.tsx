@@ -7,6 +7,7 @@ import ProjectsPage from './pages/ProjectsPage'
 import ProjectDetailPage from './pages/ProjectDetailPage'
 import NewProjectPage from './pages/NewProjectPage'
 import NewStudyPage from './pages/NewStudyPage'
+import StudyDetailPage from './pages/StudyDetailPage'
 
 export default function App() {
   return (
@@ -41,6 +42,7 @@ export default function App() {
           <Route path="/projects/new" element={<NewProjectPage />} />
           <Route path="/projects/:code" element={<ProjectDetailPage />} />
           <Route path="/projects/:code/studies/new" element={<NewStudyPage />} />
+          <Route path="/projects/:code/studies/:studyCode" element={<StudyDetailPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </main>
