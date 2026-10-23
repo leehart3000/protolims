@@ -45,6 +45,12 @@ makemigration message:
     {{uvb}} ruff check --fix migrations
     {{uvb}} ruff format migrations
 
+# Create an empty migration for changes autogenerate can't detect (e.g. renames)
+emptymigration message:
+    {{uvb}} alembic revision -m "{{message}}"
+    {{uvb}} ruff check --fix migrations
+    {{uvb}} ruff format migrations
+
 # Install frontend packages
 web-install:
     {{web}} install
