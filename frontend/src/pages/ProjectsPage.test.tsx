@@ -73,4 +73,14 @@ describe('ProjectsPage', () => {
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Could not load projects')
   })
+
+  it('links to the new project form', () => {
+    respondWith(Response.json([]))
+    renderPage()
+
+    expect(screen.getByRole('link', { name: 'New project' })).toHaveAttribute(
+      'href',
+      '/projects/new',
+    )
+  })
 })

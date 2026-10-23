@@ -78,7 +78,15 @@ function ProjectList() {
 export default function ProjectsPage() {
   return (
     <>
-      <h1 className="text-2xl font-semibold sm:text-3xl">Projects</h1>
+      <div className="flex items-center justify-between gap-4">
+        <h1 className="text-2xl font-semibold sm:text-3xl">Projects</h1>
+        <Link
+          to="/projects/new"
+          className="rounded-md bg-cobalt px-3 py-2 text-sm font-medium text-white hover:bg-cobalt/90"
+        >
+          New project
+        </Link>
+      </div>
       <ProjectList />
     </>
   )
