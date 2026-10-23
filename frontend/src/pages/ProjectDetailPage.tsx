@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router'
 
 import { api } from '../api/client'
 import type { components } from '../api/schema'
+import { errorBox } from '../styles'
 
 type Project = components['schemas']['ProjectRead']
 
@@ -49,7 +50,7 @@ function StudyList({ projectCode }: { projectCode: string }) {
 
   if (query.isError) {
     return (
-      <p role="alert" className="mt-4 rounded-lg border border-line bg-panel px-4 py-3">
+      <p role="alert" className={`mt-4 ${errorBox}`}>
         Could not load studies. Please try again later.
       </p>
     )
@@ -126,7 +127,7 @@ function ProjectContent({ code }: { code: string }) {
 
   if (query.isError) {
     return (
-      <p role="alert" className="rounded-lg border border-line bg-panel px-4 py-3">
+      <p role="alert" className={errorBox}>
         Could not load project. Please try again later.
       </p>
     )

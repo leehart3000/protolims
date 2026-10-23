@@ -12,6 +12,10 @@
 
   --color-ink: #0e1b33;
   --color-primary: #1d5fd1;
+  --color-primary-fg: #ffffff;
+  --color-danger: #a4262c;
+  --color-danger-bg: #fdeeee;
+  --color-danger-line: #f1b5b8;
   --color-cobalt: #1d5fd1;
   --color-sky: #9dbdf5;
   --color-gold: #f2b33d;
@@ -40,6 +44,10 @@
     --color-line: #26375a;
     --color-link: #9dbdf5;
     --color-primary: #9dbdf5;
+    --color-primary-fg: #0e1b33;
+    --color-danger: #f5b5ba;
+    --color-danger-bg: #3b1a24;
+    --color-danger-line: #7d3340;
   }
 
   body {

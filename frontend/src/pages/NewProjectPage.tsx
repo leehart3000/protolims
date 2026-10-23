@@ -4,11 +4,14 @@ import { Link, useNavigate } from 'react-router'
 
 import { api } from '../api/client'
 import type { components } from '../api/schema'
+import { errorBox, primaryButton, textLink } from '../styles'
 
 type ProjectCreate = components['schemas']['ProjectCreate']
 
 const inputClass =
-  'mt-1.5 block w-full rounded-md border border-line bg-panel px-3 py-2 focus:outline-2 focus:outline-offset-1 focus:outline-link'
+  'mt-1.5 block w-full rounded-md border bg-panel px-3 py-2 focus:outline-2 focus:outline-offset-1 focus:outline-link'
+
+class DuplicateCodeError extends Error {}
 
 async function createProject(body: ProjectCreate) {
   const { data, response } = await api.POST('/api/v1/projects', { body })
@@ -16,7 +19,7 @@ async function createProject(body: ProjectCreate) {
     return data
   }
   if (response.status === 409) {
-    throw new Error(`A project with the code ${body.code} already exists.`)
+    throw new DuplicateCodeError(`A project with the code ${body.code} already exists.`)
   }
   if (response.status === 422) {
     throw new Error('Some of the details are not valid. Please check them and try again.')
@@ -25,8 +28,7 @@ async function createProject(body: ProjectCreate) {
 }
 
 function text(form: FormData, name: string) {
-  const value = form.get(name)
-  return typeof value === 'string' ? value.trim() : ''
+  return ((form.get(name) as string | null) ?? '').trim()
 }
 
 function optionalText(form: FormData, name: string) {
@@ -54,15 +56,22 @@ function TextField({
   label,
   name,
   hint,
+  error,
   optional,
+  mono,
   ...inputProps
 }: {
   label: string
   name: string
   hint?: string
+  error?: string
   optional?: boolean
+  mono?: boolean
 } & InputHTMLAttributes<HTMLInputElement>) {
   const hintId = `${name}-hint`
+  const errorId = `${name}-error`
+  const describedBy = [hint && hintId, error && errorId].filter(Boolean).join(' ')
+
   return (
     <div>
       <FieldLabel htmlFor={name} label={label} optional={optional} />
@@ -74,10 +83,16 @@ function TextField({
       <input
         id={name}
         name={name}
-        aria-describedby={hint ? hintId : undefined}
-        className={inputClass}
+        aria-describedby={describedBy || undefined}
+        aria-invalid={error ? true : undefined}
+        className={`${inputClass} ${error ? 'border-danger' : 'border-line'} ${mono ? 'font-mono' : ''}`}
         {...inputProps}
       />
+      {error && (
+        <p id={errorId} className="mt-1.5 text-sm font-medium text-danger">
+          {error}
+        </p>
+      )}
     </div>
   )
 }
@@ -93,10 +108,15 @@ export default function NewProjectPage() {
     },
   })
 
+  const codeError =
+    mutation.error instanceof DuplicateCodeError
+      ? 'This code is already in use. Please choose another.'
+      : undefined
+
   return (
     <>
       <p className="mb-6 text-sm">
-        <Link to="/projects" className="text-link underline hover:no-underline">
+        <Link to="/projects" className={textLink}>
           ← All projects
         </Link>
       </p>
@@ -104,6 +124,11 @@ export default function NewProjectPage() {
 
       <form
         className="mt-6 max-w-2xl space-y-5"
+        onChange={() => {
+          if (mutation.isError) {
+            mutation.reset()
+          }
+        }}
         onSubmit={(event) => {
           event.preventDefault()
           const form = new FormData(event.currentTarget)
@@ -117,27 +142,27 @@ export default function NewProjectPage() {
           })
         }}
       >
-        {mutation.isError && (
-          <p role="alert" className="rounded-lg border border-line bg-panel px-4 py-3">
-            {mutation.error.message}
-          </p>
-        )}
-
         <TextField
           label="Code"
           name="code"
           hint="A short, unique identifier such as TCGA-BRCA. Letters, digits, dots, dashes and underscores; it must start with a letter or digit."
+          error={codeError}
           required
           maxLength={64}
           pattern="[A-Za-z0-9][A-Za-z0-9._\-]*"
           autoComplete="off"
-          className={`${inputClass} font-mono`}
+          mono
         />
         <TextField label="Name" name="name" required maxLength={200} />
 
         <div>
           <FieldLabel htmlFor="description" label="Description" optional />
-          <textarea id="description" name="description" rows={4} className={inputClass} />
+          <textarea
+            id="description"
+            name="description"
+            rows={4}
+            className={`${inputClass} border-line`}
+          />
         </div>
 
         <TextField
@@ -150,17 +175,19 @@ export default function NewProjectPage() {
         <TextField label="Citation" name="citation" optional />
 
         <div className="flex items-center gap-4 pt-2">
-          <button
-            type="submit"
-            disabled={mutation.isPending}
-            className="rounded-md bg-cobalt px-4 py-2 font-medium text-white hover:bg-cobalt/90 disabled:opacity-60"
-          >
+          <button type="submit" disabled={mutation.isPending} className={primaryButton}>
             {mutation.isPending ? 'Creating…' : 'Create project'}
           </button>
-          <Link to="/projects" className="text-link underline hover:no-underline">
+          <Link to="/projects" className={textLink}>
             Cancel
           </Link>
         </div>
+
+        {mutation.isError && (
+          <p role="alert" className={errorBox}>
+            {mutation.error.message}
+          </p>
+        )}
       </form>
     </>
   )

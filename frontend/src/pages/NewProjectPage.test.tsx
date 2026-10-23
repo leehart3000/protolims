@@ -73,7 +73,20 @@ describe('NewProjectPage', () => {
     })
   })
 
-  it('says when the code is already in use', async () => {
+  it('shows that the project is being created', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => new Promise<Response>(() => undefined)),
+    )
+    const user = userEvent.setup()
+    renderPage()
+
+    await fillInAndSubmit(user)
+
+    expect(await screen.findByRole('button', { name: 'Creating…' })).toBeDisabled()
+  })
+
+  it('highlights the code when it is already in use', async () => {
     respondWith(Response.json({ detail: 'Project code already exists' }, { status: 409 }))
     const user = userEvent.setup()
     renderPage()
@@ -83,6 +96,22 @@ describe('NewProjectPage', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'A project with the code TCGA-BRCA already exists.',
     )
+    const codeInput = screen.getByLabelText('Code')
+    expect(codeInput).toHaveAttribute('aria-invalid', 'true')
+    expect(codeInput).toHaveAccessibleDescription(/already in use/)
+  })
+
+  it('clears the error when the details are changed', async () => {
+    respondWith(Response.json({ detail: 'Project code already exists' }, { status: 409 }))
+    const user = userEvent.setup()
+    renderPage()
+
+    await fillInAndSubmit(user)
+    expect(await screen.findByRole('alert')).toBeInTheDocument()
+    await user.type(screen.getByLabelText('Code'), '-2')
+
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    expect(screen.getByLabelText('Code')).not.toHaveAttribute('aria-invalid')
   })
 
   it('says when the details are not valid', async () => {
@@ -93,6 +122,7 @@ describe('NewProjectPage', () => {
     await fillInAndSubmit(user)
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Some of the details are not valid.')
+    expect(screen.getByLabelText('Code')).not.toHaveAttribute('aria-invalid')
   })
 
   it('shows an error when the API fails', async () => {

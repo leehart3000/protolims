@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router'
 
 import { api } from '../api/client'
+import { errorBox, primaryButton } from '../styles'
 
 async function fetchProjects() {
   const { data } = await api.GET('/api/v1/projects')
@@ -20,7 +21,7 @@ function ProjectList() {
 
   if (query.isError) {
     return (
-      <p role="alert" className="mt-6 rounded-lg border border-line bg-panel px-4 py-3">
+      <p role="alert" className={`mt-6 ${errorBox}`}>
         Could not load projects. Please try again later.
       </p>
     )
@@ -80,10 +81,7 @@ export default function ProjectsPage() {
     <>
       <div className="flex items-center justify-between gap-4">
         <h1 className="text-2xl font-semibold sm:text-3xl">Projects</h1>
-        <Link
-          to="/projects/new"
-          className="rounded-md bg-cobalt px-3 py-2 text-sm font-medium text-white hover:bg-cobalt/90"
-        >
+        <Link to="/projects/new" className={`${primaryButton} text-sm`}>
           New project
         </Link>
       </div>
