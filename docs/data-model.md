@@ -21,6 +21,7 @@ omics types fit the same structure.
 erDiagram
     PROJECT ||--o{ STUDY : contains
     STUDY ||--o{ SUBJECT : enrols
+    STUDY ||--o{ SAMPLE : holds
     SUBJECT |o--o{ SAMPLE : provides
     SAMPLE |o--o{ SAMPLE : "derived into"
     STUDY ||--o{ ASSAY : includes
@@ -34,7 +35,7 @@ erDiagram
 
     PROJECT {
         uuid id PK
-        text code UK
+        text code UK "unique across ProtoLIMS"
         text name
         text source_repository
         text licence
@@ -43,22 +44,23 @@ erDiagram
     STUDY {
         uuid id PK
         uuid project_id FK
-        text code UK
+        text code "unique within its project"
         text title
         jsonb design_factors
     }
     SUBJECT {
         uuid id PK
         uuid study_id FK
-        text external_id
+        text external_id "unique within its study"
         text subject_type
         text species
         jsonb attributes
     }
     SAMPLE {
         uuid id PK
-        text accession UK
-        text external_id
+        uuid study_id FK
+        text name "unique within its study"
+        text external_id "ID in the source repository"
         uuid subject_id FK
         uuid parent_sample_id FK
         text material_type
@@ -119,12 +121,26 @@ An append-only `audit_event` table records who changed what, and when.
 
 ## Design decisions
 
-- **IDs:** UUIDv7 primary keys (PostgreSQL 18 `uuidv7()`), plus a
-  human-readable `accession` on samples.
-- **Codes** (projects, studies) are unique across the whole system, so a code
-  works on its own in URLs, labels and conversation. The UI pre-fills the
-  project code as a prefix for new studies (e.g. `TCGA-…`), but other codes are
-  allowed if they don't clash. To revisit if this causes problems.
+- **IDs:** UUIDv7 primary keys (PostgreSQL 18 `uuidv7()`). The UUID is a
+  record's permanent identity and is what links use; people work with codes and
+  names.
+- **Projects are independent.** Project codes are unique across ProtoLIMS.
+  Everything else is scoped to its parent: study codes are unique within their
+  project, and subject and sample names are unique within their study. So
+  different projects can each have a `PILOT` study, and different studies can
+  each have a sample called `S1`. Studies are addressed through their project,
+  e.g. `/projects/TCGA-BRCA/studies/RNASEQ`.
+- **No assumed identity across studies.** Two samples (or subjects) with the
+  same name in different studies are separate records; ProtoLIMS assumes neither
+  that they are the same nor that they are different. Connections between
+  studies are made only by explicit, recorded links (planned): for example,
+  "sample `S1` in study A is the same material as `TCGA-A1-A0SB-01A` in study
+  B", with who made the link and on what basis (e.g. matched on a chosen
+  column). A matching tool may suggest links, but nothing is linked until a
+  person confirms it.
+- **Single installation, single organisation:** ProtoLIMS is not designed for
+  independent groups sharing one installation; projects provide separation
+  within one organisation.
 - **Cell lines** are Subjects with `subject_type = cell_line`; reference IDs
   (e.g. Cellosaurus) go in `attributes`.
 - **Sample lineage:** one Sample table with `material_type` and a parent link
@@ -156,4 +172,6 @@ MetaboLights study.
 ## Deferred (not in the first week)
 
 Storage locations (freezer/box/position), batches and plates, consent records,
-protocols as a separate table, users and permissions beyond basic login.
+protocols as a separate table, users and permissions beyond basic login,
+explicit cross-study links for samples and subjects, and the matching tool that
+suggests them.
