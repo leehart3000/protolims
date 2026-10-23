@@ -95,11 +95,16 @@ export default function ProjectsPage() {
     <>
       <div className="flex items-center justify-between gap-4">
         <h1 className="text-2xl font-semibold sm:text-3xl">Projects</h1>
-        <Link to="/projects/new" className={`${primaryButton} text-sm`}>
+        <Link to="/projects/new" className={`${primaryButton} inline-block text-sm`}>
           New project
         </Link>
       </div>
       <ProjectList />
+      <p className="mt-4">
+        <Link to="/projects/new" className={`${primaryButton} inline-block text-sm`}>
+          New project
+        </Link>
+      </p>
     </>
   )
 }

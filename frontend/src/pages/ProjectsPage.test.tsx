@@ -78,9 +78,10 @@ describe('ProjectsPage', () => {
     respondWith(Response.json([]))
     renderPage()
 
-    expect(screen.getByRole('link', { name: 'New project' })).toHaveAttribute(
-      'href',
-      '/projects/new',
-    )
+    const links = screen.getAllByRole('link', { name: 'New project' })
+    expect(links).toHaveLength(2)
+    for (const link of links) {
+      expect(link).toHaveAttribute('href', '/projects/new')
+    }
   })
 })

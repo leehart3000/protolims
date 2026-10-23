@@ -66,24 +66,26 @@ describe('ProjectDetailPage', () => {
 
     expect(screen.getByText('Loading project…')).toBeInTheDocument()
     expect(
-      await screen.findByRole('heading', { name: 'TCGA Breast Invasive Carcinoma' }),
+      await screen.findByRole('heading', { name: /TCGA Breast Invasive Carcinoma/ }),
     ).toBeInTheDocument()
+    expect(screen.getByText('Project:')).toBeInTheDocument()
     expect(
       screen.getByText('Breast cancer cohort from The Cancer Genome Atlas.'),
     ).toBeInTheDocument()
+    expect(screen.getByText('TCGA-BRCA')).toBeInTheDocument()
     expect(screen.getByText('GDC')).toBeInTheDocument()
     expect(screen.getByText('22 October 2026')).toBeInTheDocument()
-    expect(screen.queryByText('Licence')).not.toBeInTheDocument()
+    expect(screen.queryByText('Licence:')).not.toBeInTheDocument()
     expect(await screen.findByRole('cell', { name: 'TCGA-BRCA-RNASEQ' })).toBeInTheDocument()
-    expect(screen.getByRole('cell', { name: 'RNA-seq of primary tumours' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'New study' })).toHaveAttribute(
-      'href',
-      '/projects/TCGA-BRCA/studies/new',
-    )
     expect(screen.getByRole('link', { name: 'RNA-seq of primary tumours' })).toHaveAttribute(
       'href',
       '/projects/TCGA-BRCA/studies/TCGA-BRCA-RNASEQ',
     )
+    const newStudyLinks = screen.getAllByRole('link', { name: 'New study' })
+    expect(newStudyLinks).toHaveLength(2)
+    for (const link of newStudyLinks) {
+      expect(link).toHaveAttribute('href', '/projects/TCGA-BRCA/studies/new')
+    }
   })
 
   it('says when the project has no studies', async () => {

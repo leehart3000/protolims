@@ -1,11 +1,14 @@
 import { useQuery } from '@tanstack/react-query'
-import { Link, useParams } from 'react-router'
+import { useParams } from 'react-router'
 
 import { api } from '../api/client'
+import { fetchProject } from '../api/queries'
 import type { components } from '../api/schema'
+import { Breadcrumbs } from '../components/Breadcrumbs'
 import { DetailList } from '../components/DetailList'
+import { PageTitle } from '../components/PageTitle'
 import { formatDate } from '../format'
-import { errorBox, textLink } from '../styles'
+import { errorBox } from '../styles'
 
 type Study = components['schemas']['StudyRead']
 
@@ -23,15 +26,24 @@ async function fetchStudy(projectCode: string, studyCode: string) {
 }
 
 function StudyDetails({ projectCode, study }: { projectCode: string; study: Study }) {
+  const project = useQuery({
+    queryKey: ['projects', projectCode],
+    queryFn: () => fetchProject(projectCode),
+  })
+
   return (
     <>
-      <p className="font-mono text-sm text-muted">
-        {projectCode} / {study.code}
-      </p>
-      <h1 className="mt-1 text-2xl font-semibold sm:text-3xl">{study.title}</h1>
+      <PageTitle label="Study">{study.title}</PageTitle>
       {study.description && <p className="mt-3 max-w-3xl text-muted">{study.description}</p>}
 
-      <DetailList items={[['Created', formatDate(study.created_at)]]} />
+      <DetailList
+        items={[
+          ['Study code', <span className="font-mono">{study.code}</span>],
+          ['Created', formatDate(study.created_at)],
+          ['Project', project.data?.name ?? null],
+          ['Project code', <span className="font-mono">{projectCode}</span>],
+        ]}
+      />
 
       <h2 className="mt-10 text-xl font-semibold">Design factors</h2>
       {study.design_factors.length === 0 ? (
@@ -88,11 +100,13 @@ export default function StudyDetailPage() {
 
   return (
     <>
-      <p className="mb-6 text-sm">
-        <Link to={`/projects/${encodeURIComponent(projectCode)}`} className={textLink}>
-          ← Back to project
-        </Link>
-      </p>
+      <Breadcrumbs
+        items={[
+          { label: 'Projects', to: '/projects' },
+          { label: projectCode, to: `/projects/${encodeURIComponent(projectCode)}`, mono: true },
+          { label: studyCode, mono: true },
+        ]}
+      />
       <StudyContent projectCode={projectCode} studyCode={studyCode} />
     </>
   )

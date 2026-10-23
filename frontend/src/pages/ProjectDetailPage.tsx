@@ -2,8 +2,10 @@ import { useQuery } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router'
 
 import { api } from '../api/client'
+import { fetchProject } from '../api/queries'
 import type { components } from '../api/schema'
 import { DetailList } from '../components/DetailList'
+import { PageTitle } from '../components/PageTitle'
 import { formatDate } from '../format'
 import {
   errorBox,
@@ -20,19 +22,6 @@ import {
 
 type Project = components['schemas']['ProjectRead']
 
-async function fetchProject(code: string) {
-  const { data, response } = await api.GET('/api/v1/projects/{code}', {
-    params: { path: { code } },
-  })
-  if (response.status === 404) {
-    return null
-  }
-  if (!data) {
-    throw new Error('Could not load project')
-  }
-  return data
-}
-
 async function fetchStudies(projectCode: string) {
   const { data } = await api.GET('/api/v1/projects/{project_code}/studies', {
     params: { path: { project_code: projectCode } },
@@ -41,6 +30,17 @@ async function fetchStudies(projectCode: string) {
     throw new Error('Could not load studies')
   }
   return data
+}
+
+function NewStudyButton({ projectCode }: { projectCode: string }) {
+  return (
+    <Link
+      to={`/projects/${encodeURIComponent(projectCode)}/studies/new`}
+      className={`${primaryButton} inline-block text-sm`}
+    >
+      New study
+    </Link>
+  )
 }
 
 function StudyList({ projectCode }: { projectCode: string }) {
@@ -106,31 +106,29 @@ function StudyList({ projectCode }: { projectCode: string }) {
 }
 
 function ProjectDetails({ project }: { project: Project }) {
-  const details: [string, string | null][] = [
-    ['Source repository', project.source_repository],
-    ['Licence', project.licence],
-    ['Citation', project.citation],
-    ['Created', formatDate(project.created_at)],
-  ]
-
   return (
     <>
-      <p className="font-mono text-sm text-muted">{project.code}</p>
-      <h1 className="mt-1 text-2xl font-semibold sm:text-3xl">{project.name}</h1>
+      <PageTitle label="Project">{project.name}</PageTitle>
       {project.description && <p className="mt-3 max-w-3xl text-muted">{project.description}</p>}
 
-      <DetailList items={details} />
+      <DetailList
+        items={[
+          ['Code', <span className="font-mono">{project.code}</span>],
+          ['Source repository', project.source_repository],
+          ['Licence', project.licence],
+          ['Citation', project.citation],
+          ['Created', formatDate(project.created_at)],
+        ]}
+      />
 
       <div className="mt-10 flex items-center justify-between gap-4">
         <h2 className="text-xl font-semibold">Studies</h2>
-        <Link
-          to={`/projects/${encodeURIComponent(project.code)}/studies/new`}
-          className={`${primaryButton} text-sm`}
-        >
-          New study
-        </Link>
+        <NewStudyButton projectCode={project.code} />
       </div>
       <StudyList projectCode={project.code} />
+      <p className="mt-4">
+        <NewStudyButton projectCode={project.code} />
+      </p>
     </>
   )
 }
@@ -167,14 +165,5 @@ function ProjectContent({ code }: { code: string }) {
 export default function ProjectDetailPage() {
   const { code = '' } = useParams()
 
-  return (
-    <>
-      <p className="mb-6 text-sm">
-        <Link to="/projects" className="text-link underline hover:no-underline">
-          ← All projects
-        </Link>
-      </p>
-      <ProjectContent code={code} />
-    </>
-  )
+  return <ProjectContent code={code} />
 }
