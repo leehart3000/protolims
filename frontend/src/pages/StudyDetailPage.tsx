@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router'
 
 import { api } from '../api/client'
 import type { components } from '../api/schema'
+import { DetailList } from '../components/DetailList'
 import { formatDate } from '../format'
 import { errorBox, textLink } from '../styles'
 
@@ -30,12 +31,7 @@ function StudyDetails({ projectCode, study }: { projectCode: string; study: Stud
       <h1 className="mt-1 text-2xl font-semibold sm:text-3xl">{study.title}</h1>
       {study.description && <p className="mt-3 max-w-3xl text-muted">{study.description}</p>}
 
-      <dl className="mt-6 space-y-2 text-sm">
-        <div className="sm:flex sm:gap-6">
-          <dt className="text-muted sm:w-40 sm:shrink-0">Created</dt>
-          <dd>{formatDate(study.created_at)}</dd>
-        </div>
-      </dl>
+      <DetailList items={[['Created', formatDate(study.created_at)]]} />
 
       <h2 className="mt-10 text-xl font-semibold">Design factors</h2>
       {study.design_factors.length === 0 ? (

@@ -3,8 +3,19 @@ import { Link, useParams } from 'react-router'
 
 import { api } from '../api/client'
 import type { components } from '../api/schema'
+import { DetailList } from '../components/DetailList'
 import { formatDate } from '../format'
-import { errorBox, primaryButton, textLink } from '../styles'
+import {
+  errorBox,
+  primaryButton,
+  rowLink,
+  table,
+  tableCell,
+  tableHead,
+  tableHeader,
+  tableRow,
+  tableWrapper,
+} from '../styles'
 
 type Project = components['schemas']['ProjectRead']
 
@@ -55,29 +66,35 @@ function StudyList({ projectCode }: { projectCode: string }) {
   }
 
   return (
-    <div className="mt-4 overflow-x-auto rounded-lg border border-line bg-panel">
-      <table className="w-full text-left text-sm">
-        <thead className="border-b border-line text-muted">
+    <div className={`mt-4 ${tableWrapper}`}>
+      <table className={table}>
+        <thead className={tableHead}>
           <tr>
-            <th scope="col" className="px-4 py-3 font-medium">
+            <th scope="col" className={`${tableHeader} w-px`}>
               Code
             </th>
-            <th scope="col" className="px-4 py-3 font-medium">
+            <th scope="col" className={tableHeader}>
               Title
+            </th>
+            <th scope="col" className={`${tableHeader} w-px`}>
+              <span className="sr-only">Open</span>
             </th>
           </tr>
         </thead>
         <tbody className="divide-y divide-line">
           {studies.map((study) => (
-            <tr key={study.id}>
-              <td className="px-4 py-3 align-top font-mono whitespace-nowrap">{study.code}</td>
-              <td className="px-4 py-3 align-top">
+            <tr key={study.id} className={tableRow}>
+              <td className={`${tableCell} font-mono whitespace-nowrap`}>{study.code}</td>
+              <td className={tableCell}>
                 <Link
                   to={`/projects/${encodeURIComponent(projectCode)}/studies/${encodeURIComponent(study.code)}`}
-                  className={textLink}
+                  className={rowLink}
                 >
                   {study.title}
                 </Link>
+              </td>
+              <td className={`${tableCell} text-muted`} aria-hidden="true">
+                ›
               </td>
             </tr>
           ))}
@@ -101,16 +118,7 @@ function ProjectDetails({ project }: { project: Project }) {
       <h1 className="mt-1 text-2xl font-semibold sm:text-3xl">{project.name}</h1>
       {project.description && <p className="mt-3 max-w-3xl text-muted">{project.description}</p>}
 
-      <dl className="mt-6 space-y-2 text-sm">
-        {details
-          .filter(([, value]) => value)
-          .map(([label, value]) => (
-            <div key={label} className="sm:flex sm:gap-6">
-              <dt className="text-muted sm:w-40 sm:shrink-0">{label}</dt>
-              <dd>{value}</dd>
-            </div>
-          ))}
-      </dl>
+      <DetailList items={details} />
 
       <div className="mt-10 flex items-center justify-between gap-4">
         <h2 className="text-xl font-semibold">Studies</h2>

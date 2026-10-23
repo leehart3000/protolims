@@ -2,7 +2,17 @@ import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router'
 
 import { api } from '../api/client'
-import { errorBox, primaryButton } from '../styles'
+import {
+  errorBox,
+  primaryButton,
+  rowLink,
+  table,
+  tableCell,
+  tableHead,
+  tableHeader,
+  tableRow,
+  tableWrapper,
+} from '../styles'
 
 async function fetchProjects() {
   const { data } = await api.GET('/api/v1/projects')
@@ -33,30 +43,30 @@ function ProjectList() {
   }
 
   return (
-    <div className="mt-6 overflow-x-auto rounded-lg border border-line bg-panel">
-      <table className="w-full text-left text-sm">
-        <thead className="border-b border-line text-muted">
+    <div className={`mt-6 ${tableWrapper}`}>
+      <table className={table}>
+        <thead className={tableHead}>
           <tr>
-            <th scope="col" className="px-4 py-3 font-medium">
+            <th scope="col" className={`${tableHeader} w-px`}>
               Code
             </th>
-            <th scope="col" className="px-4 py-3 font-medium">
+            <th scope="col" className={tableHeader}>
               Name
             </th>
-            <th scope="col" className="hidden px-4 py-3 font-medium sm:table-cell">
+            <th scope="col" className={`${tableHeader} hidden sm:table-cell`}>
               Description
+            </th>
+            <th scope="col" className={`${tableHeader} w-px`}>
+              <span className="sr-only">Open</span>
             </th>
           </tr>
         </thead>
         <tbody className="divide-y divide-line">
           {projects.map((project) => (
-            <tr key={project.id}>
-              <td className="px-4 py-3 align-top font-mono whitespace-nowrap">{project.code}</td>
-              <td className="px-4 py-3 align-top">
-                <Link
-                  to={`/projects/${encodeURIComponent(project.code)}`}
-                  className="font-medium text-link underline hover:no-underline"
-                >
+            <tr key={project.id} className={tableRow}>
+              <td className={`${tableCell} font-mono whitespace-nowrap`}>{project.code}</td>
+              <td className={tableCell}>
+                <Link to={`/projects/${encodeURIComponent(project.code)}`} className={rowLink}>
                   {project.name}
                 </Link>
                 {project.description && (
@@ -65,8 +75,11 @@ function ProjectList() {
                   </p>
                 )}
               </td>
-              <td className="hidden px-4 py-3 align-top text-muted sm:table-cell">
+              <td className={`${tableCell} hidden text-muted sm:table-cell`}>
                 {project.description}
+              </td>
+              <td className={`${tableCell} text-muted`} aria-hidden="true">
+                ›
               </td>
             </tr>
           ))}
