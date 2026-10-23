@@ -20,6 +20,14 @@ const tcga: Project = {
   created_by: null,
 }
 
+const demo: Project = {
+  ...tcga,
+  id: '0192a5b0-0000-7000-8000-000000000003',
+  code: 'DEMO',
+  name: 'Demo project',
+  description: null,
+}
+
 function respondWith(response: Response) {
   vi.stubGlobal(
     'fetch',
@@ -36,13 +44,20 @@ function renderPage() {
 }
 
 describe('ProjectsPage', () => {
-  it('shows a loading message, then the projects', async () => {
-    respondWith(Response.json([tcga]))
+  it('shows a loading message, then the projects with links to them', async () => {
+    respondWith(Response.json([tcga, demo]))
     renderPage()
 
     expect(screen.getByText('Loading projects…')).toBeInTheDocument()
     expect(await screen.findByRole('cell', { name: 'TCGA-BRCA' })).toBeInTheDocument()
-    expect(screen.getByRole('cell', { name: 'TCGA Breast Invasive Carcinoma' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'TCGA Breast Invasive Carcinoma' })).toHaveAttribute(
+      'href',
+      '/projects/TCGA-BRCA',
+    )
+    expect(screen.getByRole('link', { name: 'Demo project' })).toHaveAttribute(
+      'href',
+      '/projects/DEMO',
+    )
   })
 
   it('says when there are no projects', async () => {

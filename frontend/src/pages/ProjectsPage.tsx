@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { Link } from 'react-router'
 
 import { api } from '../api/client'
 
@@ -49,9 +50,23 @@ function ProjectList() {
         <tbody className="divide-y divide-line">
           {projects.map((project) => (
             <tr key={project.id}>
-              <td className="px-4 py-3 font-mono whitespace-nowrap">{project.code}</td>
-              <td className="px-4 py-3">{project.name}</td>
-              <td className="hidden px-4 py-3 text-muted sm:table-cell">{project.description}</td>
+              <td className="px-4 py-3 align-top font-mono whitespace-nowrap">{project.code}</td>
+              <td className="px-4 py-3 align-top">
+                <Link
+                  to={`/projects/${encodeURIComponent(project.code)}`}
+                  className="font-medium text-link underline hover:no-underline"
+                >
+                  {project.name}
+                </Link>
+                {project.description && (
+                  <p className="mt-1 max-w-56 truncate text-muted sm:hidden">
+                    {project.description}
+                  </p>
+                )}
+              </td>
+              <td className="hidden px-4 py-3 align-top text-muted sm:table-cell">
+                {project.description}
+              </td>
             </tr>
           ))}
         </tbody>
