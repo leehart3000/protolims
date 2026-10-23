@@ -63,7 +63,7 @@ export interface paths {
         put?: never;
         /**
          * Create Study
-         * @description Create a study within a project.
+         * @description Create a study within a project. Study codes are unique within their project.
          */
         post: operations["create_study_api_v1_projects__project_code__studies_post"];
         delete?: never;
@@ -72,7 +72,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/studies/{code}": {
+    "/api/v1/projects/{project_code}/studies/{study_code}": {
         parameters: {
             query?: never;
             header?: never;
@@ -81,9 +81,9 @@ export interface paths {
         };
         /**
          * Get Study
-         * @description Get one study by its code.
+         * @description Get one study by its project's code and its own code.
          */
-        get: operations["get_study_api_v1_studies__code__get"];
+        get: operations["get_study_api_v1_projects__project_code__studies__study_code__get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -441,12 +441,13 @@ export interface operations {
             };
         };
     };
-    get_study_api_v1_studies__code__get: {
+    get_study_api_v1_projects__project_code__studies__study_code__get: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                code: string;
+                project_code: string;
+                study_code: string;
             };
             cookie?: never;
         };

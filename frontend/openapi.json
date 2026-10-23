@@ -156,7 +156,7 @@
           "studies"
         ],
         "summary": "Create Study",
-        "description": "Create a study within a project.",
+        "description": "Create a study within a project. Study codes are unique within their project.",
         "operationId": "create_study_api_v1_projects__project_code__studies_post",
         "parameters": [
           {
@@ -271,22 +271,31 @@
         }
       }
     },
-    "/api/v1/studies/{code}": {
+    "/api/v1/projects/{project_code}/studies/{study_code}": {
       "get": {
         "tags": [
           "studies"
         ],
         "summary": "Get Study",
-        "description": "Get one study by its code.",
-        "operationId": "get_study_api_v1_studies__code__get",
+        "description": "Get one study by its project's code and its own code.",
+        "operationId": "get_study_api_v1_projects__project_code__studies__study_code__get",
         "parameters": [
           {
-            "name": "code",
+            "name": "project_code",
             "in": "path",
             "required": true,
             "schema": {
               "type": "string",
-              "title": "Code"
+              "title": "Project Code"
+            }
+          },
+          {
+            "name": "study_code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Study Code"
             }
           }
         ],

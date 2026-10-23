@@ -20,7 +20,9 @@ async function createStudy(projectCode: string, body: StudyCreate) {
     return data
   }
   if (response.status === 409) {
-    throw new DuplicateCodeError(`A study with the code ${body.code} already exists.`)
+    throw new DuplicateCodeError(
+      `A study with the code ${body.code} already exists in this project.`,
+    )
   }
   if (response.status === 404) {
     throw new Error(`There is no project with the code ${projectCode}.`)
@@ -81,9 +83,8 @@ export default function NewStudyPage() {
         <TextField
           label="Code"
           name="code"
-          hint="Study codes are unique across all projects, so they start with the project code, for example TCGA-BRCA-RNASEQ."
+          hint="A short identifier, unique within this project, such as RNASEQ. Letters, digits, dots, dashes and underscores; it must start with a letter or digit."
           error={codeError}
-          defaultValue={`${projectCode}-`}
           required
           maxLength={64}
           pattern={codePattern}

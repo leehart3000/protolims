@@ -17,7 +17,7 @@ router = APIRouter(tags=["studies"])
 
 @router.post("/projects/{project_code}/studies", status_code=status.HTTP_201_CREATED)
 async def create_study(project_code: str, payload: StudyCreate, session: SessionDep) -> StudyRead:
-    """Create a study within a project."""
+    """Create a study within a project. Study codes are unique within their project."""
     project = await get_project_or_404(session, project_code)
     study = Study(project_id=project.id, **payload.model_dump())
     session.add(study)
@@ -27,7 +27,7 @@ async def create_study(project_code: str, payload: StudyCreate, session: Session
         await session.rollback()
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail=f"Study code {payload.code!r} already exists",
+            detail=f"Study code {payload.code!r} already exists in project {project_code!r}",
         ) from exc
     await record_event(
         session,
@@ -60,13 +60,16 @@ async def list_studies(
     return [StudyRead.model_validate(study) for study in result]
 
 
-@router.get("/studies/{code}")
-async def get_study(code: str, session: SessionDep) -> StudyRead:
-    """Get one study by its code."""
-    study = await session.scalar(select(Study).where(Study.code == code))
+@router.get("/projects/{project_code}/studies/{study_code}")
+async def get_study(project_code: str, study_code: str, session: SessionDep) -> StudyRead:
+    """Get one study by its project's code and its own code."""
+    project = await get_project_or_404(session, project_code)
+    study = await session.scalar(
+        select(Study).where(Study.project_id == project.id, Study.code == study_code)
+    )
     if study is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Study {code!r} not found",
+            detail=f"Study {study_code!r} not found in project {project_code!r}",
         )
     return StudyRead.model_validate(study)

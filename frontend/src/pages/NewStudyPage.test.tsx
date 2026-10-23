@@ -48,12 +48,6 @@ async function fillInAndSubmit(user: UserEvent) {
 }
 
 describe('NewStudyPage', () => {
-  it('starts the code with the project code', () => {
-    renderPage()
-
-    expect(screen.getByLabelText('Code')).toHaveValue('TCGA-BRCA-')
-  })
-
   it('creates the study and goes back to the project', async () => {
     let sentPath = ''
     let sentBody: unknown
@@ -100,7 +94,7 @@ describe('NewStudyPage', () => {
     await fillInAndSubmit(user)
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      'A study with the code TCGA-BRCA-RNASEQ already exists.',
+      'A study with the code TCGA-BRCA-RNASEQ already exists in this project.',
     )
     expect(screen.getByLabelText('Code')).toHaveAttribute('aria-invalid', 'true')
 

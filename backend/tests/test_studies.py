@@ -14,21 +14,21 @@ def create_project(client: TestClient, code: str) -> str:
 
 
 def test_create_and_get_study(client: TestClient) -> None:
-    project_id = create_project(client, "TCGA")
+    project_id = create_project(client, "TCGA-BRCA")
     payload = {
-        "code": "TCGA-BRCA",
-        "title": "Breast invasive carcinoma",
+        "code": "RNASEQ",
+        "title": "RNA-seq of primary tumours",
         "design_factors": [{"name": "sample type", "description": "tumour or normal"}],
     }
-    response = client.post(f"{API}/projects/TCGA/studies", json=payload)
+    response = client.post(f"{API}/projects/TCGA-BRCA/studies", json=payload)
     assert response.status_code == 201
     body = response.json()
     assert body["project_id"] == project_id
     assert body["design_factors"] == [{"name": "sample type", "description": "tumour or normal"}]
 
-    response = client.get(f"{API}/studies/TCGA-BRCA")
+    response = client.get(f"{API}/projects/TCGA-BRCA/studies/RNASEQ")
     assert response.status_code == 200
-    assert response.json()["title"] == "Breast invasive carcinoma"
+    assert response.json()["title"] == "RNA-seq of primary tumours"
 
 
 def test_create_study_in_unknown_project_returns_404(client: TestClient) -> None:
@@ -36,23 +36,41 @@ def test_create_study_in_unknown_project_returns_404(client: TestClient) -> None
     assert response.status_code == 404
 
 
-def test_duplicate_study_code_is_rejected_across_projects(client: TestClient) -> None:
+def test_same_study_code_is_allowed_in_different_projects(client: TestClient) -> None:
     create_project(client, "P1")
     create_project(client, "P2")
-    payload = {"code": "SAME", "title": "Study"}
+    payload = {"code": "PILOT", "title": "Pilot study"}
     assert client.post(f"{API}/projects/P1/studies", json=payload).status_code == 201
-    assert client.post(f"{API}/projects/P2/studies", json=payload).status_code == 409
+    assert client.post(f"{API}/projects/P2/studies", json=payload).status_code == 201
+
+
+def test_duplicate_study_code_in_same_project_is_rejected(client: TestClient) -> None:
+    create_project(client, "P1")
+    payload = {"code": "PILOT", "title": "Pilot study"}
+    assert client.post(f"{API}/projects/P1/studies", json=payload).status_code == 201
+    response = client.post(f"{API}/projects/P1/studies", json=payload)
+    assert response.status_code == 409
+    assert "P1" in response.json()["detail"]
+
+
+def test_get_study_only_finds_it_in_its_own_project(client: TestClient) -> None:
+    create_project(client, "P1")
+    create_project(client, "P2")
+    client.post(f"{API}/projects/P1/studies", json={"code": "PILOT", "title": "Pilot"})
+    assert client.get(f"{API}/projects/P1/studies/PILOT").status_code == 200
+    assert client.get(f"{API}/projects/P2/studies/PILOT").status_code == 404
+    assert client.get(f"{API}/projects/NOPE/studies/PILOT").status_code == 404
 
 
 def test_list_studies_only_returns_that_projects_studies(client: TestClient) -> None:
     create_project(client, "P1")
     create_project(client, "P2")
-    client.post(f"{API}/projects/P1/studies", json={"code": "P1-B", "title": "B"})
-    client.post(f"{API}/projects/P1/studies", json={"code": "P1-A", "title": "A"})
-    client.post(f"{API}/projects/P2/studies", json={"code": "P2-A", "title": "Other"})
+    client.post(f"{API}/projects/P1/studies", json={"code": "B", "title": "B"})
+    client.post(f"{API}/projects/P1/studies", json={"code": "A", "title": "A"})
+    client.post(f"{API}/projects/P2/studies", json={"code": "A", "title": "Other"})
     response = client.get(f"{API}/projects/P1/studies")
     assert response.status_code == 200
-    assert [s["code"] for s in response.json()] == ["P1-A", "P1-B"]
+    assert [s["title"] for s in response.json()] == ["A", "B"]
 
 
 def test_invalid_design_factor_is_rejected(client: TestClient) -> None:
@@ -70,7 +88,3 @@ def test_create_study_records_audit_event(client: TestClient, database: Engine) 
             text("SELECT entity_type FROM audit_event ORDER BY occurred_at, id")
         ).all()
     assert [row[0] for row in rows] == ["project", "study"]
-
-
-def test_unknown_study_returns_404(client: TestClient) -> None:
-    assert client.get(f"{API}/studies/NOPE").status_code == 404
