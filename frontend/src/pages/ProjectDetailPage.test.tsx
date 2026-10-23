@@ -76,6 +76,10 @@ describe('ProjectDetailPage', () => {
     expect(screen.queryByText('Licence')).not.toBeInTheDocument()
     expect(await screen.findByRole('cell', { name: 'TCGA-BRCA-RNASEQ' })).toBeInTheDocument()
     expect(screen.getByRole('cell', { name: 'RNA-seq of primary tumours' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'New study' })).toHaveAttribute(
+      'href',
+      '/projects/TCGA-BRCA/studies/new',
+    )
   })
 
   it('says when the project has no studies', async () => {

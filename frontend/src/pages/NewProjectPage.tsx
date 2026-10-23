@@ -1,15 +1,13 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import type { InputHTMLAttributes } from 'react'
 import { Link, useNavigate } from 'react-router'
 
 import { api } from '../api/client'
 import type { components } from '../api/schema'
+import { TextAreaField, TextField } from '../components/FormFields'
+import { codePattern, optionalText, text } from '../forms'
 import { errorBox, primaryButton, textLink } from '../styles'
 
 type ProjectCreate = components['schemas']['ProjectCreate']
-
-const inputClass =
-  'mt-1.5 block w-full rounded-md border bg-panel px-3 py-2 focus:outline-2 focus:outline-offset-1 focus:outline-link'
 
 class DuplicateCodeError extends Error {}
 
@@ -25,76 +23,6 @@ async function createProject(body: ProjectCreate) {
     throw new Error('Some of the details are not valid. Please check them and try again.')
   }
   throw new Error('Could not create the project. Please try again later.')
-}
-
-function text(form: FormData, name: string) {
-  return ((form.get(name) as string | null) ?? '').trim()
-}
-
-function optionalText(form: FormData, name: string) {
-  return text(form, name) || null
-}
-
-function FieldLabel({
-  htmlFor,
-  label,
-  optional,
-}: {
-  htmlFor: string
-  label: string
-  optional?: boolean
-}) {
-  return (
-    <label htmlFor={htmlFor} className="block text-sm font-medium">
-      {label}
-      {optional && <span className="font-normal text-muted"> (optional)</span>}
-    </label>
-  )
-}
-
-function TextField({
-  label,
-  name,
-  hint,
-  error,
-  optional,
-  mono,
-  ...inputProps
-}: {
-  label: string
-  name: string
-  hint?: string
-  error?: string
-  optional?: boolean
-  mono?: boolean
-} & InputHTMLAttributes<HTMLInputElement>) {
-  const hintId = `${name}-hint`
-  const errorId = `${name}-error`
-  const describedBy = [hint && hintId, error && errorId].filter(Boolean).join(' ')
-
-  return (
-    <div>
-      <FieldLabel htmlFor={name} label={label} optional={optional} />
-      {hint && (
-        <p id={hintId} className="mt-1 text-sm text-muted">
-          {hint}
-        </p>
-      )}
-      <input
-        id={name}
-        name={name}
-        aria-describedby={describedBy || undefined}
-        aria-invalid={error ? true : undefined}
-        className={`${inputClass} ${error ? 'border-danger' : 'border-line'} ${mono ? 'font-mono' : ''}`}
-        {...inputProps}
-      />
-      {error && (
-        <p id={errorId} className="mt-1.5 text-sm font-medium text-danger">
-          {error}
-        </p>
-      )}
-    </div>
-  )
 }
 
 export default function NewProjectPage() {
@@ -149,22 +77,12 @@ export default function NewProjectPage() {
           error={codeError}
           required
           maxLength={64}
-          pattern="[A-Za-z0-9][A-Za-z0-9._\-]*"
+          pattern={codePattern}
           autoComplete="off"
           mono
         />
         <TextField label="Name" name="name" required maxLength={200} />
-
-        <div>
-          <FieldLabel htmlFor="description" label="Description" optional />
-          <textarea
-            id="description"
-            name="description"
-            rows={4}
-            className={`${inputClass} border-line`}
-          />
-        </div>
-
+        <TextAreaField label="Description" name="description" rows={4} optional />
         <TextField
           label="Source repository"
           name="source_repository"

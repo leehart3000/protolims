@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router'
 
 import { api } from '../api/client'
 import type { components } from '../api/schema'
-import { errorBox } from '../styles'
+import { errorBox, primaryButton } from '../styles'
 
 type Project = components['schemas']['ProjectRead']
 
@@ -112,7 +112,15 @@ function ProjectDetails({ project }: { project: Project }) {
           ))}
       </dl>
 
-      <h2 className="mt-10 text-xl font-semibold">Studies</h2>
+      <div className="mt-10 flex items-center justify-between gap-4">
+        <h2 className="text-xl font-semibold">Studies</h2>
+        <Link
+          to={`/projects/${encodeURIComponent(project.code)}/studies/new`}
+          className={`${primaryButton} text-sm`}
+        >
+          New study
+        </Link>
+      </div>
       <StudyList projectCode={project.code} />
     </>
   )
