@@ -49,7 +49,13 @@ They are defined in `frontend/src/index.css`.
 | `muted` | `#4A5468` | `#B4BFD6` | Secondary text |
 | `line` | `#E1E3EE` | `#26375A` | Borders, dividers |
 | `link` | `#1D5FD1` | `#9DBDF5` | Links (always underlined) |
-| `primary` | `#1D5FD1` | `#9DBDF5` | Headings, "LIMS" in the wordmark |
+| `primary` | `#1D5FD1` | `#9DBDF5` | Headings, "LIMS" in the wordmark, buttons |
+| `primary-fg` | `#FFFFFF` | `#0E1B33` | Text on a `primary` background |
+| `danger` | `#A4262C` | `#F5B5BA` | Error text and highlighted fields |
+| `danger-bg` | `#FDEEEE` | `#3B1A24` | Error message background |
+| `danger-line` | `#F1B5B8` | `#7D3340` | Error message border |
+
+Shared class strings (buttons, links, error boxes) live in `frontend/src/styles.ts`.
 
 Dark mode follows the visitor's system setting until they use the toggle in
 the header; their choice is then remembered in the browser.
