@@ -23,5 +23,8 @@ export const tableCell = 'px-4 py-3 align-top'
 // "relative" lets a row link's invisible overlay (rowLink's "after:") cover the whole row.
 export const tableRow = 'relative hover:bg-line/30'
 
+// No link styling (the whole row is the link); keyboard focus outlines the whole row.
 export const rowLink =
-  'font-medium text-link underline after:absolute after:inset-0 hover:no-underline'
+  'font-medium focus-visible:outline-hidden after:absolute after:inset-0 focus-visible:after:outline-2 focus-visible:after:-outline-offset-2 focus-visible:after:outline-link'
+
+export const rowChevron = 'text-base font-bold text-primary'

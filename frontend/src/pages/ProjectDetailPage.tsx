@@ -8,6 +8,7 @@ import { formatDate } from '../format'
 import {
   errorBox,
   primaryButton,
+  rowChevron,
   rowLink,
   table,
   tableCell,
@@ -93,7 +94,7 @@ function StudyList({ projectCode }: { projectCode: string }) {
                   {study.title}
                 </Link>
               </td>
-              <td className={`${tableCell} text-muted`} aria-hidden="true">
+              <td className={`${tableCell} ${rowChevron}`} aria-hidden="true">
                 ›
               </td>
             </tr>

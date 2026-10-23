@@ -5,6 +5,7 @@ import { api } from '../api/client'
 import {
   errorBox,
   primaryButton,
+  rowChevron,
   rowLink,
   table,
   tableCell,
@@ -78,7 +79,7 @@ function ProjectList() {
               <td className={`${tableCell} hidden text-muted sm:table-cell`}>
                 {project.description}
               </td>
-              <td className={`${tableCell} text-muted`} aria-hidden="true">
+              <td className={`${tableCell} ${rowChevron}`} aria-hidden="true">
                 ›
               </td>
             </tr>
