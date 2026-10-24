@@ -1,4 +1,5 @@
 # ProtoLIMS task runner. Run `just` on its own to list the recipes.
+# backend-* and web-* recipes do one half; lint, format, typecheck, test and check do both.
 
 uvb := "uv run --directory backend"
 web := "pnpm --dir frontend"
@@ -6,6 +7,8 @@ web := "pnpm --dir frontend"
 # List available recipes
 default:
     @just --list
+
+# --- Local services ---
 
 # Start local services (PostgreSQL) in the background
 up:
@@ -15,25 +18,53 @@ up:
 down:
     docker compose stop
 
+# --- Both halves ---
+
+# Fix lint issues in the backend and frontend
+lint: backend-lint web-lint
+
+# Format the backend and frontend
+format: backend-format web-format
+
+# Type-check the backend and frontend
+typecheck: backend-typecheck web-typecheck
+
+# Run the backend and frontend tests
+test: backend-test web-test
+
+# Run every check CI runs, for both backend and frontend
+check: backend-check web-check
+
+# --- Backend ---
+
 # Run the API locally with auto-reload
-run:
+backend-dev:
     {{uvb}} uvicorn protolims_api.main:app --reload
 
-# Fix lint issues with Ruff
-lint:
+# Fix backend lint issues with Ruff
+backend-lint:
     {{uvb}} ruff check --fix .
 
-# Format code with Ruff
-format:
+# Format the backend with Ruff
+backend-format:
     {{uvb}} ruff format .
 
-# Type-check with Mypy
-typecheck:
+# Type-check the backend with Mypy
+backend-typecheck:
     {{uvb}} mypy src tests
 
-# Run the tests; extra arguments go to pytest, e.g. `just test -k studies`
-test *args:
+# Run the backend tests; extra arguments go to pytest, e.g. `just backend-test -k studies`
+backend-test *args:
     {{uvb}} pytest {{args}}
+
+# Run every backend check CI runs, without changing any files
+backend-check:
+    uv --directory backend lock --check
+    {{uvb}} ruff check .
+    {{uvb}} ruff format --check .
+    {{uvb}} mypy src tests
+    {{uvb}} alembic check
+    {{uvb}} pytest
 
 # Apply migrations to the local database
 migrate:
@@ -51,6 +82,8 @@ emptymigration message:
     {{uvb}} ruff check --fix migrations
     {{uvb}} ruff format migrations
 
+# --- Frontend ---
+
 # Install frontend packages
 web-install:
     {{web}} install
@@ -59,9 +92,9 @@ web-install:
 web-dev:
     {{web}} dev
 
-# Lint the frontend with ESLint
+# Fix frontend lint issues with ESLint
 web-lint:
-    {{web}} lint
+    {{web}} lint --fix
 
 # Format the frontend with Prettier
 web-format:
@@ -75,24 +108,6 @@ web-typecheck:
 web-test *args:
     {{web}} test {{args}}
 
-# Build the frontend for production
-web-build:
-    {{web}} build
-
-# Regenerate frontend/openapi.json and the frontend's API types from the backend code
-api-types:
-    {{uvb}} python -c "import json; from protolims_api.main import app; print(json.dumps(app.openapi(), indent=2))" > frontend/openapi.json
-    {{web}} exec openapi-typescript openapi.json -o src/api/schema.d.ts
-
-# Run every backend check CI runs, without changing any files
-backend-check:
-    uv --directory backend lock --check
-    {{uvb}} ruff check .
-    {{uvb}} ruff format --check .
-    {{uvb}} mypy src tests
-    {{uvb}} alembic check
-    {{uvb}} pytest
-
 # Run every frontend check CI runs, without changing any files
 web-check:
     {{web}} install --frozen-lockfile
@@ -101,8 +116,16 @@ web-check:
     {{web}} typecheck
     {{web}} coverage
 
-# Run every check CI runs, for both backend and frontend
-check: backend-check web-check
+# Build the frontend for production
+web-build:
+    {{web}} build
+
+# --- Both: API types, releases ---
+
+# Regenerate frontend/openapi.json and the frontend's API types from the backend code
+api-types:
+    {{uvb}} python -c "import json; from protolims_api.main import app; print(json.dumps(app.openapi(), indent=2))" > frontend/openapi.json
+    {{web}} exec openapi-typescript openapi.json -o src/api/schema.d.ts
 
 # Promote whatever is running on staging to production, e.g. `just release v0.1.0`
 release version:
