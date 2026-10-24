@@ -51,7 +51,8 @@ erDiagram
     SUBJECT {
         uuid id PK
         uuid study_id FK
-        text external_id "unique within its study"
+        text name "unique within its study"
+        text external_id "ID in the source repository"
         text subject_type
         text species
         jsonb attributes

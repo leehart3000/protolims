@@ -5,6 +5,7 @@ from typing import Annotated
 from fastapi import APIRouter, HTTPException, Query, status
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from protolims_api.audit import record_event
 from protolims_api.db import SessionDep
@@ -60,9 +61,8 @@ async def list_studies(
     return [StudyRead.model_validate(study) for study in result]
 
 
-@router.get("/projects/{project_code}/studies/{study_code}")
-async def get_study(project_code: str, study_code: str, session: SessionDep) -> StudyRead:
-    """Get one study by its project's code and its own code."""
+async def get_study_or_404(session: AsyncSession, project_code: str, study_code: str) -> Study:
+    """Find a study by its project's code and its own code, or respond with 404."""
     project = await get_project_or_404(session, project_code)
     study = await session.scalar(
         select(Study).where(Study.project_id == project.id, Study.code == study_code)
@@ -72,7 +72,13 @@ async def get_study(project_code: str, study_code: str, session: SessionDep) -> 
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Study {study_code!r} not found in project {project_code!r}",
         )
-    return StudyRead.model_validate(study)
+    return study
+
+
+@router.get("/projects/{project_code}/studies/{study_code}")
+async def get_study(project_code: str, study_code: str, session: SessionDep) -> StudyRead:
+    """Get one study by its project's code and its own code."""
+    return StudyRead.model_validate(await get_study_or_404(session, project_code, study_code))
 
 
 @router.get("/studies")

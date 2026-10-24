@@ -112,6 +112,50 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/projects/{project_code}/studies/{study_code}/subjects": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Subjects
+         * @description List a study's subjects, ordered by name.
+         */
+        get: operations["list_subjects_api_v1_projects__project_code__studies__study_code__subjects_get"];
+        put?: never;
+        /**
+         * Create Subject
+         * @description Create a subject within a study. Subject names are unique within their study.
+         */
+        post: operations["create_subject_api_v1_projects__project_code__studies__study_code__subjects_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_code}/studies/{study_code}/subjects/{name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Subject
+         * @description Get one subject by its name within a study.
+         */
+        get: operations["get_subject_api_v1_projects__project_code__studies__study_code__subjects__name__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -313,6 +357,67 @@ export interface components {
             project_code: string;
             /** Project Name */
             project_name: string;
+        };
+        /**
+         * SubjectCreate
+         * @description Data needed to create a subject.
+         */
+        SubjectCreate: {
+            /** Name */
+            name: string;
+            /** External Id */
+            external_id?: string | null;
+            /**
+             * Subject Type
+             * @enum {string}
+             */
+            subject_type: "patient" | "cell_line" | "organism" | "other";
+            /** Species */
+            species?: string | null;
+            /** Attributes */
+            attributes?: {
+                [key: string]: unknown;
+            };
+        };
+        /**
+         * SubjectRead
+         * @description A subject as returned by the API.
+         */
+        SubjectRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Study Id
+             * Format: uuid
+             */
+            study_id: string;
+            /** Name */
+            name: string;
+            /** External Id */
+            external_id: string | null;
+            /** Subject Type */
+            subject_type: string;
+            /** Species */
+            species: string | null;
+            /** Attributes */
+            attributes: {
+                [key: string]: unknown;
+            };
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Created By */
+            created_by: string | null;
         };
         /** ValidationError */
         ValidationError: {
@@ -554,6 +659,110 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StudyWithProjectRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_subjects_api_v1_projects__project_code__studies__study_code__subjects_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path: {
+                project_code: string;
+                study_code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SubjectRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_subject_api_v1_projects__project_code__studies__study_code__subjects_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_code: string;
+                study_code: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SubjectCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SubjectRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_subject_api_v1_projects__project_code__studies__study_code__subjects__name__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_code: string;
+                study_code: string;
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SubjectRead"];
                 };
             };
             /** @description Validation Error */
