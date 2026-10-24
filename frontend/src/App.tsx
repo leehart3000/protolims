@@ -53,21 +53,27 @@ export default function App() {
       </main>
 
       <footer className="border-t border-line">
-        <div className="mx-auto max-w-6xl px-4 py-6 text-sm text-muted">
-          ProtoLIMS is free software under the{' '}
-          <a
-            className="text-link underline hover:no-underline"
-            href="https://www.gnu.org/licenses/agpl-3.0.html"
-          >
-            GNU AGPL v3
-          </a>
-          .{' '}
-          <a
-            className="text-link underline hover:no-underline"
-            href="https://github.com/leehart3000/protolims"
-          >
-            Source code
-          </a>
+        <div className="mx-auto flex max-w-6xl flex-wrap justify-between gap-x-6 gap-y-2 px-4 py-6 text-sm text-muted">
+          <p>
+            ProtoLIMS is{' '}
+            <a
+              className="text-link underline hover:no-underline"
+              href="https://github.com/leehart3000/protolims"
+            >
+              free software
+            </a>{' '}
+            under the{' '}
+            <a
+              className="text-link underline hover:no-underline"
+              href="https://www.gnu.org/licenses/agpl-3.0.html"
+            >
+              GNU AGPL v3
+            </a>
+            .
+          </p>
+          <p>
+            Version {import.meta.env.VITE_APP_VERSION}/{import.meta.env.VITE_APP_COMMIT}
+          </p>
         </div>
       </footer>
     </div>

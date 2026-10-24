@@ -20,13 +20,14 @@ describe('App', () => {
     expect(screen.getByRole('link', { name: 'ProtoLIMS' })).toHaveAttribute('href', '/')
   })
 
-  it('links to the source code', () => {
+  it('links to the source code and shows the version', () => {
     renderApp()
 
-    expect(screen.getByRole('link', { name: /source code/i })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'free software' })).toHaveAttribute(
       'href',
       'https://github.com/leehart3000/protolims',
     )
+    expect(screen.getByText(/^Version .+\/[0-9a-f]{7}$/)).toBeInTheDocument()
   })
 
   it('goes to the projects page from the main navigation', async () => {
