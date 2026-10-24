@@ -14,7 +14,7 @@ export const tableWrapper = 'overflow-x-auto rounded-lg border border-line bg-pa
 export const table = 'w-full text-left text-sm'
 
 export const tableHead =
-  'border-b border-line bg-line/40 text-xs font-semibold tracking-wide text-muted uppercase'
+  'border-b border-line bg-line/40 text-xs font-semibold tracking-wide whitespace-nowrap text-muted uppercase'
 
 export const tableHeader = 'px-4 py-3'
 
