@@ -6,11 +6,25 @@ import type { components } from '../api/schema'
 import { TestProviders } from '../test/TestProviders'
 import StudiesPage from './StudiesPage'
 
+type Project = components['schemas']['ProjectRead']
 type StudyWithProject = components['schemas']['StudyWithProjectRead']
+
+const tcga: Project = {
+  id: '0192a5b0-0000-7000-8000-000000000001',
+  code: 'TCGA-BRCA',
+  name: 'TCGA Breast Invasive Carcinoma',
+  description: null,
+  source_repository: 'GDC',
+  licence: null,
+  citation: null,
+  created_at: '2026-10-22T12:00:00Z',
+  updated_at: '2026-10-22T12:00:00Z',
+  created_by: null,
+}
 
 const tcgaRnaseq: StudyWithProject = {
   id: '0192a5b0-0000-7000-8000-000000000002',
-  project_id: '0192a5b0-0000-7000-8000-000000000001',
+  project_id: tcga.id,
   code: 'RNASEQ',
   title: 'RNA-seq of primary tumours',
   description: null,
@@ -32,14 +46,16 @@ const cptacPilot: StudyWithProject = {
   project_name: 'CPTAC Breast Cancer',
 }
 
-// Returns the list of requested URLs, so tests can check what was asked for.
-function respondWith(response: Response) {
+// Answers the studies list with the given response, and any project request with TCGA-BRCA.
+// Returns the requested URLs, so tests can check what was asked for.
+function respondWith(studiesResponse: Response) {
   const requested: string[] = []
   vi.stubGlobal(
     'fetch',
     vi.fn((request: Request) => {
       requested.push(request.url)
-      return Promise.resolve(response)
+      const isStudiesList = new URL(request.url).pathname === '/api/v1/studies'
+      return Promise.resolve(isStudiesList ? studiesResponse : Response.json(tcga))
     }),
   )
   return requested
@@ -66,8 +82,10 @@ describe('StudiesPage', () => {
       'href',
       '/projects/TCGA-BRCA/studies/RNASEQ',
     )
+    expect(screen.getByText('RNASEQ · TCGA-BRCA')).toBeInTheDocument()
     expect(screen.queryByRole('navigation', { name: 'Breadcrumb' })).not.toBeInTheDocument()
     expect(screen.queryByRole('link', { name: 'New study' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'All studies' })).not.toBeInTheDocument()
   })
 
   it("can show just one project's studies", async () => {
@@ -77,17 +95,20 @@ describe('StudiesPage', () => {
     expect(
       await screen.findByRole('link', { name: 'RNA-seq of primary tumours' }),
     ).toBeInTheDocument()
-    expect(requested[0]).toContain('project=TCGA-BRCA')
+    expect(requested.some((url) => url.includes('/api/v1/studies?project=TCGA-BRCA'))).toBe(true)
+    expect(await screen.findByText('TCGA Breast Invasive Carcinoma')).toBeInTheDocument()
+    expect(screen.getByText('Project code:')).toBeInTheDocument()
 
     const trail = screen.getByRole('navigation', { name: 'Breadcrumb' })
     expect(within(trail).getByRole('link', { name: 'TCGA-BRCA' })).toHaveAttribute(
       'href',
       '/projects/TCGA-BRCA',
     )
-    expect(screen.getByRole('link', { name: 'Show all studies' })).toHaveAttribute(
-      'href',
-      '/studies',
-    )
+    const allStudiesLinks = screen.getAllByRole('link', { name: 'All studies' })
+    expect(allStudiesLinks).toHaveLength(2)
+    for (const link of allStudiesLinks) {
+      expect(link).toHaveAttribute('href', '/studies')
+    }
     const newStudyLinks = screen.getAllByRole('link', { name: 'New study' })
     expect(newStudyLinks).toHaveLength(2)
     for (const link of newStudyLinks) {
