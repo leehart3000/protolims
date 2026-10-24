@@ -1,5 +1,10 @@
-"""Subject endpoints. Subjects belong to a study and are addressed through it."""
+"""Subject endpoints.
 
+Subjects are created and listed under their study, and fetched by their permanent ID,
+so links to a subject keep working even if its name is corrected.
+"""
+
+import uuid
 from typing import Annotated
 
 from fastapi import APIRouter, HTTPException, Query, status
@@ -8,11 +13,19 @@ from sqlalchemy.exc import IntegrityError
 
 from protolims_api.audit import record_event
 from protolims_api.db import SessionDep
-from protolims_api.models import Subject
+from protolims_api.models import Project, Study, Subject
 from protolims_api.routers.studies import get_study_or_404
-from protolims_api.schemas.subject import SubjectCreate, SubjectRead
+from protolims_api.schemas.subject import SubjectCreate, SubjectFields, SubjectRead
 
 router = APIRouter(tags=["subjects"])
+
+
+def subject_read(subject: Subject, project_code: str, study_code: str) -> SubjectRead:
+    return SubjectRead(
+        **SubjectFields.model_validate(subject).model_dump(),
+        project_code=project_code,
+        study_code=study_code,
+    )
 
 
 @router.post(
@@ -49,7 +62,7 @@ async def create_subject(
     )
     await session.commit()
     await session.refresh(subject)
-    return SubjectRead.model_validate(subject)
+    return subject_read(subject, project_code, study_code)
 
 
 @router.get("/projects/{project_code}/studies/{study_code}/subjects")
@@ -69,21 +82,24 @@ async def list_subjects(
         .limit(limit)
         .offset(offset)
     )
-    return [SubjectRead.model_validate(subject) for subject in result]
+    return [subject_read(subject, project_code, study_code) for subject in result]
 
 
-@router.get("/projects/{project_code}/studies/{study_code}/subjects/{name}")
-async def get_subject(
-    project_code: str, study_code: str, name: str, session: SessionDep
-) -> SubjectRead:
-    """Get one subject by its name within a study."""
-    study = await get_study_or_404(session, project_code, study_code)
-    subject = await session.scalar(
-        select(Subject).where(Subject.study_id == study.id, Subject.name == name)
-    )
-    if subject is None:
+@router.get("/subjects/{subject_id}")
+async def get_subject(subject_id: uuid.UUID, session: SessionDep) -> SubjectRead:
+    """Get one subject by its permanent ID."""
+    row = (
+        await session.execute(
+            select(Subject, Project.code, Study.code)
+            .join(Study, Subject.study_id == Study.id)
+            .join(Project, Study.project_id == Project.id)
+            .where(Subject.id == subject_id)
+        )
+    ).one_or_none()
+    if row is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Subject {name!r} not found in study {study_code!r}",
+            detail=f"Subject {subject_id} not found",
         )
-    return SubjectRead.model_validate(subject)
+    subject, project_code, study_code = row
+    return subject_read(subject, project_code, study_code)

@@ -131,6 +131,13 @@ An append-only `audit_event` table records who changed what, and when.
   different projects can each have a `PILOT` study, and different studies can
   each have a sample called `S1`. Studies are addressed through their project,
   e.g. `/projects/TCGA-BRCA/studies/RNASEQ`.
+- **Addresses:** projects and studies, of which there are few and whose codes
+  are chosen deliberately, are addressed by code (e.g.
+  `/projects/TCGA-BRCA/studies/RNASEQ`). Subjects and samples, which are
+  numerous and whose names are imported and may be corrected, are addressed by
+  their permanent ID (e.g. `/subjects/{id}`), so links never break when a name
+  changes. Pages show names and breadcrumbs, never the ID. Creating and
+  listing subjects and samples still happens under their study.
 - **No assumed identity across studies.** Two samples (or subjects) with the
   same name in different studies are separate records; ProtoLIMS assumes neither
   that they are the same nor that they are different. Connections between

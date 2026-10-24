@@ -27,18 +27,23 @@ def test_create_and_get_subject(client: TestClient) -> None:
     }
     response = client.post(subjects, json=payload)
     assert response.status_code == 201
-    assert response.json()["attributes"] == {"sex": "female"}
+    body = response.json()
+    assert body["attributes"] == {"sex": "female"}
+    assert (body["project_code"], body["study_code"]) == ("P1", "S1")
 
-    response = client.get(f"{subjects}/TCGA-A1-A0SB")
+    response = client.get(f"{API}/subjects/{body['id']}")
     assert response.status_code == 200
-    assert response.json()["external_id"] == "0004d251-3f70-4395-b175-c94c2f5b1b81"
+    fetched = response.json()
+    assert fetched["name"] == "TCGA-A1-A0SB"
+    assert fetched["external_id"] == "0004d251-3f70-4395-b175-c94c2f5b1b81"
+    assert (fetched["project_code"], fetched["study_code"]) == ("P1", "S1")
 
 
 def test_names_may_contain_spaces(client: TestClient) -> None:
     subjects = create_study(client)
     payload = {"name": "Hs 578T", "subject_type": "cell_line"}
     assert client.post(subjects, json=payload).status_code == 201
-    assert client.get(f"{subjects}/Hs%20578T").status_code == 200
+    assert [s["name"] for s in client.get(subjects).json()] == ["Hs 578T"]
 
 
 def test_invalid_names_are_rejected(client: TestClient) -> None:
@@ -71,11 +76,10 @@ def test_duplicate_name_in_same_study_is_rejected(client: TestClient) -> None:
     assert "S1" in response.json()["detail"]
 
 
-def test_unknown_study_returns_404(client: TestClient) -> None:
-    create_study(client)
-    unknown = f"{API}/projects/P1/studies/NOPE/subjects"
-    assert client.post(unknown, json={"name": "X1", "subject_type": "patient"}).status_code == 404
+def test_unknown_or_invalid_subject_id(client: TestClient) -> None:
+    unknown = f"{API}/subjects/00000000-0000-7000-8000-000000000000"
     assert client.get(unknown).status_code == 404
+    assert client.get(f"{API}/subjects/not-a-uuid").status_code == 422
 
 
 def test_unknown_subject_returns_404(client: TestClient) -> None:

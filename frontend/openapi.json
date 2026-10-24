@@ -541,40 +541,23 @@
         }
       }
     },
-    "/api/v1/projects/{project_code}/studies/{study_code}/subjects/{name}": {
+    "/api/v1/subjects/{subject_id}": {
       "get": {
         "tags": [
           "subjects"
         ],
         "summary": "Get Subject",
-        "description": "Get one subject by its name within a study.",
-        "operationId": "get_subject_api_v1_projects__project_code__studies__study_code__subjects__name__get",
+        "description": "Get one subject by its permanent ID.",
+        "operationId": "get_subject_api_v1_subjects__subject_id__get",
         "parameters": [
           {
-            "name": "project_code",
+            "name": "subject_id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "string",
-              "title": "Project Code"
-            }
-          },
-          {
-            "name": "study_code",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Study Code"
-            }
-          },
-          {
-            "name": "name",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Name"
+              "format": "uuid",
+              "title": "Subject Id"
             }
           }
         ],
@@ -1192,6 +1175,14 @@
               }
             ],
             "title": "Created By"
+          },
+          "project_code": {
+            "type": "string",
+            "title": "Project Code"
+          },
+          "study_code": {
+            "type": "string",
+            "title": "Study Code"
           }
         },
         "type": "object",
@@ -1205,10 +1196,12 @@
           "attributes",
           "created_at",
           "updated_at",
-          "created_by"
+          "created_by",
+          "project_code",
+          "study_code"
         ],
         "title": "SubjectRead",
-        "description": "A subject as returned by the API."
+        "description": "A subject as returned by the API, with the codes of its study and project."
       },
       "ValidationError": {
         "properties": {

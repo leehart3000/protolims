@@ -136,7 +136,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/projects/{project_code}/studies/{study_code}/subjects/{name}": {
+    "/api/v1/subjects/{subject_id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -145,9 +145,9 @@ export interface paths {
         };
         /**
          * Get Subject
-         * @description Get one subject by its name within a study.
+         * @description Get one subject by its permanent ID.
          */
-        get: operations["get_subject_api_v1_projects__project_code__studies__study_code__subjects__name__get"];
+        get: operations["get_subject_api_v1_subjects__subject_id__get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -381,7 +381,7 @@ export interface components {
         };
         /**
          * SubjectRead
-         * @description A subject as returned by the API.
+         * @description A subject as returned by the API, with the codes of its study and project.
          */
         SubjectRead: {
             /**
@@ -418,6 +418,10 @@ export interface components {
             updated_at: string;
             /** Created By */
             created_by: string | null;
+            /** Project Code */
+            project_code: string;
+            /** Study Code */
+            study_code: string;
         };
         /** ValidationError */
         ValidationError: {
@@ -743,14 +747,12 @@ export interface operations {
             };
         };
     };
-    get_subject_api_v1_projects__project_code__studies__study_code__subjects__name__get: {
+    get_subject_api_v1_subjects__subject_id__get: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                project_code: string;
-                study_code: string;
-                name: string;
+                subject_id: string;
             };
             cookie?: never;
         };

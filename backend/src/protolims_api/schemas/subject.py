@@ -26,8 +26,8 @@ class SubjectCreate(BaseModel):
     attributes: dict[str, Any] = Field(default_factory=dict)
 
 
-class SubjectRead(BaseModel):
-    """A subject as returned by the API."""
+class SubjectFields(BaseModel):
+    """A subject's own fields, read from the database."""
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -41,3 +41,10 @@ class SubjectRead(BaseModel):
     created_at: datetime
     updated_at: datetime
     created_by: str | None
+
+
+class SubjectRead(SubjectFields):
+    """A subject as returned by the API, with the codes of its study and project."""
+
+    project_code: str
+    study_code: str
