@@ -5,7 +5,7 @@ from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
 from protolims_api.db import SessionDep
-from protolims_api.routers import projects, studies, subjects
+from protolims_api.routers import projects, samples, studies, subjects
 
 app = FastAPI(
     title="ProtoLIMS API",
@@ -18,6 +18,7 @@ app = FastAPI(
 app.include_router(projects.router, prefix="/api/v1")
 app.include_router(studies.router, prefix="/api/v1")
 app.include_router(subjects.router, prefix="/api/v1")
+app.include_router(samples.router, prefix="/api/v1")
 
 
 @app.get("/health", tags=["system"])

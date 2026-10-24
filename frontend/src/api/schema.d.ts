@@ -156,6 +156,50 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/projects/{project_code}/studies/{study_code}/samples": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Samples
+         * @description List a study's samples, ordered by name.
+         */
+        get: operations["list_samples_api_v1_projects__project_code__studies__study_code__samples_get"];
+        put?: never;
+        /**
+         * Create Sample
+         * @description Create a sample within a study. Sample names are unique within their study.
+         */
+        post: operations["create_sample_api_v1_projects__project_code__studies__study_code__samples_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/samples/{sample_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Sample
+         * @description Get one sample by its permanent ID.
+         */
+        get: operations["get_sample_api_v1_samples__sample_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -267,6 +311,96 @@ export interface components {
             updated_at: string;
             /** Created By */
             created_by: string | null;
+        };
+        /**
+         * SampleCreate
+         * @description Data needed to create a sample.
+         */
+        SampleCreate: {
+            /** Name */
+            name: string;
+            /** External Id */
+            external_id?: string | null;
+            /** Subject Id */
+            subject_id?: string | null;
+            /** Parent Sample Id */
+            parent_sample_id?: string | null;
+            /** Material Type */
+            material_type: string;
+            /**
+             * Status
+             * @default registered
+             * @enum {string}
+             */
+            status: "registered" | "received" | "in_storage" | "in_use" | "consumed" | "disposed";
+            /** Collected At */
+            collected_at?: string | null;
+            /** Characteristics */
+            characteristics?: {
+                [key: string]: unknown;
+            };
+            /** Factor Values */
+            factor_values?: {
+                [key: string]: unknown;
+            };
+        };
+        /**
+         * SampleRead
+         * @description A sample as returned by the API, with where it belongs and what it's linked to.
+         */
+        SampleRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Study Id
+             * Format: uuid
+             */
+            study_id: string;
+            /** Name */
+            name: string;
+            /** External Id */
+            external_id: string | null;
+            /** Subject Id */
+            subject_id: string | null;
+            /** Parent Sample Id */
+            parent_sample_id: string | null;
+            /** Material Type */
+            material_type: string;
+            /** Status */
+            status: string;
+            /** Collected At */
+            collected_at: string | null;
+            /** Characteristics */
+            characteristics: {
+                [key: string]: unknown;
+            };
+            /** Factor Values */
+            factor_values: {
+                [key: string]: unknown;
+            };
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Created By */
+            created_by: string | null;
+            /** Project Code */
+            project_code: string;
+            /** Study Code */
+            study_code: string;
+            /** Subject Name */
+            subject_name: string | null;
+            /** Parent Sample Name */
+            parent_sample_name: string | null;
         };
         /**
          * StudyCreate
@@ -765,6 +899,108 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SubjectRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_samples_api_v1_projects__project_code__studies__study_code__samples_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path: {
+                project_code: string;
+                study_code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SampleRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_sample_api_v1_projects__project_code__studies__study_code__samples_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_code: string;
+                study_code: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SampleCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SampleRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_sample_api_v1_samples__sample_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                sample_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SampleRead"];
                 };
             };
             /** @description Validation Error */

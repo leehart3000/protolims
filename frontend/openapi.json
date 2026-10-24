@@ -585,6 +585,189 @@
         }
       }
     },
+    "/api/v1/projects/{project_code}/studies/{study_code}/samples": {
+      "post": {
+        "tags": [
+          "samples"
+        ],
+        "summary": "Create Sample",
+        "description": "Create a sample within a study. Sample names are unique within their study.",
+        "operationId": "create_sample_api_v1_projects__project_code__studies__study_code__samples_post",
+        "parameters": [
+          {
+            "name": "project_code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Code"
+            }
+          },
+          {
+            "name": "study_code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Study Code"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SampleCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SampleRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "samples"
+        ],
+        "summary": "List Samples",
+        "description": "List a study's samples, ordered by name.",
+        "operationId": "list_samples_api_v1_projects__project_code__studies__study_code__samples_get",
+        "parameters": [
+          {
+            "name": "project_code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Code"
+            }
+          },
+          {
+            "name": "study_code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Study Code"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SampleRead"
+                  },
+                  "title": "Response List Samples Api V1 Projects  Project Code  Studies  Study Code  Samples Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/samples/{sample_id}": {
+      "get": {
+        "tags": [
+          "samples"
+        ],
+        "summary": "Get Sample",
+        "description": "Get one sample by its permanent ID.",
+        "operationId": "get_sample_api_v1_samples__sample_id__get",
+        "parameters": [
+          {
+            "name": "sample_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Sample Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SampleRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "tags": [
@@ -846,6 +1029,259 @@
         ],
         "title": "ProjectRead",
         "description": "A project as returned by the API."
+      },
+      "SampleCreate": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "pattern": "^[^/\\s](?:[^/]*[^/\\s])?$",
+            "title": "Name"
+          },
+          "external_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "External Id"
+          },
+          "subject_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subject Id"
+          },
+          "parent_sample_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Sample Id"
+          },
+          "material_type": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Material Type"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "registered",
+              "received",
+              "in_storage",
+              "in_use",
+              "consumed",
+              "disposed"
+            ],
+            "title": "Status",
+            "default": "registered"
+          },
+          "collected_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Collected At"
+          },
+          "characteristics": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Characteristics"
+          },
+          "factor_values": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Factor Values"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name",
+          "material_type"
+        ],
+        "title": "SampleCreate",
+        "description": "Data needed to create a sample."
+      },
+      "SampleRead": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "study_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Study Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "external_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "External Id"
+          },
+          "subject_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subject Id"
+          },
+          "parent_sample_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Sample Id"
+          },
+          "material_type": {
+            "type": "string",
+            "title": "Material Type"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "collected_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Collected At"
+          },
+          "characteristics": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Characteristics"
+          },
+          "factor_values": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Factor Values"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "created_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created By"
+          },
+          "project_code": {
+            "type": "string",
+            "title": "Project Code"
+          },
+          "study_code": {
+            "type": "string",
+            "title": "Study Code"
+          },
+          "subject_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subject Name"
+          },
+          "parent_sample_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Sample Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "study_id",
+          "name",
+          "external_id",
+          "subject_id",
+          "parent_sample_id",
+          "material_type",
+          "status",
+          "collected_at",
+          "characteristics",
+          "factor_values",
+          "created_at",
+          "updated_at",
+          "created_by",
+          "project_code",
+          "study_code",
+          "subject_name",
+          "parent_sample_name"
+        ],
+        "title": "SampleRead",
+        "description": "A sample as returned by the API, with where it belongs and what it's linked to."
       },
       "StudyCreate": {
         "properties": {
