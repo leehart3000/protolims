@@ -7,12 +7,26 @@ import type { components } from '../api/schema'
 import { TestProviders } from '../test/TestProviders'
 import NewStudyPage from './NewStudyPage'
 
+type Project = components['schemas']['ProjectRead']
 type Study = components['schemas']['StudyRead']
+
+const project: Project = {
+  id: '0192a5b0-0000-7000-8000-000000000001',
+  code: 'TCGA-BRCA',
+  name: 'TCGA Breast Invasive Carcinoma',
+  description: null,
+  source_repository: 'GDC',
+  licence: null,
+  citation: null,
+  created_at: '2026-10-22T12:00:00Z',
+  updated_at: '2026-10-22T12:00:00Z',
+  created_by: null,
+}
 
 const created: Study = {
   id: '0192a5b0-0000-7000-8000-000000000002',
-  project_id: '0192a5b0-0000-7000-8000-000000000001',
-  code: 'TCGA-BRCA-RNASEQ',
+  project_id: project.id,
+  code: 'RNASEQ',
   title: 'RNA-seq of primary tumours',
   description: null,
   design_factors: [],
@@ -21,11 +35,18 @@ const created: Study = {
   created_by: null,
 }
 
-function respondWith(response: Response) {
+// The page loads the project (GET); submitting the form creates the study (POST).
+function respondToCreateWith(createResponse: () => Promise<Response>) {
   vi.stubGlobal(
     'fetch',
-    vi.fn(() => Promise.resolve(response)),
+    vi.fn((request: Request) =>
+      request.method === 'GET' ? Promise.resolve(Response.json(project)) : createResponse(),
+    ),
   )
+}
+
+function respondWith(response: Response) {
+  respondToCreateWith(() => Promise.resolve(response))
 }
 
 function renderPage() {
@@ -41,15 +62,22 @@ function renderPage() {
 }
 
 async function fillInAndSubmit(user: UserEvent) {
-  const codeInput = screen.getByLabelText('Code')
-  await user.clear(codeInput)
-  await user.type(codeInput, 'TCGA-BRCA-RNASEQ')
+  await user.type(screen.getByLabelText('Code'), 'RNASEQ')
   await user.type(screen.getByLabelText('Title'), 'RNA-seq of primary tumours')
   await user.click(screen.getByRole('button', { name: 'Create study' }))
 }
 
 describe('NewStudyPage', () => {
+  it('shows which project the study will belong to', async () => {
+    respondWith(Response.json(created, { status: 201 }))
+    renderPage()
+
+    expect(await screen.findByText('TCGA Breast Invasive Carcinoma')).toBeInTheDocument()
+    expect(screen.getByText('Project code:')).toBeInTheDocument()
+  })
+
   it('shows a breadcrumb trail back to the project', () => {
+    respondWith(Response.json(created, { status: 201 }))
     renderPage()
 
     const trail = screen.getByRole('navigation', { name: 'Breadcrumb' })
@@ -58,12 +86,16 @@ describe('NewStudyPage', () => {
       '/projects/TCGA-BRCA',
     )
   })
+
   it('creates the study and goes to its page', async () => {
     let sentPath = ''
     let sentBody: unknown
     vi.stubGlobal(
       'fetch',
       vi.fn(async (request: Request) => {
+        if (request.method === 'GET') {
+          return Response.json(project)
+        }
         sentPath = new URL(request.url).pathname
         sentBody = await request.json()
         return Response.json(created, { status: 201 })
@@ -77,17 +109,14 @@ describe('NewStudyPage', () => {
     expect(await screen.findByRole('heading', { name: 'Study page' })).toBeInTheDocument()
     expect(sentPath).toBe('/api/v1/projects/TCGA-BRCA/studies')
     expect(sentBody).toEqual({
-      code: 'TCGA-BRCA-RNASEQ',
+      code: 'RNASEQ',
       title: 'RNA-seq of primary tumours',
       description: null,
     })
   })
 
   it('shows that the study is being created', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(() => new Promise<Response>(() => undefined)),
-    )
+    respondToCreateWith(() => new Promise<Response>(() => undefined))
     const user = userEvent.setup()
     renderPage()
 
@@ -104,7 +133,7 @@ describe('NewStudyPage', () => {
     await fillInAndSubmit(user)
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      'A study with the code TCGA-BRCA-RNASEQ already exists in this project.',
+      'A study with the code RNASEQ already exists in this project.',
     )
     expect(screen.getByLabelText('Code')).toHaveAttribute('aria-invalid', 'true')
 

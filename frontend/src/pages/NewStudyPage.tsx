@@ -1,11 +1,13 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate, useParams } from 'react-router'
 
 import { api } from '../api/client'
+import { fetchProject } from '../api/queries'
 import type { components } from '../api/schema'
 import { Breadcrumbs } from '../components/Breadcrumbs'
-import { PageTitle } from '../components/PageTitle'
+import { DetailList } from '../components/DetailList'
 import { TextAreaField, TextField } from '../components/FormFields'
+import { PageTitle } from '../components/PageTitle'
 import { codePattern, optionalText, text } from '../forms'
 import { errorBox, primaryButton, textLink } from '../styles'
 
@@ -40,6 +42,10 @@ export default function NewStudyPage() {
   const projectPath = `/projects/${encodeURIComponent(projectCode)}`
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const project = useQuery({
+    queryKey: ['projects', projectCode],
+    queryFn: () => fetchProject(projectCode),
+  })
   const mutation = useMutation({
     mutationFn: (body: StudyCreate) => createStudy(projectCode, body),
     onSuccess: async (study) => {
@@ -63,6 +69,12 @@ export default function NewStudyPage() {
         ]}
       />
       <PageTitle>New study</PageTitle>
+      <DetailList
+        items={[
+          ['Project', project.data?.name ?? null],
+          ['Project code', <span className="font-mono">{projectCode}</span>],
+        ]}
+      />
 
       <form
         className="mt-6 max-w-2xl space-y-5"
