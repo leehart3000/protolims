@@ -93,7 +93,7 @@ function StudyList({ projectCode }: { projectCode: string | null }) {
               Study code
             </th>
             <th scope="col" className={`${tableHeader} hidden w-px sm:table-cell`}>
-              Project
+              Project code
             </th>
             <th scope="col" className={`${tableHeader} w-px`}>
               <span className="sr-only">Open</span>
