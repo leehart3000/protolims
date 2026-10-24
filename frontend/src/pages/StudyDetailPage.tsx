@@ -5,7 +5,6 @@ import { fetchProject, fetchSamples, fetchStudy, fetchSubjects } from '../api/qu
 import type { components } from '../api/schema'
 import { Breadcrumbs } from '../components/Breadcrumbs'
 import { DetailList } from '../components/DetailList'
-import { SampleIcon, SubjectIcon } from '../components/icons'
 import { NewButton } from '../components/NewButton'
 import { PageTitle } from '../components/PageTitle'
 import { SampleTable } from '../components/SampleTable'
@@ -102,29 +101,21 @@ function StudyDetails({ projectCode, study }: { projectCode: string; study: Stud
       )}
 
       <div className="mt-10 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-        <SectionHeading icon={SubjectIcon}>Subjects</SectionHeading>
-        <NewButton to={`${studyPath}/subjects/new`} icon={SubjectIcon}>
-          New subject
-        </NewButton>
+        <SectionHeading>Subjects</SectionHeading>
+        <NewButton to={`${studyPath}/subjects/new`}>New subject</NewButton>
       </div>
       <SubjectList projectCode={projectCode} studyCode={study.code} />
       <p className="mt-4">
-        <NewButton to={`${studyPath}/subjects/new`} icon={SubjectIcon}>
-          New subject
-        </NewButton>
+        <NewButton to={`${studyPath}/subjects/new`}>New subject</NewButton>
       </p>
 
       <div className="mt-10 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-        <SectionHeading icon={SampleIcon}>Samples</SectionHeading>
-        <NewButton to={`${studyPath}/samples/new`} icon={SampleIcon}>
-          New sample
-        </NewButton>
+        <SectionHeading>Samples</SectionHeading>
+        <NewButton to={`${studyPath}/samples/new`}>New sample</NewButton>
       </div>
       <SampleList projectCode={projectCode} studyCode={study.code} />
       <p className="mt-4">
-        <NewButton to={`${studyPath}/samples/new`} icon={SampleIcon}>
-          New sample
-        </NewButton>
+        <NewButton to={`${studyPath}/samples/new`}>New sample</NewButton>
       </p>
     </>
   )

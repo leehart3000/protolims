@@ -9,7 +9,6 @@ import { DetailList } from '../components/DetailList'
 import { KeyValueList } from '../components/KeyValueList'
 import { PageTitle } from '../components/PageTitle'
 import { SampleTable } from '../components/SampleTable'
-import { SampleIcon } from '../components/icons'
 import { NewButton } from '../components/NewButton'
 import { SectionHeading } from '../components/SectionHeading'
 import { formatDate } from '../format'
@@ -120,16 +119,12 @@ function SampleDetails({ sample }: { sample: Sample }) {
       <KeyValueList values={sample.factor_values} emptyText="No factor values recorded." />
 
       <div className="mt-10 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-        <SectionHeading icon={SampleIcon}>Derived samples</SectionHeading>
-        <NewButton to={derivedPath} icon={SampleIcon}>
-          New derived sample
-        </NewButton>
+        <SectionHeading>Derived samples</SectionHeading>
+        <NewButton to={derivedPath}>New derived sample</NewButton>
       </div>
       <DerivedSamples sample={sample} />
       <p className="mt-4">
-        <NewButton to={derivedPath} icon={SampleIcon}>
-          New derived sample
-        </NewButton>
+        <NewButton to={derivedPath}>New derived sample</NewButton>
       </p>
     </>
   )
