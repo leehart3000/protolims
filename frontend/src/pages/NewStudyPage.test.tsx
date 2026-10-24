@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent, { type UserEvent } from '@testing-library/user-event'
 import { Route, Routes } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
@@ -49,6 +49,15 @@ async function fillInAndSubmit(user: UserEvent) {
 }
 
 describe('NewStudyPage', () => {
+  it('shows a breadcrumb trail back to the project', () => {
+    renderPage()
+
+    const trail = screen.getByRole('navigation', { name: 'Breadcrumb' })
+    expect(within(trail).getByRole('link', { name: 'TCGA-BRCA' })).toHaveAttribute(
+      'href',
+      '/projects/TCGA-BRCA',
+    )
+  })
   it('creates the study and goes to its page', async () => {
     let sentPath = ''
     let sentBody: unknown

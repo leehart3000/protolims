@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router'
 
 import { api } from '../api/client'
+import { PageTitle } from '../components/PageTitle'
 import {
   errorBox,
   primaryButton,
@@ -94,7 +95,7 @@ export default function ProjectsPage() {
   return (
     <>
       <div className="flex items-center justify-between gap-4">
-        <h1 className="text-2xl font-semibold sm:text-3xl">Projects</h1>
+        <PageTitle>Projects</PageTitle>
         <Link to="/projects/new" className={`${primaryButton} inline-block text-sm`}>
           New project
         </Link>

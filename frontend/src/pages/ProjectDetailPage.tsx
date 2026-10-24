@@ -151,7 +151,7 @@ function ProjectContent({ code }: { code: string }) {
   if (query.data === null) {
     return (
       <>
-        <h1 className="text-2xl font-semibold sm:text-3xl">Project not found</h1>
+        <PageTitle>Project not found</PageTitle>
         <p className="mt-3 text-muted">
           There is no project with the code <span className="font-mono">{code}</span>.
         </p>

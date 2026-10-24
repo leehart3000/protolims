@@ -3,6 +3,8 @@ import { Link, useNavigate, useParams } from 'react-router'
 
 import { api } from '../api/client'
 import type { components } from '../api/schema'
+import { Breadcrumbs } from '../components/Breadcrumbs'
+import { PageTitle } from '../components/PageTitle'
 import { TextAreaField, TextField } from '../components/FormFields'
 import { codePattern, optionalText, text } from '../forms'
 import { errorBox, primaryButton, textLink } from '../styles'
@@ -53,15 +55,14 @@ export default function NewStudyPage() {
 
   return (
     <>
-      <p className="mb-6 text-sm">
-        <Link to={projectPath} className={textLink}>
-          ← Back to project
-        </Link>
-      </p>
-      <h1 className="text-2xl font-semibold sm:text-3xl">New study</h1>
-      <p className="mt-2 text-muted">
-        In project <span className="font-mono">{projectCode}</span>
-      </p>
+      <Breadcrumbs
+        items={[
+          { label: 'Projects', to: '/projects' },
+          { label: projectCode, to: projectPath, mono: true },
+          { label: 'New study' },
+        ]}
+      />
+      <PageTitle>New study</PageTitle>
 
       <form
         className="mt-6 max-w-2xl space-y-5"

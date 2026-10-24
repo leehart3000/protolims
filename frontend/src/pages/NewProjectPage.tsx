@@ -3,6 +3,8 @@ import { Link, useNavigate } from 'react-router'
 
 import { api } from '../api/client'
 import type { components } from '../api/schema'
+import { Breadcrumbs } from '../components/Breadcrumbs'
+import { PageTitle } from '../components/PageTitle'
 import { TextAreaField, TextField } from '../components/FormFields'
 import { codePattern, optionalText, text } from '../forms'
 import { errorBox, primaryButton, textLink } from '../styles'
@@ -43,12 +45,8 @@ export default function NewProjectPage() {
 
   return (
     <>
-      <p className="mb-6 text-sm">
-        <Link to="/projects" className={textLink}>
-          ← All projects
-        </Link>
-      </p>
-      <h1 className="text-2xl font-semibold sm:text-3xl">New project</h1>
+      <Breadcrumbs items={[{ label: 'Projects', to: '/projects' }, { label: 'New project' }]} />
+      <PageTitle>New project</PageTitle>
 
       <form
         className="mt-6 max-w-2xl space-y-5"

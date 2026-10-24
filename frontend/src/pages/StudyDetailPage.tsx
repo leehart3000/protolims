@@ -83,7 +83,7 @@ function StudyContent({ projectCode, studyCode }: { projectCode: string; studyCo
   if (query.data === null) {
     return (
       <>
-        <h1 className="text-2xl font-semibold sm:text-3xl">Study not found</h1>
+        <PageTitle>Study not found</PageTitle>
         <p className="mt-3 text-muted">
           There is no study with the code <span className="font-mono">{studyCode}</span> in project{' '}
           <span className="font-mono">{projectCode}</span>.
