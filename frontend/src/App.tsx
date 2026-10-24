@@ -2,12 +2,17 @@ import { Link, NavLink, Route, Routes } from 'react-router'
 
 import ThemeToggle from './components/ThemeToggle'
 import HomePage from './pages/HomePage'
-import NotFoundPage from './pages/NotFoundPage'
-import ProjectsPage from './pages/ProjectsPage'
-import ProjectDetailPage from './pages/ProjectDetailPage'
 import NewProjectPage from './pages/NewProjectPage'
 import NewStudyPage from './pages/NewStudyPage'
+import NotFoundPage from './pages/NotFoundPage'
+import ProjectDetailPage from './pages/ProjectDetailPage'
+import ProjectsPage from './pages/ProjectsPage'
+import StudiesPage from './pages/StudiesPage'
 import StudyDetailPage from './pages/StudyDetailPage'
+
+function navLinkClass({ isActive }: { isActive: boolean }) {
+  return `rounded-md px-2 py-1.5 text-sm font-medium ${isActive ? 'text-primary' : 'text-muted hover:text-fg'}`
+}
 
 export default function App() {
   return (
@@ -17,18 +22,17 @@ export default function App() {
           <Link to="/" className="flex items-center gap-2.5">
             <img src="/brand/protolims-mark.svg" alt="" className="size-8 dark:hidden" />
             <img src="/brand/protolims-mark-dark.svg" alt="" className="hidden size-8 dark:block" />
-            <span className="font-brand text-2xl tracking-tight">
+            {/* On narrow screens only the mark shows; the name stays readable by screen readers. */}
+            <span className="sr-only font-brand text-2xl tracking-tight sm:not-sr-only">
               Proto<span className="font-bold text-primary">LIMS</span>
             </span>
           </Link>
-          <nav aria-label="Main" className="flex-1">
-            <NavLink
-              to="/projects"
-              className={({ isActive }) =>
-                `rounded-md px-2 py-1.5 text-sm font-medium ${isActive ? 'text-primary' : 'text-muted hover:text-fg'}`
-              }
-            >
+          <nav aria-label="Main" className="flex flex-1 gap-1">
+            <NavLink to="/projects" className={navLinkClass}>
               Projects
+            </NavLink>
+            <NavLink to="/studies" className={navLinkClass}>
+              Studies
             </NavLink>
           </nav>
           <ThemeToggle />
@@ -43,6 +47,7 @@ export default function App() {
           <Route path="/projects/:code" element={<ProjectDetailPage />} />
           <Route path="/projects/:code/studies/new" element={<NewStudyPage />} />
           <Route path="/projects/:code/studies/:studyCode" element={<StudyDetailPage />} />
+          <Route path="/studies" element={<StudiesPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </main>

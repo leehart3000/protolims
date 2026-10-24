@@ -6,10 +6,10 @@ import { fetchProject } from '../api/queries'
 import type { components } from '../api/schema'
 import { DetailList } from '../components/DetailList'
 import { PageTitle } from '../components/PageTitle'
+import { NewStudyButton } from '../components/NewStudyButton'
 import { formatDate } from '../format'
 import {
   errorBox,
-  primaryButton,
   rowChevron,
   rowLink,
   table,
@@ -30,17 +30,6 @@ async function fetchStudies(projectCode: string) {
     throw new Error('Could not load studies')
   }
   return data
-}
-
-function NewStudyButton({ projectCode }: { projectCode: string }) {
-  return (
-    <Link
-      to={`/projects/${encodeURIComponent(projectCode)}/studies/new`}
-      className={`${primaryButton} inline-block text-sm`}
-    >
-      New study
-    </Link>
-  )
 }
 
 function StudyList({ projectCode }: { projectCode: string }) {

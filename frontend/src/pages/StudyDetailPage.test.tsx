@@ -94,6 +94,10 @@ describe('StudyDetailPage', () => {
       'href',
       '/projects/TCGA-BRCA',
     )
+    expect(within(trail).getByRole('link', { name: 'Studies' })).toHaveAttribute(
+      'href',
+      '/studies?project=TCGA-BRCA',
+    )
     expect(within(trail).getByText('RNASEQ')).toHaveAttribute('aria-current', 'page')
   })
 

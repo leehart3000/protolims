@@ -104,6 +104,7 @@ export default function StudyDetailPage() {
         items={[
           { label: 'Projects', to: '/projects' },
           { label: projectCode, to: `/projects/${encodeURIComponent(projectCode)}`, mono: true },
+          { label: 'Studies', to: `/studies?project=${encodeURIComponent(projectCode)}` },
           { label: studyCode, mono: true },
         ]}
       />

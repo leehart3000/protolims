@@ -50,6 +50,7 @@ export default function NewStudyPage() {
     mutationFn: (body: StudyCreate) => createStudy(projectCode, body),
     onSuccess: async (study) => {
       await queryClient.invalidateQueries({ queryKey: ['projects', projectCode, 'studies'] })
+      await queryClient.invalidateQueries({ queryKey: ['studies'] })
       await navigate(`${projectPath}/studies/${encodeURIComponent(study.code)}`)
     },
   })

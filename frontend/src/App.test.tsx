@@ -42,6 +42,19 @@ describe('App', () => {
     expect(screen.getByRole('heading', { name: 'Projects' })).toBeInTheDocument()
   })
 
+  it('goes to the studies page from the main navigation', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => Promise.resolve(Response.json([]))),
+    )
+    const user = userEvent.setup()
+    renderApp()
+
+    await user.click(screen.getByRole('link', { name: 'Studies' }))
+
+    expect(screen.getByRole('heading', { name: 'Studies' })).toBeInTheDocument()
+  })
+
   it('shows a not-found page for unknown addresses', () => {
     renderApp('/no-such-page')
 
