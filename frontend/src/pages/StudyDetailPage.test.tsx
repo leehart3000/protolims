@@ -130,6 +130,7 @@ describe('StudyDetailPage', () => {
       `/subjects/${patient.id}`,
     )
     expect(screen.getByRole('cell', { name: 'Patient' })).toBeInTheDocument()
+    expect(screen.getByText('Patient · Homo sapiens')).toBeInTheDocument()
     const newSubjectLinks = screen.getAllByRole('link', { name: 'New subject' })
     expect(newSubjectLinks).toHaveLength(2)
     for (const link of newSubjectLinks) {
@@ -141,6 +142,7 @@ describe('StudyDetailPage', () => {
       `/samples/${tumour.id}`,
     )
     expect(screen.getByRole('cell', { name: 'In storage' })).toBeInTheDocument()
+    expect(screen.getByText('tissue · TCGA-A1-A0SB · In storage')).toBeInTheDocument()
   })
 
   it('shows a breadcrumb trail', () => {

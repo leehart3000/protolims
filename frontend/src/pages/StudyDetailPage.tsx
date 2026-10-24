@@ -8,20 +8,9 @@ import { Breadcrumbs } from '../components/Breadcrumbs'
 import { DetailList } from '../components/DetailList'
 import { PageTitle } from '../components/PageTitle'
 import { SampleTable } from '../components/SampleTable'
+import { SubjectTable } from '../components/SubjectTable'
 import { formatDate } from '../format'
-import { subjectTypeLabel } from '../labels'
-import {
-  errorBox,
-  primaryButton,
-  rowChevron,
-  rowLink,
-  table,
-  tableCell,
-  tableHead,
-  tableHeader,
-  tableRow,
-  tableWrapper,
-} from '../styles'
+import { errorBox, primaryButton } from '../styles'
 
 type Study = components['schemas']['StudyRead']
 
@@ -69,48 +58,7 @@ function SubjectList({ projectCode, studyCode }: { projectCode: string; studyCod
     return <p className="mt-4 text-muted">No subjects in this study yet.</p>
   }
 
-  return (
-    <div className={`mt-4 ${tableWrapper}`}>
-      <table className={table}>
-        <thead className={tableHead}>
-          <tr>
-            <th scope="col" className={tableHeader}>
-              Name
-            </th>
-            <th scope="col" className={`${tableHeader} w-px`}>
-              Type
-            </th>
-            <th scope="col" className={`${tableHeader} hidden sm:table-cell`}>
-              Species
-            </th>
-            <th scope="col" className={`${tableHeader} w-px`}>
-              <span className="sr-only">Open</span>
-            </th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-line">
-          {subjects.map((subject) => (
-            <tr key={subject.id} className={tableRow}>
-              <td className={tableCell}>
-                <Link to={`/subjects/${subject.id}`} className={rowLink}>
-                  {subject.name}
-                </Link>
-              </td>
-              <td className={`${tableCell} whitespace-nowrap`}>
-                {subjectTypeLabel(subject.subject_type)}
-              </td>
-              <td className={`${tableCell} hidden text-muted italic sm:table-cell`}>
-                {subject.species}
-              </td>
-              <td className={`${tableCell} ${rowChevron}`} aria-hidden="true">
-                ›
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  )
+  return <SubjectTable subjects={query.data} />
 }
 
 function SampleList({ projectCode, studyCode }: { projectCode: string; studyCode: string }) {
