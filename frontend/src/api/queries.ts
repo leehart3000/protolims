@@ -41,3 +41,13 @@ export async function fetchSamples(projectCode: string, studyCode: string, paren
   }
   return data
 }
+
+export async function fetchSubjects(projectCode: string, studyCode: string) {
+  const { data } = await api.GET('/api/v1/projects/{project_code}/studies/{study_code}/subjects', {
+    params: { path: { project_code: projectCode, study_code: studyCode } },
+  })
+  if (!data) {
+    throw new Error('Could not load subjects')
+  }
+  return data
+}

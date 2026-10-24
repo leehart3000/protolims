@@ -143,6 +143,11 @@ describe('StudyDetailPage', () => {
     )
     expect(screen.getByRole('cell', { name: 'In storage' })).toBeInTheDocument()
     expect(screen.getByText('tissue · TCGA-A1-A0SB · In storage')).toBeInTheDocument()
+    const newSampleLinks = screen.getAllByRole('link', { name: 'New sample' })
+    expect(newSampleLinks).toHaveLength(2)
+    for (const link of newSampleLinks) {
+      expect(link).toHaveAttribute('href', '/projects/TCGA-BRCA/studies/RNASEQ/samples/new')
+    }
   })
 
   it('shows a breadcrumb trail', () => {

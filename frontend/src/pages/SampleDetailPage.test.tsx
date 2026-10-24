@@ -93,6 +93,10 @@ describe('SampleDetailPage', () => {
       'href',
       `/samples/${rna.id}`,
     )
+    expect(screen.getByRole('link', { name: 'New derived sample' })).toHaveAttribute(
+      'href',
+      `/projects/TCGA-BRCA/studies/RNASEQ/samples/new?parent=${tumour.id}`,
+    )
 
     const trail = screen.getByRole('navigation', { name: 'Breadcrumb' })
     expect(within(trail).getByRole('link', { name: 'RNASEQ' })).toHaveAttribute(
@@ -111,6 +115,10 @@ describe('SampleDetailPage', () => {
     expect(await screen.findByRole('link', { name: 'Tumour-01' })).toHaveAttribute(
       'href',
       `/samples/${tumour.id}`,
+    )
+    expect(screen.getByRole('link', { name: 'New derived sample' })).toHaveAttribute(
+      'href',
+      `/projects/TCGA-BRCA/studies/RNASEQ/samples/new?parent=${rna.id}`,
     )
     expect(screen.queryByText('Subject:')).not.toBeInTheDocument()
     expect(screen.queryByText('Collected:')).not.toBeInTheDocument()

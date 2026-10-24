@@ -82,22 +82,26 @@ export function TextAreaField({
   )
 }
 
+// A required list starts on a "Choose…" placeholder that can't be picked; an optional one
+// starts on "None", which can.
 export function SelectField({
   label,
   name,
   options,
+  optional,
   ...selectProps
 }: {
   label: string
   name: string
   options: { value: string; label: string }[]
+  optional?: boolean
 } & SelectHTMLAttributes<HTMLSelectElement>) {
   return (
     <div>
-      <FieldLabel htmlFor={name} label={label} />
+      <FieldLabel htmlFor={name} label={label} optional={optional} />
       <select id={name} name={name} className={`${inputClass} border-line`} {...selectProps}>
-        <option value="" disabled>
-          Choose…
+        <option value="" disabled={!optional}>
+          {optional ? 'None' : 'Choose…'}
         </option>
         {options.map((option) => (
           <option key={option.value} value={option.value}>

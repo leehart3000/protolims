@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
+import type { ReactNode } from 'react'
 import { Link, useParams } from 'react-router'
 
-import { api } from '../api/client'
-import { fetchProject, fetchSamples, fetchStudy } from '../api/queries'
+import { fetchProject, fetchSamples, fetchStudy, fetchSubjects } from '../api/queries'
 import type { components } from '../api/schema'
 import { Breadcrumbs } from '../components/Breadcrumbs'
 import { DetailList } from '../components/DetailList'
@@ -14,23 +14,10 @@ import { errorBox, primaryButton } from '../styles'
 
 type Study = components['schemas']['StudyRead']
 
-async function fetchSubjects(projectCode: string, studyCode: string) {
-  const { data } = await api.GET('/api/v1/projects/{project_code}/studies/{study_code}/subjects', {
-    params: { path: { project_code: projectCode, study_code: studyCode } },
-  })
-  if (!data) {
-    throw new Error('Could not load subjects')
-  }
-  return data
-}
-
-function NewSubjectButton({ projectCode, studyCode }: { projectCode: string; studyCode: string }) {
+function NewButton({ to, children }: { to: string; children: ReactNode }) {
   return (
-    <Link
-      to={`/projects/${encodeURIComponent(projectCode)}/studies/${encodeURIComponent(studyCode)}/subjects/new`}
-      className={`${primaryButton} inline-block text-sm`}
-    >
-      New subject
+    <Link to={to} className={`${primaryButton} inline-block text-sm`}>
+      {children}
     </Link>
   )
 }
@@ -53,8 +40,7 @@ function SubjectList({ projectCode, studyCode }: { projectCode: string; studyCod
     )
   }
 
-  const subjects = query.data
-  if (subjects.length === 0) {
+  if (query.data.length === 0) {
     return <p className="mt-4 text-muted">No subjects in this study yet.</p>
   }
 
@@ -91,6 +77,7 @@ function StudyDetails({ projectCode, study }: { projectCode: string; study: Stud
     queryKey: ['projects', projectCode],
     queryFn: () => fetchProject(projectCode),
   })
+  const studyPath = `/projects/${encodeURIComponent(projectCode)}/studies/${encodeURIComponent(study.code)}`
 
   return (
     <>
@@ -122,14 +109,21 @@ function StudyDetails({ projectCode, study }: { projectCode: string; study: Stud
 
       <div className="mt-10 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
         <h2 className="text-xl font-semibold">Subjects</h2>
-        <NewSubjectButton projectCode={projectCode} studyCode={study.code} />
+        <NewButton to={`${studyPath}/subjects/new`}>New subject</NewButton>
       </div>
       <SubjectList projectCode={projectCode} studyCode={study.code} />
       <p className="mt-4">
-        <NewSubjectButton projectCode={projectCode} studyCode={study.code} />
+        <NewButton to={`${studyPath}/subjects/new`}>New subject</NewButton>
       </p>
-      <h2 className="mt-10 text-xl font-semibold">Samples</h2>
+
+      <div className="mt-10 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        <h2 className="text-xl font-semibold">Samples</h2>
+        <NewButton to={`${studyPath}/samples/new`}>New sample</NewButton>
+      </div>
       <SampleList projectCode={projectCode} studyCode={study.code} />
+      <p className="mt-4">
+        <NewButton to={`${studyPath}/samples/new`}>New sample</NewButton>
+      </p>
     </>
   )
 }

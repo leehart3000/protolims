@@ -11,7 +11,7 @@ import { PageTitle } from '../components/PageTitle'
 import { SampleTable } from '../components/SampleTable'
 import { formatDate } from '../format'
 import { sampleStatusLabel } from '../labels'
-import { errorBox, textLink } from '../styles'
+import { errorBox, primaryButton, textLink } from '../styles'
 
 type Sample = components['schemas']['SampleRead']
 
@@ -117,6 +117,14 @@ function SampleDetails({ sample }: { sample: Sample }) {
 
       <h2 className="mt-10 text-xl font-semibold">Derived samples</h2>
       <DerivedSamples sample={sample} />
+      <p className="mt-4">
+        <Link
+          to={`${studyPath}/samples/new?parent=${sample.id}`}
+          className={`${primaryButton} inline-block text-sm`}
+        >
+          New derived sample
+        </Link>
+      </p>
     </>
   )
 }
