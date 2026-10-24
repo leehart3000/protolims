@@ -1,4 +1,4 @@
-import type { InputHTMLAttributes, TextareaHTMLAttributes } from 'react'
+import type { InputHTMLAttributes, SelectHTMLAttributes, TextareaHTMLAttributes } from 'react'
 
 import { inputClass } from '../styles'
 
@@ -78,6 +78,33 @@ export function TextAreaField({
     <div>
       <FieldLabel htmlFor={name} label={label} optional={optional} />
       <textarea id={name} name={name} className={`${inputClass} border-line`} {...textareaProps} />
+    </div>
+  )
+}
+
+export function SelectField({
+  label,
+  name,
+  options,
+  ...selectProps
+}: {
+  label: string
+  name: string
+  options: { value: string; label: string }[]
+} & SelectHTMLAttributes<HTMLSelectElement>) {
+  return (
+    <div>
+      <FieldLabel htmlFor={name} label={label} />
+      <select id={name} name={name} className={`${inputClass} border-line`} {...selectProps}>
+        <option value="" disabled>
+          Choose…
+        </option>
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
     </div>
   )
 }

@@ -1,28 +1,115 @@
 import { useQuery } from '@tanstack/react-query'
-import { useParams } from 'react-router'
+import { Link, useParams } from 'react-router'
 
 import { api } from '../api/client'
-import { fetchProject } from '../api/queries'
+import { fetchProject, fetchStudy } from '../api/queries'
 import type { components } from '../api/schema'
 import { Breadcrumbs } from '../components/Breadcrumbs'
 import { DetailList } from '../components/DetailList'
 import { PageTitle } from '../components/PageTitle'
 import { formatDate } from '../format'
-import { errorBox } from '../styles'
+import { subjectTypeLabel } from '../labels'
+import {
+  errorBox,
+  primaryButton,
+  rowChevron,
+  rowLink,
+  table,
+  tableCell,
+  tableHead,
+  tableHeader,
+  tableRow,
+  tableWrapper,
+} from '../styles'
 
 type Study = components['schemas']['StudyRead']
 
-async function fetchStudy(projectCode: string, studyCode: string) {
-  const { data, response } = await api.GET('/api/v1/projects/{project_code}/studies/{study_code}', {
+async function fetchSubjects(projectCode: string, studyCode: string) {
+  const { data } = await api.GET('/api/v1/projects/{project_code}/studies/{study_code}/subjects', {
     params: { path: { project_code: projectCode, study_code: studyCode } },
   })
-  if (response.status === 404) {
-    return null
-  }
   if (!data) {
-    throw new Error('Could not load study')
+    throw new Error('Could not load subjects')
   }
   return data
+}
+
+function NewSubjectButton({ projectCode, studyCode }: { projectCode: string; studyCode: string }) {
+  return (
+    <Link
+      to={`/projects/${encodeURIComponent(projectCode)}/studies/${encodeURIComponent(studyCode)}/subjects/new`}
+      className={`${primaryButton} inline-block text-sm`}
+    >
+      New subject
+    </Link>
+  )
+}
+
+function SubjectList({ projectCode, studyCode }: { projectCode: string; studyCode: string }) {
+  const query = useQuery({
+    queryKey: ['projects', projectCode, 'studies', studyCode, 'subjects'],
+    queryFn: () => fetchSubjects(projectCode, studyCode),
+  })
+
+  if (query.isPending) {
+    return <p className="mt-4 text-muted">Loading subjects…</p>
+  }
+
+  if (query.isError) {
+    return (
+      <p role="alert" className={`mt-4 ${errorBox}`}>
+        Could not load subjects. Please try again later.
+      </p>
+    )
+  }
+
+  const subjects = query.data
+  if (subjects.length === 0) {
+    return <p className="mt-4 text-muted">No subjects in this study yet.</p>
+  }
+
+  return (
+    <div className={`mt-4 ${tableWrapper}`}>
+      <table className={table}>
+        <thead className={tableHead}>
+          <tr>
+            <th scope="col" className={tableHeader}>
+              Name
+            </th>
+            <th scope="col" className={`${tableHeader} w-px`}>
+              Type
+            </th>
+            <th scope="col" className={`${tableHeader} hidden sm:table-cell`}>
+              Species
+            </th>
+            <th scope="col" className={`${tableHeader} w-px`}>
+              <span className="sr-only">Open</span>
+            </th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-line">
+          {subjects.map((subject) => (
+            <tr key={subject.id} className={tableRow}>
+              <td className={tableCell}>
+                <Link to={`/subjects/${subject.id}`} className={rowLink}>
+                  {subject.name}
+                </Link>
+              </td>
+              <td className={`${tableCell} whitespace-nowrap`}>
+                {subjectTypeLabel(subject.subject_type)}
+              </td>
+              <td className={`${tableCell} hidden text-muted italic sm:table-cell`}>
+                {subject.species}
+              </td>
+              <td className={`${tableCell} ${rowChevron}`} aria-hidden="true">
+                ›
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
 }
 
 function StudyDetails({ projectCode, study }: { projectCode: string; study: Study }) {
@@ -58,6 +145,15 @@ function StudyDetails({ projectCode, study }: { projectCode: string; study: Stud
           ))}
         </ul>
       )}
+
+      <div className="mt-10 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        <h2 className="text-xl font-semibold">Subjects</h2>
+        <NewSubjectButton projectCode={projectCode} studyCode={study.code} />
+      </div>
+      <SubjectList projectCode={projectCode} studyCode={study.code} />
+      <p className="mt-4">
+        <NewSubjectButton projectCode={projectCode} studyCode={study.code} />
+      </p>
     </>
   )
 }
