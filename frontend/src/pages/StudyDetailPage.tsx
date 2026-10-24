@@ -1,26 +1,20 @@
 import { useQuery } from '@tanstack/react-query'
-import type { ReactNode } from 'react'
-import { Link, useParams } from 'react-router'
+import { useParams } from 'react-router'
 
 import { fetchProject, fetchSamples, fetchStudy, fetchSubjects } from '../api/queries'
 import type { components } from '../api/schema'
 import { Breadcrumbs } from '../components/Breadcrumbs'
 import { DetailList } from '../components/DetailList'
+import { SampleIcon, SubjectIcon } from '../components/icons'
+import { NewButton } from '../components/NewButton'
 import { PageTitle } from '../components/PageTitle'
 import { SampleTable } from '../components/SampleTable'
+import { SectionHeading } from '../components/SectionHeading'
 import { SubjectTable } from '../components/SubjectTable'
 import { formatDate } from '../format'
-import { errorBox, primaryButton } from '../styles'
+import { errorBox } from '../styles'
 
 type Study = components['schemas']['StudyRead']
-
-function NewButton({ to, children }: { to: string; children: ReactNode }) {
-  return (
-    <Link to={to} className={`${primaryButton} inline-block text-sm`}>
-      {children}
-    </Link>
-  )
-}
 
 function SubjectList({ projectCode, studyCode }: { projectCode: string; studyCode: string }) {
   const query = useQuery({
@@ -108,21 +102,29 @@ function StudyDetails({ projectCode, study }: { projectCode: string; study: Stud
       )}
 
       <div className="mt-10 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-        <h2 className="text-xl font-semibold">Subjects</h2>
-        <NewButton to={`${studyPath}/subjects/new`}>New subject</NewButton>
+        <SectionHeading icon={SubjectIcon}>Subjects</SectionHeading>
+        <NewButton to={`${studyPath}/subjects/new`} icon={SubjectIcon}>
+          New subject
+        </NewButton>
       </div>
       <SubjectList projectCode={projectCode} studyCode={study.code} />
       <p className="mt-4">
-        <NewButton to={`${studyPath}/subjects/new`}>New subject</NewButton>
+        <NewButton to={`${studyPath}/subjects/new`} icon={SubjectIcon}>
+          New subject
+        </NewButton>
       </p>
 
       <div className="mt-10 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-        <h2 className="text-xl font-semibold">Samples</h2>
-        <NewButton to={`${studyPath}/samples/new`}>New sample</NewButton>
+        <SectionHeading icon={SampleIcon}>Samples</SectionHeading>
+        <NewButton to={`${studyPath}/samples/new`} icon={SampleIcon}>
+          New sample
+        </NewButton>
       </div>
       <SampleList projectCode={projectCode} studyCode={study.code} />
       <p className="mt-4">
-        <NewButton to={`${studyPath}/samples/new`}>New sample</NewButton>
+        <NewButton to={`${studyPath}/samples/new`} icon={SampleIcon}>
+          New sample
+        </NewButton>
       </p>
     </>
   )

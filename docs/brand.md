@@ -72,3 +72,17 @@ backgrounds and 35% on dark backgrounds.
 | Accessions and identifiers | Source Code Pro |
 
 All three fonts are under the SIL Open Font License.
+
+## Icons
+
+Icons come from [Lucide](https://lucide.dev) (ISC licence), in its default line
+style. Each kind of record has one icon, used on its section headings and on
+buttons that create one. They're defined in `frontend/src/components/icons.ts`.
+
+| Record | Icon |
+| --- | --- |
+| Subject | `UserRound` |
+| Sample | `TestTube` |
+
+Icons are 16 px on buttons and 20 px beside headings, in the same colour as
+their text, and always appear with words, never on their own.

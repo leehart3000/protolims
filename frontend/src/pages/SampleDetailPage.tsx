@@ -9,9 +9,12 @@ import { DetailList } from '../components/DetailList'
 import { KeyValueList } from '../components/KeyValueList'
 import { PageTitle } from '../components/PageTitle'
 import { SampleTable } from '../components/SampleTable'
+import { SampleIcon } from '../components/icons'
+import { NewButton } from '../components/NewButton'
+import { SectionHeading } from '../components/SectionHeading'
 import { formatDate } from '../format'
 import { sampleStatusLabel } from '../labels'
-import { errorBox, primaryButton, textLink } from '../styles'
+import { errorBox, textLink } from '../styles'
 
 type Sample = components['schemas']['SampleRead']
 
@@ -64,6 +67,7 @@ function DerivedSamples({ sample }: { sample: Sample }) {
 function SampleDetails({ sample }: { sample: Sample }) {
   const projectPath = `/projects/${encodeURIComponent(sample.project_code)}`
   const studyPath = `${projectPath}/studies/${encodeURIComponent(sample.study_code)}`
+  const derivedPath = `${studyPath}/samples/new?parent=${sample.id}`
 
   return (
     <>
@@ -115,15 +119,17 @@ function SampleDetails({ sample }: { sample: Sample }) {
       <h2 className="mt-10 text-xl font-semibold">Factor values</h2>
       <KeyValueList values={sample.factor_values} emptyText="No factor values recorded." />
 
-      <h2 className="mt-10 text-xl font-semibold">Derived samples</h2>
+      <div className="mt-10 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        <SectionHeading icon={SampleIcon}>Derived samples</SectionHeading>
+        <NewButton to={derivedPath} icon={SampleIcon}>
+          New derived sample
+        </NewButton>
+      </div>
       <DerivedSamples sample={sample} />
       <p className="mt-4">
-        <Link
-          to={`${studyPath}/samples/new?parent=${sample.id}`}
-          className={`${primaryButton} inline-block text-sm`}
-        >
+        <NewButton to={derivedPath} icon={SampleIcon}>
           New derived sample
-        </Link>
+        </NewButton>
       </p>
     </>
   )
