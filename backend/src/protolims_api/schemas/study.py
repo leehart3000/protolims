@@ -42,3 +42,10 @@ class StudyRead(BaseModel):
     created_at: datetime
     updated_at: datetime
     created_by: str | None
+
+
+class StudyWithProjectRead(StudyRead):
+    """A study plus its project's code and name, for lists that span projects."""
+
+    project_code: str
+    project_name: str

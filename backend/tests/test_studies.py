@@ -88,3 +88,33 @@ def test_create_study_records_audit_event(client: TestClient, database: Engine) 
             text("SELECT entity_type FROM audit_event ORDER BY occurred_at, id")
         ).all()
     assert [row[0] for row in rows] == ["project", "study"]
+
+
+def test_list_all_studies_across_projects(client: TestClient) -> None:
+    create_project(client, "P2")
+    create_project(client, "P1")
+    client.post(f"{API}/projects/P2/studies", json={"code": "A", "title": "P2 study A"})
+    client.post(f"{API}/projects/P1/studies", json={"code": "B", "title": "P1 study B"})
+    client.post(f"{API}/projects/P1/studies", json={"code": "A", "title": "P1 study A"})
+    response = client.get(f"{API}/studies")
+    assert response.status_code == 200
+    body = response.json()
+    assert [(s["project_code"], s["code"]) for s in body] == [("P1", "A"), ("P1", "B"), ("P2", "A")]
+    assert body[0]["project_name"] == "Project P1"
+    assert body[0]["title"] == "P1 study A"
+
+
+def test_list_all_studies_can_filter_by_project(client: TestClient) -> None:
+    create_project(client, "P1")
+    create_project(client, "P2")
+    client.post(f"{API}/projects/P1/studies", json={"code": "A", "title": "P1 study A"})
+    client.post(f"{API}/projects/P2/studies", json={"code": "A", "title": "P2 study A"})
+    response = client.get(f"{API}/studies", params={"project": "P2"})
+    assert response.status_code == 200
+    assert [(s["project_code"], s["title"]) for s in response.json()] == [("P2", "P2 study A")]
+
+
+def test_list_all_studies_for_unknown_project_is_empty(client: TestClient) -> None:
+    response = client.get(f"{API}/studies", params={"project": "NOPE"})
+    assert response.status_code == 200
+    assert response.json() == []

@@ -323,6 +323,85 @@
         }
       }
     },
+    "/api/v1/studies": {
+      "get": {
+        "tags": [
+          "studies"
+        ],
+        "summary": "List All Studies",
+        "description": "List studies across all projects, ordered by project code and then study code.",
+        "operationId": "list_all_studies_api_v1_studies_get",
+        "parameters": [
+          {
+            "name": "project",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only list studies in the project with this code",
+              "title": "Project"
+            },
+            "description": "Only list studies in the project with this code"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StudyWithProjectRead"
+                  },
+                  "title": "Response List All Studies Api V1 Studies Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "tags": [
@@ -702,6 +781,91 @@
         ],
         "title": "StudyRead",
         "description": "A study as returned by the API."
+      },
+      "StudyWithProjectRead": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "project_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Project Id"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "design_factors": {
+            "items": {
+              "$ref": "#/components/schemas/DesignFactor"
+            },
+            "type": "array",
+            "title": "Design Factors"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "created_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created By"
+          },
+          "project_code": {
+            "type": "string",
+            "title": "Project Code"
+          },
+          "project_name": {
+            "type": "string",
+            "title": "Project Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "project_id",
+          "code",
+          "title",
+          "description",
+          "design_factors",
+          "created_at",
+          "updated_at",
+          "created_by",
+          "project_code",
+          "project_name"
+        ],
+        "title": "StudyWithProjectRead",
+        "description": "A study plus its project's code and name, for lists that span projects."
       },
       "ValidationError": {
         "properties": {

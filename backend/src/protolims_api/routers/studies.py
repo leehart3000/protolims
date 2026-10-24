@@ -8,9 +8,9 @@ from sqlalchemy.exc import IntegrityError
 
 from protolims_api.audit import record_event
 from protolims_api.db import SessionDep
-from protolims_api.models import Study
+from protolims_api.models import Project, Study
 from protolims_api.routers.projects import get_project_or_404
-from protolims_api.schemas.study import StudyCreate, StudyRead
+from protolims_api.schemas.study import StudyCreate, StudyRead, StudyWithProjectRead
 
 router = APIRouter(tags=["studies"])
 
@@ -73,3 +73,33 @@ async def get_study(project_code: str, study_code: str, session: SessionDep) -> 
             detail=f"Study {study_code!r} not found in project {project_code!r}",
         )
     return StudyRead.model_validate(study)
+
+
+@router.get("/studies")
+async def list_all_studies(
+    session: SessionDep,
+    project: Annotated[
+        str | None, Query(description="Only list studies in the project with this code")
+    ] = None,
+    limit: Annotated[int, Query(ge=1, le=500)] = 50,
+    offset: Annotated[int, Query(ge=0)] = 0,
+) -> list[StudyWithProjectRead]:
+    """List studies across all projects, ordered by project code and then study code."""
+    query = (
+        select(Study, Project.code, Project.name)
+        .join(Project, Study.project_id == Project.id)
+        .order_by(Project.code, Study.code)
+        .limit(limit)
+        .offset(offset)
+    )
+    if project is not None:
+        query = query.where(Project.code == project)
+    result = await session.execute(query)
+    return [
+        StudyWithProjectRead(
+            **StudyRead.model_validate(study).model_dump(),
+            project_code=project_code,
+            project_name=project_name,
+        )
+        for study, project_code, project_name in result
+    ]
