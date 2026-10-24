@@ -118,17 +118,18 @@ async def list_samples(
     project_code: str,
     study_code: str,
     session: SessionDep,
+    parent: Annotated[
+        uuid.UUID | None, Query(description="Only list samples derived from this sample")
+    ] = None,
     limit: Annotated[int, Query(ge=1, le=500)] = 50,
     offset: Annotated[int, Query(ge=0)] = 0,
 ) -> list[SampleRead]:
     """List a study's samples, ordered by name."""
     study = await get_study_or_404(session, project_code, study_code)
-    result = await session.execute(
-        SAMPLE_QUERY.where(Sample.study_id == study.id)
-        .order_by(Sample.name)
-        .limit(limit)
-        .offset(offset)
-    )
+    query = SAMPLE_QUERY.where(Sample.study_id == study.id)
+    if parent is not None:
+        query = query.where(Sample.parent_sample_id == parent)
+    result = await session.execute(query.order_by(Sample.name).limit(limit).offset(offset))
     return [
         sample_read(sample, row_project_code, row_study_code, subject_name, parent_name)
         for sample, row_project_code, row_study_code, subject_name, parent_name in result

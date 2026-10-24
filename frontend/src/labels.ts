@@ -12,3 +12,18 @@ export const subjectTypeOptions: { value: SubjectType; label: string }[] = [
 export function subjectTypeLabel(type: string) {
   return subjectTypeOptions.find((option) => option.value === type)?.label ?? type
 }
+
+export type SampleStatus = NonNullable<components['schemas']['SampleCreate']['status']>
+
+export const sampleStatusOptions: { value: SampleStatus; label: string }[] = [
+  { value: 'registered', label: 'Registered' },
+  { value: 'received', label: 'Received' },
+  { value: 'in_storage', label: 'In storage' },
+  { value: 'in_use', label: 'In use' },
+  { value: 'consumed', label: 'Consumed' },
+  { value: 'disposed', label: 'Disposed' },
+]
+
+export function sampleStatusLabel(status: string) {
+  return sampleStatusOptions.find((option) => option.value === status)?.label ?? status
+}

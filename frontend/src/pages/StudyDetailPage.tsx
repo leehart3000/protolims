@@ -2,11 +2,12 @@ import { useQuery } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router'
 
 import { api } from '../api/client'
-import { fetchProject, fetchStudy } from '../api/queries'
+import { fetchProject, fetchSamples, fetchStudy } from '../api/queries'
 import type { components } from '../api/schema'
 import { Breadcrumbs } from '../components/Breadcrumbs'
 import { DetailList } from '../components/DetailList'
 import { PageTitle } from '../components/PageTitle'
+import { SampleTable } from '../components/SampleTable'
 import { formatDate } from '../format'
 import { subjectTypeLabel } from '../labels'
 import {
@@ -112,6 +113,31 @@ function SubjectList({ projectCode, studyCode }: { projectCode: string; studyCod
   )
 }
 
+function SampleList({ projectCode, studyCode }: { projectCode: string; studyCode: string }) {
+  const query = useQuery({
+    queryKey: ['projects', projectCode, 'studies', studyCode, 'samples'],
+    queryFn: () => fetchSamples(projectCode, studyCode),
+  })
+
+  if (query.isPending) {
+    return <p className="mt-4 text-muted">Loading samples…</p>
+  }
+
+  if (query.isError) {
+    return (
+      <p role="alert" className={`mt-4 ${errorBox}`}>
+        Could not load samples. Please try again later.
+      </p>
+    )
+  }
+
+  if (query.data.length === 0) {
+    return <p className="mt-4 text-muted">No samples in this study yet.</p>
+  }
+
+  return <SampleTable samples={query.data} />
+}
+
 function StudyDetails({ projectCode, study }: { projectCode: string; study: Study }) {
   const project = useQuery({
     queryKey: ['projects', projectCode],
@@ -154,6 +180,8 @@ function StudyDetails({ projectCode, study }: { projectCode: string; study: Stud
       <p className="mt-4">
         <NewSubjectButton projectCode={projectCode} studyCode={study.code} />
       </p>
+      <h2 className="mt-10 text-xl font-semibold">Samples</h2>
+      <SampleList projectCode={projectCode} studyCode={study.code} />
     </>
   )
 }

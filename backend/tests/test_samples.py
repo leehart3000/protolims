@@ -147,3 +147,13 @@ def test_create_sample_records_audit_event(client: TestClient, database: Engine)
             text("SELECT entity_type FROM audit_event ORDER BY occurred_at, id")
         ).all()
     assert [row[0] for row in rows] == ["project", "study", "sample"]
+
+
+def test_list_samples_can_filter_by_parent(client: TestClient) -> None:
+    study = create_study(client)
+    parent_id = create_sample(client, study, "S1")
+    create_sample(client, study, "S1-RNA", parent_sample_id=parent_id)
+    create_sample(client, study, "S2")
+    response = client.get(f"{study}/samples", params={"parent": parent_id})
+    assert response.status_code == 200
+    assert [s["name"] for s in response.json()] == ["S1-RNA"]

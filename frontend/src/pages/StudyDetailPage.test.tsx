@@ -9,6 +9,7 @@ import StudyDetailPage from './StudyDetailPage'
 type Project = components['schemas']['ProjectRead']
 type Study = components['schemas']['StudyRead']
 type Subject = components['schemas']['SubjectRead']
+type Sample = components['schemas']['SampleRead']
 
 const tcga: Project = {
   id: '0192a5b0-0000-7000-8000-000000000001',
@@ -53,9 +54,31 @@ const patient: Subject = {
   study_code: 'RNASEQ',
 }
 
+const tumour: Sample = {
+  id: '0192a5b0-0000-7000-8000-000000000010',
+  study_id: rnaseq.id,
+  name: 'Tumour-01',
+  external_id: null,
+  subject_id: patient.id,
+  parent_sample_id: null,
+  material_type: 'tissue',
+  status: 'in_storage',
+  collected_at: null,
+  characteristics: {},
+  factor_values: {},
+  created_at: '2026-10-24T12:00:00Z',
+  updated_at: '2026-10-24T12:00:00Z',
+  created_by: null,
+  project_code: 'TCGA-BRCA',
+  study_code: 'RNASEQ',
+  subject_name: 'TCGA-A1-A0SB',
+  parent_sample_name: null,
+}
+
 const projectPath = '/api/v1/projects/TCGA-BRCA'
 const studyPath = '/api/v1/projects/TCGA-BRCA/studies/RNASEQ'
 const subjectsPath = '/api/v1/projects/TCGA-BRCA/studies/RNASEQ/subjects'
+const samplesPath = '/api/v1/projects/TCGA-BRCA/studies/RNASEQ/samples'
 
 function respondByPath(responses: Record<string, Response>) {
   vi.stubGlobal(
@@ -80,11 +103,12 @@ function renderPage(studyCode = 'RNASEQ') {
 }
 
 describe('StudyDetailPage', () => {
-  it('shows the study, its project, design factors and subjects', async () => {
+  it('shows the study, its project, design factors, subjects and samples', async () => {
     respondByPath({
       [projectPath]: Response.json(tcga),
       [studyPath]: Response.json(rnaseq),
       [subjectsPath]: Response.json([patient]),
+      [samplesPath]: Response.json([tumour]),
     })
     renderPage()
 
@@ -111,6 +135,12 @@ describe('StudyDetailPage', () => {
     for (const link of newSubjectLinks) {
       expect(link).toHaveAttribute('href', '/projects/TCGA-BRCA/studies/RNASEQ/subjects/new')
     }
+
+    expect(await screen.findByRole('link', { name: 'Tumour-01' })).toHaveAttribute(
+      'href',
+      `/samples/${tumour.id}`,
+    )
+    expect(screen.getByRole('cell', { name: 'In storage' })).toBeInTheDocument()
   })
 
   it('shows a breadcrumb trail', () => {
@@ -133,16 +163,18 @@ describe('StudyDetailPage', () => {
     expect(within(trail).getByText('RNASEQ')).toHaveAttribute('aria-current', 'page')
   })
 
-  it('says when there are no design factors or subjects', async () => {
+  it('says when there are no design factors, subjects or samples', async () => {
     respondByPath({
       [projectPath]: Response.json(tcga),
       [studyPath]: Response.json({ ...rnaseq, description: null, design_factors: [] }),
       [subjectsPath]: Response.json([]),
+      [samplesPath]: Response.json([]),
     })
     renderPage()
 
     expect(await screen.findByText('No design factors recorded.')).toBeInTheDocument()
     expect(await screen.findByText('No subjects in this study yet.')).toBeInTheDocument()
+    expect(await screen.findByText('No samples in this study yet.')).toBeInTheDocument()
   })
 
   it('says when the study does not exist', async () => {
@@ -164,9 +196,22 @@ describe('StudyDetailPage', () => {
       [projectPath]: Response.json(tcga),
       [studyPath]: Response.json(rnaseq),
       [subjectsPath]: Response.json({ detail: 'Internal error' }, { status: 500 }),
+      [samplesPath]: Response.json([]),
     })
     renderPage()
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Could not load subjects')
+  })
+
+  it('shows an error when the samples cannot be loaded', async () => {
+    respondByPath({
+      [projectPath]: Response.json(tcga),
+      [studyPath]: Response.json(rnaseq),
+      [subjectsPath]: Response.json([]),
+      [samplesPath]: Response.json({ detail: 'Internal error' }, { status: 500 }),
+    })
+    renderPage()
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Could not load samples')
   })
 })

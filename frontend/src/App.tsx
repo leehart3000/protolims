@@ -11,6 +11,7 @@ import StudiesPage from './pages/StudiesPage'
 import StudyDetailPage from './pages/StudyDetailPage'
 import NewSubjectPage from './pages/NewSubjectPage'
 import SubjectDetailPage from './pages/SubjectDetailPage'
+import SampleDetailPage from './pages/SampleDetailPage'
 
 function navLinkClass({ isActive }: { isActive: boolean }) {
   return `rounded-md px-2 py-1.5 text-sm font-medium ${isActive ? 'text-primary' : 'text-muted hover:text-fg'}`
@@ -54,6 +55,7 @@ export default function App() {
             element={<NewSubjectPage />}
           />
           <Route path="/subjects/:subjectId" element={<SubjectDetailPage />} />
+          <Route path="/samples/:sampleId" element={<SampleDetailPage />} />
           <Route path="/studies" element={<StudiesPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>

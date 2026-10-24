@@ -6,6 +6,7 @@ import type { components } from '../api/schema'
 import { Breadcrumbs } from '../components/Breadcrumbs'
 import { DetailList } from '../components/DetailList'
 import { PageTitle } from '../components/PageTitle'
+import { KeyValueList } from '../components/KeyValueList'
 import { formatDate } from '../format'
 import { subjectTypeLabel } from '../labels'
 import { errorBox } from '../styles'
@@ -29,7 +30,6 @@ async function fetchSubject(subjectId: string) {
 function SubjectDetails({ subject }: { subject: Subject }) {
   const projectPath = `/projects/${encodeURIComponent(subject.project_code)}`
   const studyPath = `${projectPath}/studies/${encodeURIComponent(subject.study_code)}`
-  const attributes = Object.entries(subject.attributes)
 
   return (
     <>
@@ -62,16 +62,7 @@ function SubjectDetails({ subject }: { subject: Subject }) {
       />
 
       <h2 className="mt-10 text-xl font-semibold">Attributes</h2>
-      {attributes.length === 0 ? (
-        <p className="mt-4 text-muted">No attributes recorded.</p>
-      ) : (
-        <DetailList
-          items={attributes.map(([key, value]): [string, string] => [
-            key,
-            typeof value === 'string' ? value : JSON.stringify(value),
-          ])}
-        />
-      )}
+      <KeyValueList values={subject.attributes} emptyText="No attributes recorded." />
     </>
   )
 }

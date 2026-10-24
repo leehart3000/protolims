@@ -673,6 +673,25 @@
             }
           },
           {
+            "name": "parent",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only list samples derived from this sample",
+              "title": "Parent"
+            },
+            "description": "Only list samples derived from this sample"
+          },
+          {
             "name": "limit",
             "in": "query",
             "required": false,

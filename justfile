@@ -6,7 +6,7 @@ web := "pnpm --dir frontend"
 
 # List available recipes
 default:
-    @just --list
+    @just --list --unsorted
 
 # --- Local services ---
 

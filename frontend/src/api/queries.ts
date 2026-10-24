@@ -27,3 +27,17 @@ export async function fetchStudy(projectCode: string, studyCode: string) {
   }
   return data
 }
+
+// A study's samples; with parentId, only the samples derived from that sample.
+export async function fetchSamples(projectCode: string, studyCode: string, parentId?: string) {
+  const { data } = await api.GET('/api/v1/projects/{project_code}/studies/{study_code}/samples', {
+    params: {
+      path: { project_code: projectCode, study_code: studyCode },
+      query: { parent: parentId },
+    },
+  })
+  if (!data) {
+    throw new Error('Could not load samples')
+  }
+  return data
+}
