@@ -60,7 +60,7 @@ function DerivedSamples({ sample }: { sample: Sample }) {
     return <p className="mt-4 text-muted">No samples have been derived from this one yet.</p>
   }
 
-  return <SampleTable samples={query.data} />
+  return <SampleTable samples={query.data} label="Derived samples" />
 }
 
 function SampleDetails({ sample }: { sample: Sample }) {

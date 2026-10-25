@@ -1,5 +1,6 @@
 import { Link } from 'react-router'
 
+import type { SubjectSort } from '../api/queries'
 import type { components } from '../api/schema'
 import { subjectTypeLabel } from '../labels'
 import {
@@ -12,29 +13,46 @@ import {
   tableRow,
   tableWrapper,
 } from '../styles'
+import { SortHeader } from './SortHeader'
 
 type Subject = components['schemas']['SubjectRead']
+type SubjectColumn = Exclude<SubjectSort, `-${string}`>
 
 // On phones the other columns are hidden, so their values are shown under the name instead.
 function summary(subject: Subject) {
   return [subjectTypeLabel(subject.subject_type), subject.species].filter(Boolean).join(' · ')
 }
 
-export function SubjectTable({ subjects }: { subjects: Subject[] }) {
+export function SubjectTable({
+  subjects,
+  sort,
+  onSort,
+}: {
+  subjects: Subject[]
+  sort: SubjectSort
+  onSort: (sort: SubjectSort) => void
+}) {
+  function heading(label: string, column: SubjectColumn, className: string) {
+    return (
+      <SortHeader<SubjectSort>
+        label={label}
+        ascending={column}
+        descending={`-${column}` as const}
+        sort={sort}
+        onSort={onSort}
+        className={className}
+      />
+    )
+  }
+
   return (
     <div className={`mt-4 ${tableWrapper}`}>
-      <table className={table}>
+      <table className={table} aria-label="Subjects">
         <thead className={tableHead}>
           <tr>
-            <th scope="col" className={tableHeader}>
-              Name
-            </th>
-            <th scope="col" className={`${tableHeader} hidden w-px sm:table-cell`}>
-              Type
-            </th>
-            <th scope="col" className={`${tableHeader} hidden sm:table-cell`}>
-              Species
-            </th>
+            {heading('Name', 'name', tableHeader)}
+            {heading('Type', 'subject_type', `${tableHeader} hidden w-px sm:table-cell`)}
+            {heading('Species', 'species', `${tableHeader} hidden sm:table-cell`)}
             <th scope="col" className={`${tableHeader} w-px`}>
               <span className="sr-only">Open</span>
             </th>

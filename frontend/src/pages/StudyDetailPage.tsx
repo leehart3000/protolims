@@ -1,13 +1,13 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
-import { useState } from 'react'
 import { useParams } from 'react-router'
 
 import {
   fetchProject,
   fetchSamplePage,
   fetchStudy,
-  fetchSubjects,
+  fetchSubjectPage,
   type SampleSort,
+  type SubjectSort,
 } from '../api/queries'
 import type { components } from '../api/schema'
 import { Breadcrumbs } from '../components/Breadcrumbs'
@@ -21,16 +21,25 @@ import { SectionHeading } from '../components/SectionHeading'
 import { SubjectTable } from '../components/SubjectTable'
 import { formatDate } from '../format'
 import { errorBox } from '../styles'
-import { useDebouncedValue } from '../useDebouncedValue'
+import { useListControls } from '../useListControls'
 
 const PAGE_SIZE = 50
 
 type Study = components['schemas']['StudyRead']
 
 function SubjectList({ projectCode, studyCode }: { projectCode: string; studyCode: string }) {
+  const { search, q, sort, offset, setOffset, changeSearch, changeSort } =
+    useListControls<SubjectSort>('name')
   const query = useQuery({
-    queryKey: ['projects', projectCode, 'studies', studyCode, 'subjects'],
-    queryFn: () => fetchSubjects(projectCode, studyCode),
+    queryKey: ['projects', projectCode, 'studies', studyCode, 'subjects', { q, sort, offset }],
+    queryFn: () =>
+      fetchSubjectPage(projectCode, studyCode, {
+        q: q || undefined,
+        sort,
+        limit: PAGE_SIZE,
+        offset,
+      }),
+    placeholderData: keepPreviousData,
   })
 
   if (query.isPending) {
@@ -45,18 +54,36 @@ function SubjectList({ projectCode, studyCode }: { projectCode: string; studyCod
     )
   }
 
-  if (query.data.length === 0) {
-    return <p className="mt-4 text-muted">No subjects in this study yet.</p>
-  }
+  const { items, total } = query.data
 
-  return <SubjectTable subjects={query.data} />
+  return (
+    <>
+      {(total > 0 || q !== '') && (
+        <SearchBox
+          id="subject-search"
+          label="Search subjects"
+          placeholder="Search by name or external ID"
+          value={search}
+          onChange={changeSearch}
+        />
+      )}
+      {total === 0 ? (
+        <p className="mt-4 text-muted">
+          {q ? `No subjects match “${q}”.` : 'No subjects in this study yet.'}
+        </p>
+      ) : (
+        <>
+          <SubjectTable subjects={items} sort={sort} onSort={changeSort} />
+          <Pagination offset={offset} limit={PAGE_SIZE} total={total} onChange={setOffset} />
+        </>
+      )}
+    </>
+  )
 }
 
 function SampleList({ projectCode, studyCode }: { projectCode: string; studyCode: string }) {
-  const [search, setSearch] = useState('')
-  const [sort, setSort] = useState<SampleSort>('name')
-  const [offset, setOffset] = useState(0)
-  const q = useDebouncedValue(search.trim())
+  const { search, q, sort, offset, setOffset, changeSearch, changeSort } =
+    useListControls<SampleSort>('name')
   const query = useQuery({
     queryKey: ['projects', projectCode, 'studies', studyCode, 'samples', { q, sort, offset }],
     queryFn: () =>
@@ -92,10 +119,7 @@ function SampleList({ projectCode, studyCode }: { projectCode: string; studyCode
           label="Search samples"
           placeholder="Search by name or external ID"
           value={search}
-          onChange={(value) => {
-            setSearch(value)
-            setOffset(0)
-          }}
+          onChange={changeSearch}
         />
       )}
       {total === 0 ? (
@@ -104,14 +128,7 @@ function SampleList({ projectCode, studyCode }: { projectCode: string; studyCode
         </p>
       ) : (
         <>
-          <SampleTable
-            samples={items}
-            sort={sort}
-            onSort={(next) => {
-              setSort(next)
-              setOffset(0)
-            }}
-          />
+          <SampleTable samples={items} label="Samples" sort={sort} onSort={changeSort} />
           <Pagination offset={offset} limit={PAGE_SIZE} total={total} onChange={setOffset} />
         </>
       )}

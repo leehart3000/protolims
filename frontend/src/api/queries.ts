@@ -55,12 +55,28 @@ export async function fetchSamples(projectCode: string, studyCode: string, paren
   return (await fetchSamplePage(projectCode, studyCode, { parent: parentId })).items
 }
 
-export async function fetchSubjects(projectCode: string, studyCode: string) {
+type SubjectListQuery = NonNullable<
+  paths['/api/v1/projects/{project_code}/studies/{study_code}/subjects']['get']['parameters']['query']
+>
+
+export type SubjectSort = NonNullable<SubjectListQuery['sort']>
+
+// One page of a study's subjects, with the total number that match.
+export async function fetchSubjectPage(
+  projectCode: string,
+  studyCode: string,
+  query: SubjectListQuery,
+) {
   const { data } = await api.GET('/api/v1/projects/{project_code}/studies/{study_code}/subjects', {
-    params: { path: { project_code: projectCode, study_code: studyCode } },
+    params: { path: { project_code: projectCode, study_code: studyCode }, query },
   })
   if (!data) {
     throw new Error('Could not load subjects')
   }
-  return data.items
+  return data
+}
+
+// The first page of a study's subjects, for the New sample form's Subject list.
+export async function fetchSubjects(projectCode: string, studyCode: string) {
+  return (await fetchSubjectPage(projectCode, studyCode, {})).items
 }

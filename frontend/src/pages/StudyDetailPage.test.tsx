@@ -93,27 +93,39 @@ function respondByPath(responses: Record<string, Response>) {
   )
 }
 
-// Answers each request with a fresh response, and records each samples request's query,
-// for tests that sort, search or change page.
-function stubStudyApi(samplePage: (query: URLSearchParams) => { items: Sample[]; total: number }) {
+interface ListPage<T> {
+  items: T[]
+  total: number
+}
+
+// Answers each request with a fresh response, and records each list request's query, for
+// tests that sort, search or change page.
+function stubStudyApi({
+  samples = () => ({ items: [tumour], total: 1 }),
+  subjects = () => ({ items: [patient], total: 1 }),
+}: {
+  samples?: (query: URLSearchParams) => ListPage<Sample>
+  subjects?: (query: URLSearchParams) => ListPage<Subject>
+} = {}) {
   const sampleQueries: URLSearchParams[] = []
-  const bodies: Record<string, unknown> = {
-    [projectPath]: tcga,
-    [studyPath]: rnaseq,
-    [subjectsPath]: { items: [patient], total: 1 },
-  }
+  const subjectQueries: URLSearchParams[] = []
+  const bodies: Record<string, unknown> = { [projectPath]: tcga, [studyPath]: rnaseq }
   vi.stubGlobal(
     'fetch',
     vi.fn((request: Request) => {
       const url = new URL(request.url)
       if (url.pathname === samplesPath) {
         sampleQueries.push(url.searchParams)
-        return Promise.resolve(Response.json(samplePage(url.searchParams)))
+        return Promise.resolve(Response.json(samples(url.searchParams)))
+      }
+      if (url.pathname === subjectsPath) {
+        subjectQueries.push(url.searchParams)
+        return Promise.resolve(Response.json(subjects(url.searchParams)))
       }
       return Promise.resolve(Response.json(bodies[url.pathname]))
     }),
   )
-  return sampleQueries
+  return { sampleQueries, subjectQueries }
 }
 
 function renderPage(studyCode = 'RNASEQ') {
@@ -248,22 +260,22 @@ describe('StudyDetailPage', () => {
   })
 
   it('sorts samples by a column heading', async () => {
-    const sampleQueries = stubStudyApi(() => ({ items: [tumour], total: 1 }))
+    const { sampleQueries } = stubStudyApi()
     const user = userEvent.setup()
     renderPage()
 
-    await screen.findByRole('link', { name: 'Tumour-01' })
-    const nameHeading = screen.getByRole('button', { name: 'Name' }).closest('th')
+    const samples = within(await screen.findByRole('table', { name: 'Samples' }))
+    const nameHeading = samples.getByRole('columnheader', { name: 'Name' })
     expect(nameHeading).toHaveAttribute('aria-sort', 'ascending')
     expect(sampleQueries.at(-1)?.get('sort')).toBe('name')
 
-    await user.click(screen.getByRole('button', { name: 'Name' }))
+    await user.click(samples.getByRole('button', { name: 'Name' }))
     await waitFor(() => {
       expect(sampleQueries.at(-1)?.get('sort')).toBe('-name')
     })
     expect(nameHeading).toHaveAttribute('aria-sort', 'descending')
 
-    await user.click(screen.getByRole('button', { name: 'Material' }))
+    await user.click(samples.getByRole('button', { name: 'Material' }))
     await waitFor(() => {
       expect(sampleQueries.at(-1)?.get('sort')).toBe('material_type')
     })
@@ -271,9 +283,10 @@ describe('StudyDetailPage', () => {
   })
 
   it('searches samples once typing pauses', async () => {
-    const sampleQueries = stubStudyApi((query) =>
-      query.get('q') === 'zzz' ? { items: [], total: 0 } : { items: [tumour], total: 1 },
-    )
+    const { sampleQueries } = stubStudyApi({
+      samples: (query) =>
+        query.get('q') === 'zzz' ? { items: [], total: 0 } : { items: [tumour], total: 1 },
+    })
     const user = userEvent.setup()
     renderPage()
 
@@ -284,7 +297,7 @@ describe('StudyDetailPage', () => {
   })
 
   it('pages through a long list of samples', async () => {
-    const sampleQueries = stubStudyApi(() => ({ items: [tumour], total: 120 }))
+    const { sampleQueries } = stubStudyApi({ samples: () => ({ items: [tumour], total: 120 }) })
     const user = userEvent.setup()
     renderPage()
 
@@ -303,5 +316,41 @@ describe('StudyDetailPage', () => {
 
     await user.click(previous)
     expect(await screen.findByText('51–100 of 120')).toBeInTheDocument()
+  })
+
+  it('sorts subjects by a column heading', async () => {
+    const { subjectQueries } = stubStudyApi()
+    const user = userEvent.setup()
+    renderPage()
+
+    const subjects = within(await screen.findByRole('table', { name: 'Subjects' }))
+    expect(subjects.getByRole('columnheader', { name: 'Name' })).toHaveAttribute(
+      'aria-sort',
+      'ascending',
+    )
+
+    await user.click(subjects.getByRole('button', { name: 'Type' }))
+    await waitFor(() => {
+      expect(subjectQueries.at(-1)?.get('sort')).toBe('subject_type')
+    })
+
+    await user.click(subjects.getByRole('button', { name: 'Species' }))
+    await waitFor(() => {
+      expect(subjectQueries.at(-1)?.get('sort')).toBe('species')
+    })
+  })
+
+  it('searches subjects once typing pauses', async () => {
+    const { subjectQueries } = stubStudyApi({
+      subjects: (query) =>
+        query.get('q') === 'zzz' ? { items: [], total: 0 } : { items: [patient], total: 1 },
+    })
+    const user = userEvent.setup()
+    renderPage()
+
+    await user.type(await screen.findByRole('searchbox', { name: 'Search subjects' }), 'zzz')
+
+    expect(await screen.findByText('No subjects match “zzz”.')).toBeInTheDocument()
+    expect(subjectQueries.map((query) => query.get('q'))).toEqual([null, 'zzz'])
   })
 })

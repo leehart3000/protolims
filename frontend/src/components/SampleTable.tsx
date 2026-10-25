@@ -28,10 +28,12 @@ function summary(sample: Sample) {
 // Given a sort order and a way to change it, the column headings sort the table.
 export function SampleTable({
   samples,
+  label,
   sort,
   onSort,
 }: {
   samples: Sample[]
+  label: string
   sort?: SampleSort
   onSort?: (sort: SampleSort) => void
 }) {
@@ -57,7 +59,7 @@ export function SampleTable({
 
   return (
     <div className={`mt-4 ${tableWrapper}`}>
-      <table className={table}>
+      <table className={table} aria-label={label}>
         <thead className={tableHead}>
           <tr>
             {heading('Name', 'name', tableHeader)}
