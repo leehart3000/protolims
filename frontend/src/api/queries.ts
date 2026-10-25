@@ -1,4 +1,5 @@
 import { api } from './client'
+import type { paths } from './schema'
 
 // These return null when the item doesn't exist, so pages can show "not found".
 
@@ -28,18 +29,30 @@ export async function fetchStudy(projectCode: string, studyCode: string) {
   return data
 }
 
-// A study's samples; with parentId, only the samples derived from that sample.
-export async function fetchSamples(projectCode: string, studyCode: string, parentId?: string) {
+type SampleListQuery = NonNullable<
+  paths['/api/v1/projects/{project_code}/studies/{study_code}/samples']['get']['parameters']['query']
+>
+
+export type SampleSort = NonNullable<SampleListQuery['sort']>
+
+// One page of a study's samples, with the total number that match.
+export async function fetchSamplePage(
+  projectCode: string,
+  studyCode: string,
+  query: SampleListQuery,
+) {
   const { data } = await api.GET('/api/v1/projects/{project_code}/studies/{study_code}/samples', {
-    params: {
-      path: { project_code: projectCode, study_code: studyCode },
-      query: { parent: parentId },
-    },
+    params: { path: { project_code: projectCode, study_code: studyCode }, query },
   })
   if (!data) {
     throw new Error('Could not load samples')
   }
-  return data.items
+  return data
+}
+
+// A study's samples; with parentId, only the samples derived from that sample.
+export async function fetchSamples(projectCode: string, studyCode: string, parentId?: string) {
+  return (await fetchSamplePage(projectCode, studyCode, { parent: parentId })).items
 }
 
 export async function fetchSubjects(projectCode: string, studyCode: string) {

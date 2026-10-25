@@ -1,17 +1,29 @@
-import { useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { useState } from 'react'
 import { useParams } from 'react-router'
 
-import { fetchProject, fetchSamples, fetchStudy, fetchSubjects } from '../api/queries'
+import {
+  fetchProject,
+  fetchSamplePage,
+  fetchStudy,
+  fetchSubjects,
+  type SampleSort,
+} from '../api/queries'
 import type { components } from '../api/schema'
 import { Breadcrumbs } from '../components/Breadcrumbs'
 import { DetailList } from '../components/DetailList'
 import { NewButton } from '../components/NewButton'
 import { PageTitle } from '../components/PageTitle'
+import { Pagination } from '../components/Pagination'
 import { SampleTable } from '../components/SampleTable'
+import { SearchBox } from '../components/SearchBox'
 import { SectionHeading } from '../components/SectionHeading'
 import { SubjectTable } from '../components/SubjectTable'
 import { formatDate } from '../format'
 import { errorBox } from '../styles'
+import { useDebouncedValue } from '../useDebouncedValue'
+
+const PAGE_SIZE = 50
 
 type Study = components['schemas']['StudyRead']
 
@@ -41,9 +53,21 @@ function SubjectList({ projectCode, studyCode }: { projectCode: string; studyCod
 }
 
 function SampleList({ projectCode, studyCode }: { projectCode: string; studyCode: string }) {
+  const [search, setSearch] = useState('')
+  const [sort, setSort] = useState<SampleSort>('name')
+  const [offset, setOffset] = useState(0)
+  const q = useDebouncedValue(search.trim())
   const query = useQuery({
-    queryKey: ['projects', projectCode, 'studies', studyCode, 'samples'],
-    queryFn: () => fetchSamples(projectCode, studyCode),
+    queryKey: ['projects', projectCode, 'studies', studyCode, 'samples', { q, sort, offset }],
+    queryFn: () =>
+      fetchSamplePage(projectCode, studyCode, {
+        q: q || undefined,
+        sort,
+        limit: PAGE_SIZE,
+        offset,
+      }),
+    // Keep showing the current page while the next one loads, so the table doesn't flicker.
+    placeholderData: keepPreviousData,
   })
 
   if (query.isPending) {
@@ -58,11 +82,41 @@ function SampleList({ projectCode, studyCode }: { projectCode: string; studyCode
     )
   }
 
-  if (query.data.length === 0) {
-    return <p className="mt-4 text-muted">No samples in this study yet.</p>
-  }
+  const { items, total } = query.data
 
-  return <SampleTable samples={query.data} />
+  return (
+    <>
+      {(total > 0 || q !== '') && (
+        <SearchBox
+          id="sample-search"
+          label="Search samples"
+          placeholder="Search by name or external ID"
+          value={search}
+          onChange={(value) => {
+            setSearch(value)
+            setOffset(0)
+          }}
+        />
+      )}
+      {total === 0 ? (
+        <p className="mt-4 text-muted">
+          {q ? `No samples match “${q}”.` : 'No samples in this study yet.'}
+        </p>
+      ) : (
+        <>
+          <SampleTable
+            samples={items}
+            sort={sort}
+            onSort={(next) => {
+              setSort(next)
+              setOffset(0)
+            }}
+          />
+          <Pagination offset={offset} limit={PAGE_SIZE} total={total} onChange={setOffset} />
+        </>
+      )}
+    </>
+  )
 }
 
 function StudyDetails({ projectCode, study }: { projectCode: string; study: Study }) {

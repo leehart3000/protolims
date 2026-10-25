@@ -1,5 +1,6 @@
 import { Link } from 'react-router'
 
+import type { SampleSort } from '../api/queries'
 import type { components } from '../api/schema'
 import { sampleStatusLabel } from '../labels'
 import {
@@ -12,8 +13,10 @@ import {
   tableRow,
   tableWrapper,
 } from '../styles'
+import { SortHeader } from './SortHeader'
 
 type Sample = components['schemas']['SampleRead']
+type SampleColumn = Exclude<SampleSort, `-${string}`>
 
 // On phones the other columns are hidden, so their values are shown under the name instead.
 function summary(sample: Sample) {
@@ -22,24 +25,45 @@ function summary(sample: Sample) {
     .join(' · ')
 }
 
-export function SampleTable({ samples }: { samples: Sample[] }) {
+// Given a sort order and a way to change it, the column headings sort the table.
+export function SampleTable({
+  samples,
+  sort,
+  onSort,
+}: {
+  samples: Sample[]
+  sort?: SampleSort
+  onSort?: (sort: SampleSort) => void
+}) {
+  function heading(label: string, column: SampleColumn, className: string) {
+    if (sort === undefined || onSort === undefined) {
+      return (
+        <th scope="col" className={className}>
+          {label}
+        </th>
+      )
+    }
+    return (
+      <SortHeader<SampleSort>
+        label={label}
+        ascending={column}
+        descending={`-${column}` as const}
+        sort={sort}
+        onSort={onSort}
+        className={className}
+      />
+    )
+  }
+
   return (
     <div className={`mt-4 ${tableWrapper}`}>
       <table className={table}>
         <thead className={tableHead}>
           <tr>
-            <th scope="col" className={tableHeader}>
-              Name
-            </th>
-            <th scope="col" className={`${tableHeader} hidden w-px sm:table-cell`}>
-              Material
-            </th>
-            <th scope="col" className={`${tableHeader} hidden sm:table-cell`}>
-              Subject
-            </th>
-            <th scope="col" className={`${tableHeader} hidden w-px sm:table-cell`}>
-              Status
-            </th>
+            {heading('Name', 'name', tableHeader)}
+            {heading('Material', 'material_type', `${tableHeader} hidden w-px sm:table-cell`)}
+            {heading('Subject', 'subject', `${tableHeader} hidden sm:table-cell`)}
+            {heading('Status', 'status', `${tableHeader} hidden w-px sm:table-cell`)}
             <th scope="col" className={`${tableHeader} w-px`}>
               <span className="sr-only">Open</span>
             </th>

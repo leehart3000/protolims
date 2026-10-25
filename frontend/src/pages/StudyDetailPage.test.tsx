@@ -1,4 +1,5 @@
-import { render, screen, within } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { Route, Routes } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 
@@ -92,6 +93,29 @@ function respondByPath(responses: Record<string, Response>) {
   )
 }
 
+// Answers each request with a fresh response, and records each samples request's query,
+// for tests that sort, search or change page.
+function stubStudyApi(samplePage: (query: URLSearchParams) => { items: Sample[]; total: number }) {
+  const sampleQueries: URLSearchParams[] = []
+  const bodies: Record<string, unknown> = {
+    [projectPath]: tcga,
+    [studyPath]: rnaseq,
+    [subjectsPath]: [patient],
+  }
+  vi.stubGlobal(
+    'fetch',
+    vi.fn((request: Request) => {
+      const url = new URL(request.url)
+      if (url.pathname === samplesPath) {
+        sampleQueries.push(url.searchParams)
+        return Promise.resolve(Response.json(samplePage(url.searchParams)))
+      }
+      return Promise.resolve(Response.json(bodies[url.pathname]))
+    }),
+  )
+  return sampleQueries
+}
+
 function renderPage(studyCode = 'RNASEQ') {
   render(
     <TestProviders route={`/projects/TCGA-BRCA/studies/${studyCode}`}>
@@ -182,6 +206,7 @@ describe('StudyDetailPage', () => {
     expect(await screen.findByText('No design factors recorded.')).toBeInTheDocument()
     expect(await screen.findByText('No subjects in this study yet.')).toBeInTheDocument()
     expect(await screen.findByText('No samples in this study yet.')).toBeInTheDocument()
+    expect(screen.queryByRole('searchbox')).not.toBeInTheDocument()
   })
 
   it('says when the study does not exist', async () => {
@@ -220,5 +245,63 @@ describe('StudyDetailPage', () => {
     renderPage()
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Could not load samples')
+  })
+
+  it('sorts samples by a column heading', async () => {
+    const sampleQueries = stubStudyApi(() => ({ items: [tumour], total: 1 }))
+    const user = userEvent.setup()
+    renderPage()
+
+    await screen.findByRole('link', { name: 'Tumour-01' })
+    const nameHeading = screen.getByRole('button', { name: 'Name' }).closest('th')
+    expect(nameHeading).toHaveAttribute('aria-sort', 'ascending')
+    expect(sampleQueries.at(-1)?.get('sort')).toBe('name')
+
+    await user.click(screen.getByRole('button', { name: 'Name' }))
+    await waitFor(() => {
+      expect(sampleQueries.at(-1)?.get('sort')).toBe('-name')
+    })
+    expect(nameHeading).toHaveAttribute('aria-sort', 'descending')
+
+    await user.click(screen.getByRole('button', { name: 'Material' }))
+    await waitFor(() => {
+      expect(sampleQueries.at(-1)?.get('sort')).toBe('material_type')
+    })
+    expect(nameHeading).not.toHaveAttribute('aria-sort')
+  })
+
+  it('searches samples once typing pauses', async () => {
+    const sampleQueries = stubStudyApi((query) =>
+      query.get('q') === 'zzz' ? { items: [], total: 0 } : { items: [tumour], total: 1 },
+    )
+    const user = userEvent.setup()
+    renderPage()
+
+    await user.type(await screen.findByRole('searchbox', { name: 'Search samples' }), 'zzz')
+
+    expect(await screen.findByText('No samples match “zzz”.')).toBeInTheDocument()
+    expect(sampleQueries.map((query) => query.get('q'))).toEqual([null, 'zzz'])
+  })
+
+  it('pages through a long list of samples', async () => {
+    const sampleQueries = stubStudyApi(() => ({ items: [tumour], total: 120 }))
+    const user = userEvent.setup()
+    renderPage()
+
+    expect(await screen.findByText('1–50 of 120')).toBeInTheDocument()
+    const previous = screen.getByRole('button', { name: 'Previous' })
+    const next = screen.getByRole('button', { name: 'Next' })
+    expect(previous).toBeDisabled()
+
+    await user.click(next)
+    expect(await screen.findByText('51–100 of 120')).toBeInTheDocument()
+    expect(sampleQueries.at(-1)?.get('offset')).toBe('50')
+
+    await user.click(next)
+    expect(await screen.findByText('101–120 of 120')).toBeInTheDocument()
+    expect(next).toBeDisabled()
+
+    await user.click(previous)
+    expect(await screen.findByText('51–100 of 120')).toBeInTheDocument()
   })
 })
