@@ -1,3 +1,4 @@
+import { RectangleEllipsis } from 'lucide-react'
 import { Link } from 'react-router'
 
 import type { SubjectSort } from '../api/queries'
@@ -74,7 +75,7 @@ export function SubjectTable({
                 {subject.species}
               </td>
               <td className={`${tableCell} ${rowChevron}`} aria-hidden="true">
-                ›
+                <RectangleEllipsis className="size-5" />
               </td>
             </tr>
           ))}

@@ -86,6 +86,11 @@ describe('SampleDetailPage', () => {
       'href',
       `/subjects/${tumour.subject_id ?? ''}`,
     )
+    const editLinks = screen.getAllByRole('link', { name: 'Edit sample' })
+    expect(editLinks).toHaveLength(2)
+    for (const link of editLinks) {
+      expect(link).toHaveAttribute('href', `/samples/${tumour.id}/edit`)
+    }
     expect(screen.getByText('GDC-SAMPLE-UUID')).toBeInTheDocument()
     expect(screen.getByText('breast')).toBeInTheDocument()
     expect(screen.getByText('none')).toBeInTheDocument()

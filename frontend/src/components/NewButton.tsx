@@ -1,13 +1,14 @@
-import type { LucideIcon } from 'lucide-react'
+import { type LucideIcon, SquarePlus } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Link } from 'react-router'
 
 import { primaryButton } from '../styles'
 
-// A button-styled link that starts creating a record, optionally with an icon.
+// A button-styled link that starts creating a record, with the square-plus icon unless
+// another is given.
 export function NewButton({
   to,
-  icon: Icon,
+  icon: Icon = SquarePlus,
   children,
 }: {
   to: string
@@ -16,7 +17,7 @@ export function NewButton({
 }) {
   return (
     <Link to={to} className={`${primaryButton} inline-flex items-center gap-2 text-sm`}>
-      {Icon && <Icon aria-hidden="true" className="size-4 shrink-0" />}
+      <Icon aria-hidden="true" className="size-4 shrink-0" />
       {children}
     </Link>
   )

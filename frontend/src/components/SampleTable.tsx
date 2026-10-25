@@ -1,3 +1,4 @@
+import { RectangleEllipsis } from 'lucide-react'
 import { Link } from 'react-router'
 
 import type { SampleSort } from '../api/queries'
@@ -90,7 +91,7 @@ export function SampleTable({
                 {sampleStatusLabel(sample.status)}
               </td>
               <td className={`${tableCell} ${rowChevron}`} aria-hidden="true">
-                ›
+                <RectangleEllipsis className="size-5" />
               </td>
             </tr>
           ))}

@@ -1,25 +1,20 @@
+import { SquarePlus } from 'lucide-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
-import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
+import { useNavigate, useParams, useSearchParams } from 'react-router'
 
 import { api } from '../api/client'
 import { fetchSamples, fetchStudy, fetchSubjects } from '../api/queries'
 import type { components } from '../api/schema'
 import { Breadcrumbs } from '../components/Breadcrumbs'
 import { DetailList } from '../components/DetailList'
-import { SelectField, TextField } from '../components/FormFields'
 import { PageTitle } from '../components/PageTitle'
-import { namePattern, optionalText, text } from '../forms'
-import { type SampleStatus, sampleStatusOptions } from '../labels'
-import { errorBox, primaryButton, textLink } from '../styles'
+import { SampleForm } from '../components/SampleForm'
+import { collectedAt, DuplicateNameError } from '../samples'
+import { errorBox } from '../styles'
 
 type SampleCreate = components['schemas']['SampleCreate']
 type Sample = components['schemas']['SampleRead']
 type Subject = components['schemas']['SubjectRead']
-
-const materialSuggestions = ['tissue', 'blood', 'plasma', 'serum', 'cells', 'DNA', 'RNA', 'protein']
-
-class DuplicateNameError extends Error {}
 
 async function createSample(projectCode: string, studyCode: string, body: SampleCreate) {
   const { data, response } = await api.POST(
@@ -41,12 +36,7 @@ async function createSample(projectCode: string, studyCode: string, body: Sample
   throw new Error('Could not create the sample. Please try again later.')
 }
 
-// A date without a time is stored as midday UTC, so it shows as the same day in any time zone.
-function collectedAt(date: string | null) {
-  return date && `${date}T12:00:00Z`
-}
-
-function SampleForm({
+function NewSampleForm({
   projectCode,
   studyCode,
   subjects,
@@ -62,9 +52,7 @@ function SampleForm({
   const studyPath = `/projects/${encodeURIComponent(projectCode)}/studies/${encodeURIComponent(studyCode)}`
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const initialParent = samples.find((sample) => sample.id === initialParentId)
-  const [parentId, setParentId] = useState(initialParent?.id ?? '')
-  const [subjectId, setSubjectId] = useState(initialParent?.subject_id ?? '')
+  const parent = samples.find((sample) => sample.id === initialParentId)
   const mutation = useMutation({
     mutationFn: (body: SampleCreate) => createSample(projectCode, studyCode, body),
     onSuccess: async (sample) => {
@@ -75,117 +63,30 @@ function SampleForm({
     },
   })
 
-  const nameError =
-    mutation.error instanceof DuplicateNameError
-      ? 'This name is already used in this study. Please choose another.'
-      : undefined
-
   return (
-    <form
-      className="mt-6 max-w-2xl space-y-5"
-      onChange={() => {
-        if (mutation.isError) {
-          mutation.reset()
-        }
+    <SampleForm
+      subjects={subjects}
+      samples={samples}
+      initial={{
+        name: '',
+        material_type: '',
+        status: 'registered',
+        subject_id: parent?.subject_id ?? null,
+        parent_sample_id: parent?.id ?? null,
+        collected_on: null,
+        external_id: null,
       }}
-      onSubmit={(event) => {
-        event.preventDefault()
-        const form = new FormData(event.currentTarget)
-        mutation.mutate({
-          name: text(form, 'name'),
-          material_type: text(form, 'material_type'),
-          status: text(form, 'status') as SampleStatus,
-          subject_id: subjectId || null,
-          parent_sample_id: parentId || null,
-          collected_at: collectedAt(optionalText(form, 'collected_on')),
-          external_id: optionalText(form, 'external_id'),
-        })
+      submitLabel="Create sample"
+      submitIcon={SquarePlus}
+      pendingLabel="Creating…"
+      cancelTo={parent ? `/samples/${parent.id}` : studyPath}
+      isPending={mutation.isPending}
+      error={mutation.error}
+      onEdit={mutation.reset}
+      onSubmit={({ collected_on, ...values }) => {
+        mutation.mutate({ ...values, collected_at: collectedAt(collected_on) })
       }}
-    >
-      <TextField
-        label="Name"
-        name="name"
-        hint="The name used by the study or its source, such as TCGA-A1-A0SB-01A. Spaces are allowed; slashes are not."
-        error={nameError}
-        required
-        maxLength={200}
-        pattern={namePattern}
-        autoComplete="off"
-      />
-      <TextField
-        label="Material"
-        name="material_type"
-        hint="What the sample is, such as tissue, blood, RNA or protein. Choose a suggestion or type your own."
-        required
-        maxLength={100}
-        list="material-suggestions"
-        autoComplete="off"
-      />
-      <datalist id="material-suggestions">
-        {materialSuggestions.map((material) => (
-          <option key={material} value={material} />
-        ))}
-      </datalist>
-      <SelectField
-        label="Status"
-        name="status"
-        options={sampleStatusOptions}
-        defaultValue="registered"
-        required
-      />
-      <SelectField
-        label="Derived from"
-        name="parent_sample_id"
-        options={samples.map((sample) => ({
-          value: sample.id,
-          label: `${sample.name} (${sample.material_type})`,
-        }))}
-        value={parentId}
-        onChange={(event) => {
-          const parent = samples.find((sample) => sample.id === event.target.value)
-          setParentId(event.target.value)
-          if (parent?.subject_id) {
-            setSubjectId(parent.subject_id)
-          }
-        }}
-        optional
-      />
-      <SelectField
-        label="Subject"
-        name="subject_id"
-        options={subjects.map((subject) => ({ value: subject.id, label: subject.name }))}
-        value={subjectId}
-        onChange={(event) => {
-          setSubjectId(event.target.value)
-        }}
-        optional
-      />
-      <TextField label="Collected" name="collected_on" type="date" optional />
-      <TextField
-        label="External ID"
-        name="external_id"
-        hint="The sample's ID in its source repository, such as a GDC sample UUID."
-        maxLength={200}
-        autoComplete="off"
-        optional
-        mono
-      />
-
-      <div className="flex items-center gap-4 pt-2">
-        <button type="submit" disabled={mutation.isPending} className={primaryButton}>
-          {mutation.isPending ? 'Creating…' : 'Create sample'}
-        </button>
-        <Link to={initialParent ? `/samples/${initialParent.id}` : studyPath} className={textLink}>
-          Cancel
-        </Link>
-      </div>
-
-      {mutation.isError && (
-        <p role="alert" className={errorBox}>
-          {mutation.error.message}
-        </p>
-      )}
-    </form>
+    />
   )
 }
 
@@ -232,7 +133,7 @@ export default function NewSamplePage() {
           Could not load the study's subjects and samples. Please try again later.
         </p>
       ) : subjects.data && samples.data ? (
-        <SampleForm
+        <NewSampleForm
           projectCode={projectCode}
           studyCode={studyCode}
           subjects={subjects.data}

@@ -1,8 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router'
 
-import { api } from '../api/client'
-import { fetchSamples } from '../api/queries'
+import { fetchSample, fetchSamples } from '../api/queries'
 import type { components } from '../api/schema'
 import { Breadcrumbs } from '../components/Breadcrumbs'
 import { DetailList } from '../components/DetailList'
@@ -11,25 +10,12 @@ import { PageTitle } from '../components/PageTitle'
 import { SampleTable } from '../components/SampleTable'
 import { NewButton } from '../components/NewButton'
 import { SectionHeading } from '../components/SectionHeading'
+import { EditButton } from '../components/EditButton'
 import { formatDate } from '../format'
 import { sampleStatusLabel } from '../labels'
 import { errorBox, textLink } from '../styles'
 
 type Sample = components['schemas']['SampleRead']
-
-// An address that isn't a valid ID (422) is treated like an unknown one (404).
-async function fetchSample(sampleId: string) {
-  const { data, response } = await api.GET('/api/v1/samples/{sample_id}', {
-    params: { path: { sample_id: sampleId } },
-  })
-  if (response.status === 404 || response.status === 422) {
-    return null
-  }
-  if (!data) {
-    throw new Error('Could not load sample')
-  }
-  return data
-}
 
 function DerivedSamples({ sample }: { sample: Sample }) {
   const query = useQuery({
@@ -79,7 +65,10 @@ function SampleDetails({ sample }: { sample: Sample }) {
           { label: sample.name },
         ]}
       />
-      <PageTitle label="Sample">{sample.name}</PageTitle>
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        <PageTitle label="Sample">{sample.name}</PageTitle>
+        <EditButton to={`/samples/${sample.id}/edit`}>Edit sample</EditButton>
+      </div>
 
       <DetailList
         items={[
@@ -111,6 +100,10 @@ function SampleDetails({ sample }: { sample: Sample }) {
           ['Created', formatDate(sample.created_at)],
         ]}
       />
+
+      <p className="mt-6">
+        <EditButton to={`/samples/${sample.id}/edit`}>Edit sample</EditButton>
+      </p>
 
       <h2 className="mt-10 text-xl font-semibold">Characteristics</h2>
       <KeyValueList values={sample.characteristics} emptyText="No characteristics recorded." />
