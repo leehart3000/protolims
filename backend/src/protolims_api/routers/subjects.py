@@ -5,19 +5,40 @@ so links to a subject keep working even if its name is corrected.
 """
 
 import uuid
-from typing import Annotated
+from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, HTTPException, Query, status
-from sqlalchemy import select
+from sqlalchemy import ColumnElement, func, or_, select
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import InstrumentedAttribute
 
 from protolims_api.audit import record_event
 from protolims_api.db import SessionDep
 from protolims_api.models import Project, Study, Subject
 from protolims_api.routers.studies import get_study_or_404
+from protolims_api.schemas.common import Page
 from protolims_api.schemas.subject import SubjectCreate, SubjectFields, SubjectRead
 
 router = APIRouter(tags=["subjects"])
+
+SubjectSort = Literal[
+    "name",
+    "-name",
+    "subject_type",
+    "-subject_type",
+    "species",
+    "-species",
+    "created_at",
+    "-created_at",
+]
+
+# What each sort key orders by. A leading "-" reverses the order.
+SUBJECT_SORT_COLUMNS: dict[str, InstrumentedAttribute[Any]] = {
+    "name": Subject.name,
+    "subject_type": Subject.subject_type,
+    "species": Subject.species,
+    "created_at": Subject.created_at,
+}
 
 
 def subject_read(subject: Subject, project_code: str, study_code: str) -> SubjectRead:
@@ -70,19 +91,42 @@ async def list_subjects(
     project_code: str,
     study_code: str,
     session: SessionDep,
+    q: Annotated[
+        str | None,
+        Query(max_length=200, description="Search subject names and external IDs, ignoring case"),
+    ] = None,
+    sort: Annotated[
+        SubjectSort, Query(description="The column to sort by; a leading - reverses the order")
+    ] = "name",
     limit: Annotated[int, Query(ge=1, le=500)] = 50,
     offset: Annotated[int, Query(ge=0)] = 0,
-) -> list[SubjectRead]:
-    """List a study's subjects, ordered by name."""
+) -> Page[SubjectRead]:
+    """List a study's subjects a page at a time, with the total number that match."""
     study = await get_study_or_404(session, project_code, study_code)
+    conditions: list[ColumnElement[bool]] = [Subject.study_id == study.id]
+    if q:
+        conditions.append(
+            or_(
+                Subject.name.icontains(q, autoescape=True),
+                Subject.external_id.icontains(q, autoescape=True),
+            )
+        )
+    count_query = select(func.count()).select_from(Subject).where(*conditions)
+    total = (await session.execute(count_query)).scalar_one()
+
+    column = SUBJECT_SORT_COLUMNS[sort.removeprefix("-")]
+    order = column.desc() if sort.startswith("-") else column.asc()
     result = await session.scalars(
         select(Subject)
-        .where(Subject.study_id == study.id)
-        .order_by(Subject.name)
+        .where(*conditions)
+        .order_by(order.nulls_last(), Subject.name, Subject.id)
         .limit(limit)
         .offset(offset)
     )
-    return [subject_read(subject, project_code, study_code) for subject in result]
+    return Page[SubjectRead](
+        items=[subject_read(subject, project_code, study_code) for subject in result],
+        total=total,
+    )
 
 
 @router.get("/subjects/{subject_id}")

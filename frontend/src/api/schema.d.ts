@@ -121,7 +121,7 @@ export interface paths {
         };
         /**
          * List Subjects
-         * @description List a study's subjects, ordered by name.
+         * @description List a study's subjects a page at a time, with the total number that match.
          */
         get: operations["list_subjects_api_v1_projects__project_code__studies__study_code__subjects_get"];
         put?: never;
@@ -263,6 +263,13 @@ export interface components {
         Page_SampleRead_: {
             /** Items */
             items: components["schemas"]["SampleRead"][];
+            /** Total */
+            total: number;
+        };
+        /** Page[SubjectRead] */
+        Page_SubjectRead_: {
+            /** Items */
+            items: components["schemas"]["SubjectRead"][];
             /** Total */
             total: number;
         };
@@ -820,6 +827,10 @@ export interface operations {
     list_subjects_api_v1_projects__project_code__studies__study_code__subjects_get: {
         parameters: {
             query?: {
+                /** @description Search subject names and external IDs, ignoring case */
+                q?: string | null;
+                /** @description The column to sort by; a leading - reverses the order */
+                sort?: "name" | "-name" | "subject_type" | "-subject_type" | "species" | "-species" | "created_at" | "-created_at";
                 limit?: number;
                 offset?: number;
             };
@@ -838,7 +849,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SubjectRead"][];
+                    "application/json": components["schemas"]["Page_SubjectRead_"];
                 };
             };
             /** @description Validation Error */

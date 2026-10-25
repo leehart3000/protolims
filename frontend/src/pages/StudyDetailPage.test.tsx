@@ -100,7 +100,7 @@ function stubStudyApi(samplePage: (query: URLSearchParams) => { items: Sample[];
   const bodies: Record<string, unknown> = {
     [projectPath]: tcga,
     [studyPath]: rnaseq,
-    [subjectsPath]: [patient],
+    [subjectsPath]: { items: [patient], total: 1 },
   }
   vi.stubGlobal(
     'fetch',
@@ -131,7 +131,7 @@ describe('StudyDetailPage', () => {
     respondByPath({
       [projectPath]: Response.json(tcga),
       [studyPath]: Response.json(rnaseq),
-      [subjectsPath]: Response.json([patient]),
+      [subjectsPath]: Response.json({ items: [patient], total: 1 }),
       [samplesPath]: Response.json({ items: [tumour], total: 1 }),
     })
     renderPage()
@@ -198,7 +198,7 @@ describe('StudyDetailPage', () => {
     respondByPath({
       [projectPath]: Response.json(tcga),
       [studyPath]: Response.json({ ...rnaseq, description: null, design_factors: [] }),
-      [subjectsPath]: Response.json([]),
+      [subjectsPath]: Response.json({ items: [], total: 0 }),
       [samplesPath]: Response.json({ items: [], total: 0 }),
     })
     renderPage()
@@ -239,7 +239,7 @@ describe('StudyDetailPage', () => {
     respondByPath({
       [projectPath]: Response.json(tcga),
       [studyPath]: Response.json(rnaseq),
-      [subjectsPath]: Response.json([]),
+      [subjectsPath]: Response.json({ items: [], total: 0 }),
       [samplesPath]: Response.json({ detail: 'Internal error' }, { status: 500 }),
     })
     renderPage()

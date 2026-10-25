@@ -82,7 +82,7 @@ function stubApi({
         return Promise.resolve(Response.json(study))
       }
       if (path === `${studyPath}/subjects`) {
-        return Promise.resolve(Response.json([patient]))
+        return Promise.resolve(Response.json({ items: [patient], total: 1 }))
       }
       return Promise.resolve(samples())
     }),

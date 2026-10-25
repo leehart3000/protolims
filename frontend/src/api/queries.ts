@@ -62,5 +62,5 @@ export async function fetchSubjects(projectCode: string, studyCode: string) {
   if (!data) {
     throw new Error('Could not load subjects')
   }
-  return data
+  return data.items
 }

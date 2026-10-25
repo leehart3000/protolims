@@ -43,7 +43,7 @@ def test_names_may_contain_spaces(client: TestClient) -> None:
     subjects = create_study(client)
     payload = {"name": "Hs 578T", "subject_type": "cell_line"}
     assert client.post(subjects, json=payload).status_code == 201
-    assert [s["name"] for s in client.get(subjects).json()] == ["Hs 578T"]
+    assert [s["name"] for s in client.get(subjects).json()["items"]] == ["Hs 578T"]
 
 
 def test_invalid_names_are_rejected(client: TestClient) -> None:
@@ -95,7 +95,8 @@ def test_list_subjects_only_returns_that_studys_subjects(client: TestClient) -> 
     client.post(second, json={"name": "C", "subject_type": "patient"})
     response = client.get(first)
     assert response.status_code == 200
-    assert [s["name"] for s in response.json()] == ["A", "B"]
+    assert [s["name"] for s in response.json()["items"]] == ["A", "B"]
+    assert response.json()["total"] == 2
 
 
 def test_create_subject_records_audit_event(client: TestClient, database: Engine) -> None:
@@ -106,3 +107,54 @@ def test_create_subject_records_audit_event(client: TestClient, database: Engine
             text("SELECT entity_type FROM audit_event ORDER BY occurred_at, id")
         ).all()
     assert [row[0] for row in rows] == ["project", "study", "subject"]
+
+
+def add_subject(client: TestClient, subjects_url: str, name: str, **fields: object) -> None:
+    response = client.post(subjects_url, json={"name": name, "subject_type": "patient", **fields})
+    assert response.status_code == 201, response.json()
+
+
+def list_names(client: TestClient, subjects_url: str, **params: str | int) -> list[str]:
+    response = client.get(subjects_url, params=params)
+    assert response.status_code == 200, response.json()
+    return [s["name"] for s in response.json()["items"]]
+
+
+def test_list_subjects_sorts_by_a_chosen_column(client: TestClient) -> None:
+    subjects = create_study(client)
+    add_subject(client, subjects, "A", species="Mus musculus")
+    add_subject(client, subjects, "B", subject_type="cell_line", species="Homo sapiens")
+    add_subject(client, subjects, "C", subject_type="organism")
+
+    assert list_names(client, subjects) == ["A", "B", "C"]
+    assert list_names(client, subjects, sort="-name") == ["C", "B", "A"]
+    assert list_names(client, subjects, sort="subject_type") == ["B", "C", "A"]
+    assert list_names(client, subjects, sort="species") == ["B", "A", "C"]
+    assert list_names(client, subjects, sort="-species") == ["A", "B", "C"]
+
+
+def test_list_subjects_rejects_an_unknown_sort(client: TestClient) -> None:
+    subjects = create_study(client)
+    assert client.get(subjects, params={"sort": "colour"}).status_code == 422
+
+
+def test_list_subjects_searches_names_and_external_ids(client: TestClient) -> None:
+    subjects = create_study(client)
+    add_subject(client, subjects, "TCGA-A1-A0SB", external_id="0004d251")
+    add_subject(client, subjects, "Hs 578T", subject_type="cell_line", external_id="CVCL_0332")
+    add_subject(client, subjects, "50%_cells", subject_type="cell_line")
+
+    assert list_names(client, subjects, q="tcga") == ["TCGA-A1-A0SB"]
+    assert list_names(client, subjects, q="cvcl") == ["Hs 578T"]
+    assert list_names(client, subjects, q="%") == ["50%_cells"]
+    assert list_names(client, subjects, q="nothing") == []
+
+
+def test_list_subjects_pages_through_results_with_a_total(client: TestClient) -> None:
+    subjects = create_study(client)
+    for name in ["A", "B", "C", "D", "E"]:
+        add_subject(client, subjects, name)
+
+    body = client.get(subjects, params={"limit": 2, "offset": 2}).json()
+    assert [s["name"] for s in body["items"]] == ["C", "D"]
+    assert body["total"] == 5

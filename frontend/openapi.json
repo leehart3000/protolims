@@ -468,7 +468,7 @@
           "subjects"
         ],
         "summary": "List Subjects",
-        "description": "List a study's subjects, ordered by name.",
+        "description": "List a study's subjects a page at a time, with the total number that match.",
         "operationId": "list_subjects_api_v1_projects__project_code__studies__study_code__subjects_get",
         "parameters": [
           {
@@ -488,6 +488,47 @@
               "type": "string",
               "title": "Study Code"
             }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 200
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Search subject names and external IDs, ignoring case",
+              "title": "Q"
+            },
+            "description": "Search subject names and external IDs, ignoring case"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "name",
+                "-name",
+                "subject_type",
+                "-subject_type",
+                "species",
+                "-species",
+                "created_at",
+                "-created_at"
+              ],
+              "type": "string",
+              "description": "The column to sort by; a leading - reverses the order",
+              "default": "name",
+              "title": "Sort"
+            },
+            "description": "The column to sort by; a leading - reverses the order"
           },
           {
             "name": "limit",
@@ -519,11 +560,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/SubjectRead"
-                  },
-                  "title": "Response List Subjects Api V1 Projects  Project Code  Studies  Study Code  Subjects Get"
+                  "$ref": "#/components/schemas/Page_SubjectRead_"
                 }
               }
             }
@@ -942,6 +979,27 @@
           "total"
         ],
         "title": "Page[SampleRead]"
+      },
+      "Page_SubjectRead_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SubjectRead"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total"
+        ],
+        "title": "Page[SubjectRead]"
       },
       "ProjectCreate": {
         "properties": {
