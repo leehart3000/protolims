@@ -69,4 +69,8 @@
   [role='button']:not(:disabled) {
     cursor: pointer;
   }
+  /* The "x" that Chrome and Safari draw to clear a search box. */
+  input[type='search']::-webkit-search-cancel-button {
+    cursor: pointer;
+  }
 }

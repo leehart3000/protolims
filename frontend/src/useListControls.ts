@@ -20,11 +20,9 @@ export function useListControls<S extends string>(initialSort: S) {
       setSearch(value)
       setOffset(0)
     },
-    changeSort: (next: SortOf<S>) => {
+    changeSort: (next: S) => {
       setSort(next)
       setOffset(0)
     },
   }
 }
-
-type SortOf<S extends string> = S
