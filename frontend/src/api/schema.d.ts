@@ -197,7 +197,11 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        patch?: never;
+        /**
+         * Update Sample
+         * @description Change some of a sample's details. Only the fields sent are changed; null clears one.
+         */
+        patch: operations["update_sample_api_v1_samples__sample_id__patch"];
         trace?: never;
     };
     "/health": {
@@ -415,6 +419,36 @@ export interface components {
             subject_name: string | null;
             /** Parent Sample Name */
             parent_sample_name: string | null;
+        };
+        /**
+         * SampleUpdate
+         * @description Changes to a sample. Only the fields sent are changed; sending null clears a field.
+         *
+         *     The study can't be changed: a sample stays in the study it was created in.
+         */
+        SampleUpdate: {
+            /** Name */
+            name?: string | null;
+            /** External Id */
+            external_id?: string | null;
+            /** Subject Id */
+            subject_id?: string | null;
+            /** Parent Sample Id */
+            parent_sample_id?: string | null;
+            /** Material Type */
+            material_type?: string | null;
+            /** Status */
+            status?: ("registered" | "received" | "in_storage" | "in_use" | "consumed" | "disposed") | null;
+            /** Collected At */
+            collected_at?: string | null;
+            /** Characteristics */
+            characteristics?: {
+                [key: string]: unknown;
+            } | null;
+            /** Factor Values */
+            factor_values?: {
+                [key: string]: unknown;
+            } | null;
         };
         /**
          * StudyCreate
@@ -1019,6 +1053,41 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SampleRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_sample_api_v1_samples__sample_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                sample_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SampleUpdate"];
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {

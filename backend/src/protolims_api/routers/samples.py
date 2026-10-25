@@ -6,6 +6,7 @@ studies are made only by explicit links.
 """
 
 import uuid
+from datetime import UTC, datetime
 from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, HTTPException, Query, status
@@ -19,7 +20,7 @@ from protolims_api.db import SessionDep
 from protolims_api.models import Project, Sample, Study, Subject
 from protolims_api.routers.studies import get_study_or_404
 from protolims_api.schemas.common import Page
-from protolims_api.schemas.sample import SampleCreate, SampleFields, SampleRead
+from protolims_api.schemas.sample import SampleCreate, SampleFields, SampleRead, SampleUpdate
 
 router = APIRouter(tags=["samples"])
 
@@ -74,28 +75,43 @@ def sample_read(
 
 
 async def linked_names(
-    session: AsyncSession, payload: SampleCreate, study: Study
+    session: AsyncSession,
+    study_id: uuid.UUID,
+    subject_id: uuid.UUID | None,
+    parent_sample_id: uuid.UUID | None,
 ) -> tuple[str | None, str | None]:
     """Check the subject and parent sample (if given) are in this study; return their names."""
     subject_name = None
-    if payload.subject_id is not None:
-        subject = await session.get(Subject, payload.subject_id)
-        if subject is None or subject.study_id != study.id:
+    if subject_id is not None:
+        subject = await session.get(Subject, subject_id)
+        if subject is None or subject.study_id != study_id:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
                 detail="The subject must be an existing subject in the same study",
             )
         subject_name = subject.name
     parent_name = None
-    if payload.parent_sample_id is not None:
-        parent = await session.get(Sample, payload.parent_sample_id)
-        if parent is None or parent.study_id != study.id:
+    if parent_sample_id is not None:
+        parent = await session.get(Sample, parent_sample_id)
+        if parent is None or parent.study_id != study_id:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
                 detail="The parent sample must be an existing sample in the same study",
             )
         parent_name = parent.name
     return subject_name, parent_name
+
+
+async def makes_a_loop(
+    session: AsyncSession, sample_id: uuid.UUID, new_parent_id: uuid.UUID
+) -> bool:
+    """Whether deriving a sample from new_parent_id would make it its own ancestor."""
+    current: uuid.UUID | None = new_parent_id
+    while current is not None:
+        if current == sample_id:
+            return True
+        current = await session.scalar(select(Sample.parent_sample_id).where(Sample.id == current))
+    return False
 
 
 @router.post(
@@ -107,7 +123,9 @@ async def create_sample(
 ) -> SampleRead:
     """Create a sample within a study. Sample names are unique within their study."""
     study = await get_study_or_404(session, project_code, study_code)
-    subject_name, parent_name = await linked_names(session, payload, study)
+    subject_name, parent_name = await linked_names(
+        session, study.id, payload.subject_id, payload.parent_sample_id
+    )
     sample = Sample(study_id=study.id, **payload.model_dump())
     session.add(sample)
     try:
@@ -202,3 +220,59 @@ async def get_sample(sample_id: uuid.UUID, session: SessionDep) -> SampleRead:
         )
     sample, project_code, study_code, subject_name, parent_name = row
     return sample_read(sample, project_code, study_code, subject_name, parent_name)
+
+
+@router.patch("/samples/{sample_id}")
+async def update_sample(
+    sample_id: uuid.UUID, payload: SampleUpdate, session: SessionDep
+) -> SampleRead:
+    """Change some of a sample's details. Only the fields sent are changed; null clears one."""
+    sample = await session.get(Sample, sample_id)
+    if sample is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Sample {sample_id} not found",
+        )
+
+    requested = payload.model_dump(exclude_unset=True)
+    changed = {
+        field: value for field, value in requested.items() if getattr(sample, field) != value
+    }
+    if changed:
+        await linked_names(
+            session, sample.study_id, changed.get("subject_id"), changed.get("parent_sample_id")
+        )
+        new_parent = changed.get("parent_sample_id")
+        if new_parent is not None and await makes_a_loop(session, sample.id, new_parent):
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail="A sample can't be derived from itself or from a sample derived from it",
+            )
+
+        before = SampleFields.model_validate(sample).model_dump(mode="json")
+        for field, value in changed.items():
+            setattr(sample, field, value)
+        sample.updated_at = datetime.now(UTC)
+        try:
+            await session.flush()
+        except IntegrityError as exc:
+            await session.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"Sample {payload.name!r} already exists in this study",
+            ) from exc
+        await record_event(
+            session,
+            action="update",
+            entity_type="sample",
+            entity_id=sample.id,
+            changes={
+                "before": {field: before[field] for field in changed},
+                "after": payload.model_dump(mode="json", include=set(changed)),
+            },
+        )
+        await session.commit()
+
+    row = (await session.execute(SAMPLE_QUERY.where(Sample.id == sample_id))).one()
+    updated, project_code, study_code, subject_name, parent_name = row
+    return sample_read(updated, project_code, study_code, subject_name, parent_name)

@@ -1,5 +1,7 @@
 """Tests for the sample endpoints."""
 
+from datetime import datetime
+
 from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
 
@@ -223,3 +225,105 @@ def test_list_samples_can_filter_by_subject(client: TestClient) -> None:
 
     assert list_names(client, study, subject=first) == ["S1"]
     assert list_names(client, study, subject=second) == ["S2"]
+
+
+def test_update_sample_changes_only_the_fields_sent(client: TestClient, database: Engine) -> None:
+    study = create_study(client)
+    subject_id = create_subject(client, study)
+    sample_id = create_sample(client, study, "S1", subject_id=subject_id)
+
+    response = client.patch(
+        f"{API}/samples/{sample_id}", json={"status": "in_storage", "material_type": "blood"}
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert (body["name"], body["status"], body["material_type"]) == ("S1", "in_storage", "blood")
+    assert body["subject_name"] == "Patient-01"
+    assert datetime.fromisoformat(body["updated_at"]) > datetime.fromisoformat(body["created_at"])
+
+    with database.connect() as conn:
+        changes = conn.execute(
+            text("SELECT changes FROM audit_event WHERE action = 'update'")
+        ).scalar_one()
+    assert changes == {
+        "before": {"status": "registered", "material_type": "tissue"},
+        "after": {"status": "in_storage", "material_type": "blood"},
+    }
+
+
+def test_update_sample_with_no_real_changes_records_nothing(
+    client: TestClient, database: Engine
+) -> None:
+    study = create_study(client)
+    sample_id = create_sample(client, study, "S1")
+
+    assert client.patch(f"{API}/samples/{sample_id}", json={"name": "S1"}).status_code == 200
+
+    with database.connect() as conn:
+        updates = conn.execute(
+            text("SELECT count(*) FROM audit_event WHERE action = 'update'")
+        ).scalar_one()
+    assert updates == 0
+
+
+def test_update_sample_can_clear_optional_fields_but_not_required_ones(
+    client: TestClient,
+) -> None:
+    study = create_study(client)
+    subject_id = create_subject(client, study)
+    sample_id = create_sample(client, study, "S1", subject_id=subject_id, external_id="X-1")
+
+    response = client.patch(
+        f"{API}/samples/{sample_id}", json={"subject_id": None, "external_id": None}
+    )
+    assert response.status_code == 200
+    assert (response.json()["subject_name"], response.json()["external_id"]) == (None, None)
+
+    for fields in [
+        {"name": None},
+        {"material_type": None},
+        {"status": None},
+        {"study_id": "00000000-0000-7000-8000-000000000000"},
+    ]:
+        assert client.patch(f"{API}/samples/{sample_id}", json=fields).status_code == 422, fields
+
+
+def test_update_sample_rejects_a_name_used_in_the_study(client: TestClient) -> None:
+    study = create_study(client)
+    create_sample(client, study, "S1")
+    second = create_sample(client, study, "S2")
+
+    response = client.patch(f"{API}/samples/{second}", json={"name": "S1"})
+    assert response.status_code == 409
+
+
+def test_update_sample_checks_links_are_in_the_same_study(client: TestClient) -> None:
+    first = create_study(client, "P1", "S1")
+    second = create_study(client, "P1", "S2")
+    sample_id = create_sample(client, first, "X1")
+    other_subject = create_subject(client, second)
+    other_sample = create_sample(client, second, "Other")
+
+    for fields in [{"subject_id": other_subject}, {"parent_sample_id": other_sample}]:
+        assert client.patch(f"{API}/samples/{sample_id}", json=fields).status_code == 422, fields
+
+
+def test_update_sample_cannot_make_a_loop(client: TestClient) -> None:
+    study = create_study(client)
+    a = create_sample(client, study, "A")
+    b = create_sample(client, study, "B", parent_sample_id=a)
+    c = create_sample(client, study, "C", parent_sample_id=b)
+
+    for parent in [a, c]:
+        response = client.patch(f"{API}/samples/{a}", json={"parent_sample_id": parent})
+        assert response.status_code == 422, parent
+        assert "derived" in response.json()["detail"]
+
+    response = client.patch(f"{API}/samples/{c}", json={"parent_sample_id": a})
+    assert response.status_code == 200
+    assert response.json()["parent_sample_name"] == "A"
+
+
+def test_update_unknown_sample_returns_404(client: TestClient) -> None:
+    unknown = f"{API}/samples/00000000-0000-7000-8000-000000000000"
+    assert client.patch(unknown, json={"status": "in_use"}).status_code == 404
