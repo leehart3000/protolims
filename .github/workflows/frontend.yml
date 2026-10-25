@@ -101,3 +101,20 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: pnpm wrangler deploy --env=""
+
+      - name: Smoke test
+        env:
+          CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
+          CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
+        run: |
+          for path in / /api/v1/projects; do
+            status="$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' \
+              --header "CF-Access-Client-Id: $CF_ACCESS_CLIENT_ID" \
+              --header "CF-Access-Client-Secret: $CF_ACCESS_CLIENT_SECRET" \
+              "https://staging.protolims.org$path")"
+            echo "$path: $status"
+            if [ "$status" != 200 ]; then
+              echo "::error::Expected 200 from $path, got $status"
+              exit 1
+            fi
+          done
