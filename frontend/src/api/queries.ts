@@ -39,7 +39,7 @@ export async function fetchSamples(projectCode: string, studyCode: string, paren
   if (!data) {
     throw new Error('Could not load samples')
   }
-  return data
+  return data.items
 }
 
 export async function fetchSubjects(projectCode: string, studyCode: string) {

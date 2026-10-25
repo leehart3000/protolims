@@ -66,7 +66,7 @@ const studyPath = '/api/v1/projects/TCGA-BRCA/studies/RNASEQ'
 // GET requests load the study and its subjects and samples; a POST creates the sample.
 function stubApi({
   create = () => Response.json(created, { status: 201 }),
-  samples = () => Response.json([tumour]),
+  samples = () => Response.json({ items: [tumour], total: 1 }),
 }: {
   create?: (request: Request) => Response | Promise<Response>
   samples?: () => Response

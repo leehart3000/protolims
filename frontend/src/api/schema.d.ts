@@ -165,7 +165,7 @@ export interface paths {
         };
         /**
          * List Samples
-         * @description List a study's samples, ordered by name.
+         * @description List a study's samples a page at a time, with the total number that match.
          */
         get: operations["list_samples_api_v1_projects__project_code__studies__study_code__samples_get"];
         put?: never;
@@ -258,6 +258,13 @@ export interface components {
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /** Page[SampleRead] */
+        Page_SampleRead_: {
+            /** Items */
+            items: components["schemas"]["SampleRead"][];
+            /** Total */
+            total: number;
         };
         /**
          * ProjectCreate
@@ -917,6 +924,10 @@ export interface operations {
             query?: {
                 /** @description Only list samples derived from this sample */
                 parent?: string | null;
+                /** @description Search sample names and external IDs, ignoring case */
+                q?: string | null;
+                /** @description The column to sort by; a leading - reverses the order */
+                sort?: "name" | "-name" | "material_type" | "-material_type" | "subject" | "-subject" | "status" | "-status" | "created_at" | "-created_at";
                 limit?: number;
                 offset?: number;
             };
@@ -935,7 +946,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SampleRead"][];
+                    "application/json": components["schemas"]["Page_SampleRead_"];
                 };
             };
             /** @description Validation Error */

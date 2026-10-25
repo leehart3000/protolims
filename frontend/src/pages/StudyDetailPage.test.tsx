@@ -108,7 +108,7 @@ describe('StudyDetailPage', () => {
       [projectPath]: Response.json(tcga),
       [studyPath]: Response.json(rnaseq),
       [subjectsPath]: Response.json([patient]),
-      [samplesPath]: Response.json([tumour]),
+      [samplesPath]: Response.json({ items: [tumour], total: 1 }),
     })
     renderPage()
 
@@ -175,7 +175,7 @@ describe('StudyDetailPage', () => {
       [projectPath]: Response.json(tcga),
       [studyPath]: Response.json({ ...rnaseq, description: null, design_factors: [] }),
       [subjectsPath]: Response.json([]),
-      [samplesPath]: Response.json([]),
+      [samplesPath]: Response.json({ items: [], total: 0 }),
     })
     renderPage()
 
@@ -203,7 +203,7 @@ describe('StudyDetailPage', () => {
       [projectPath]: Response.json(tcga),
       [studyPath]: Response.json(rnaseq),
       [subjectsPath]: Response.json({ detail: 'Internal error' }, { status: 500 }),
-      [samplesPath]: Response.json([]),
+      [samplesPath]: Response.json({ items: [], total: 0 }),
     })
     renderPage()
 

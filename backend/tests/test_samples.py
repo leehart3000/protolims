@@ -133,10 +133,12 @@ def test_list_samples_only_returns_that_studys_samples(client: TestClient) -> No
     create_sample(client, second, "C")
     response = client.get(f"{first}/samples")
     assert response.status_code == 200
-    assert [(s["name"], s["subject_name"]) for s in response.json()] == [
+    body = response.json()
+    assert [(s["name"], s["subject_name"]) for s in body["items"]] == [
         ("A", None),
         ("B", "Patient-01"),
     ]
+    assert body["total"] == 2
 
 
 def test_create_sample_records_audit_event(client: TestClient, database: Engine) -> None:
@@ -156,4 +158,56 @@ def test_list_samples_can_filter_by_parent(client: TestClient) -> None:
     create_sample(client, study, "S2")
     response = client.get(f"{study}/samples", params={"parent": parent_id})
     assert response.status_code == 200
-    assert [s["name"] for s in response.json()] == ["S1-RNA"]
+    assert [s["name"] for s in response.json()["items"]] == ["S1-RNA"]
+
+
+def list_names(client: TestClient, study_url: str, **params: str | int) -> list[str]:
+    response = client.get(f"{study_url}/samples", params=params)
+    assert response.status_code == 200, response.json()
+    return [s["name"] for s in response.json()["items"]]
+
+
+def test_list_samples_sorts_by_a_chosen_column(client: TestClient) -> None:
+    study = create_study(client)
+    subject_id = create_subject(client, study)
+    create_sample(client, study, "A", material_type="RNA", status="registered")
+    create_sample(client, study, "B", material_type="DNA", subject_id=subject_id, status="in_use")
+    create_sample(client, study, "C", material_type="tissue", status="consumed")
+
+    assert list_names(client, study) == ["A", "B", "C"]
+    assert list_names(client, study, sort="-name") == ["C", "B", "A"]
+    assert list_names(client, study, sort="material_type") == ["B", "A", "C"]
+    assert list_names(client, study, sort="status") == ["C", "B", "A"]
+    assert list_names(client, study, sort="subject") == ["B", "A", "C"]
+    assert list_names(client, study, sort="-subject") == ["B", "A", "C"]
+
+
+def test_list_samples_rejects_an_unknown_sort(client: TestClient) -> None:
+    study = create_study(client)
+    assert client.get(f"{study}/samples", params={"sort": "colour"}).status_code == 422
+
+
+def test_list_samples_searches_names_and_external_ids(client: TestClient) -> None:
+    study = create_study(client)
+    create_sample(client, study, "Tumour-01")
+    create_sample(client, study, "Normal-01", external_id="GDC-TUM-99")
+    create_sample(client, study, "100%_pure")
+
+    assert list_names(client, study, q="tum") == ["Normal-01", "Tumour-01"]
+    assert list_names(client, study, q="%") == ["100%_pure"]
+    assert list_names(client, study, q="_") == ["100%_pure"]
+    assert list_names(client, study, q="nothing") == []
+
+
+def test_list_samples_pages_through_results_with_a_total(client: TestClient) -> None:
+    study = create_study(client)
+    for name in ["A", "B", "C", "D", "E"]:
+        create_sample(client, study, name)
+
+    body = client.get(f"{study}/samples", params={"limit": 2, "offset": 2}).json()
+    assert [s["name"] for s in body["items"]] == ["C", "D"]
+    assert body["total"] == 5
+
+    body = client.get(f"{study}/samples", params={"q": "a", "limit": 1}).json()
+    assert [s["name"] for s in body["items"]] == ["A"]
+    assert body["total"] == 1

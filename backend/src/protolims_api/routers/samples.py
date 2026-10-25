@@ -6,18 +6,19 @@ studies are made only by explicit links.
 """
 
 import uuid
-from typing import Annotated
+from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, HTTPException, Query, status
-from sqlalchemy import select
+from sqlalchemy import ColumnElement, func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import aliased
+from sqlalchemy.orm import InstrumentedAttribute, aliased
 
 from protolims_api.audit import record_event
 from protolims_api.db import SessionDep
 from protolims_api.models import Project, Sample, Study, Subject
 from protolims_api.routers.studies import get_study_or_404
+from protolims_api.schemas.common import Page
 from protolims_api.schemas.sample import SampleCreate, SampleFields, SampleRead
 
 router = APIRouter(tags=["samples"])
@@ -32,6 +33,28 @@ SAMPLE_QUERY = (
     .outerjoin(Subject, Sample.subject_id == Subject.id)
     .outerjoin(Parent, Sample.parent_sample_id == Parent.id)
 )
+
+SampleSort = Literal[
+    "name",
+    "-name",
+    "material_type",
+    "-material_type",
+    "subject",
+    "-subject",
+    "status",
+    "-status",
+    "created_at",
+    "-created_at",
+]
+
+# What each sort key orders by. A leading "-" reverses the order.
+SAMPLE_SORT_COLUMNS: dict[str, InstrumentedAttribute[Any]] = {
+    "name": Sample.name,
+    "material_type": Sample.material_type,
+    "subject": Subject.name,
+    "status": Sample.status,
+    "created_at": Sample.created_at,
+}
 
 
 def sample_read(
@@ -121,19 +144,46 @@ async def list_samples(
     parent: Annotated[
         uuid.UUID | None, Query(description="Only list samples derived from this sample")
     ] = None,
+    q: Annotated[
+        str | None,
+        Query(max_length=200, description="Search sample names and external IDs, ignoring case"),
+    ] = None,
+    sort: Annotated[
+        SampleSort, Query(description="The column to sort by; a leading - reverses the order")
+    ] = "name",
     limit: Annotated[int, Query(ge=1, le=500)] = 50,
     offset: Annotated[int, Query(ge=0)] = 0,
-) -> list[SampleRead]:
-    """List a study's samples, ordered by name."""
+) -> Page[SampleRead]:
+    """List a study's samples a page at a time, with the total number that match."""
     study = await get_study_or_404(session, project_code, study_code)
-    query = SAMPLE_QUERY.where(Sample.study_id == study.id)
+    conditions: list[ColumnElement[bool]] = [Sample.study_id == study.id]
     if parent is not None:
-        query = query.where(Sample.parent_sample_id == parent)
-    result = await session.execute(query.order_by(Sample.name).limit(limit).offset(offset))
-    return [
-        sample_read(sample, row_project_code, row_study_code, subject_name, parent_name)
-        for sample, row_project_code, row_study_code, subject_name, parent_name in result
-    ]
+        conditions.append(Sample.parent_sample_id == parent)
+    if q:
+        conditions.append(
+            or_(
+                Sample.name.icontains(q, autoescape=True),
+                Sample.external_id.icontains(q, autoescape=True),
+            )
+        )
+    count_query = select(func.count()).select_from(Sample).where(*conditions)
+    total = (await session.execute(count_query)).scalar_one()
+
+    column = SAMPLE_SORT_COLUMNS[sort.removeprefix("-")]
+    order = column.desc() if sort.startswith("-") else column.asc()
+    result = await session.execute(
+        SAMPLE_QUERY.where(*conditions)
+        .order_by(order.nulls_last(), Sample.name, Sample.id)
+        .limit(limit)
+        .offset(offset)
+    )
+    return Page[SampleRead](
+        items=[
+            sample_read(sample, row_project_code, row_study_code, subject_name, parent_name)
+            for sample, row_project_code, row_study_code, subject_name, parent_name in result
+        ],
+        total=total,
+    )
 
 
 @router.get("/samples/{sample_id}")

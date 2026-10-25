@@ -73,7 +73,7 @@ describe('SampleDetailPage', () => {
   it('shows the sample, its subject, its data and what was derived from it', async () => {
     respondByPath({
       [`/api/v1/samples/${tumour.id}`]: Response.json(tumour),
-      [samplesPath]: Response.json([rna]),
+      [samplesPath]: Response.json({ items: [rna], total: 1 }),
     })
     renderPage(tumour.id)
 
@@ -113,7 +113,7 @@ describe('SampleDetailPage', () => {
   it('links a derived sample to its parent and leaves out missing details', async () => {
     respondByPath({
       [`/api/v1/samples/${rna.id}`]: Response.json(rna),
-      [samplesPath]: Response.json([]),
+      [samplesPath]: Response.json({ items: [], total: 0 }),
     })
     renderPage(rna.id)
 
