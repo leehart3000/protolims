@@ -1,13 +1,13 @@
 // @vitest-environment node
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import worker, { isApiPath } from './index'
+import worker, { isApiPath, PROXY_KEY_HEADER } from './index'
 
 const API_ORIGIN = 'https://api.example.run.app'
 
-function makeEnv() {
+function makeEnv(secrets: Record<string, string> = {}) {
   const assetsFetch = vi.fn(() => Promise.resolve(new Response('app')))
-  const env = { API_ORIGIN, ASSETS: { fetch: assetsFetch } } as unknown as Env
+  const env = { API_ORIGIN, ASSETS: { fetch: assetsFetch }, ...secrets } as unknown as Env
   return { env, assetsFetch }
 }
 
@@ -57,5 +57,18 @@ describe('worker', () => {
     expect(sent.method).toBe('DELETE')
     expect(sent.headers.get('X-Forwarded-Host')).toBe('protolims.org')
     expect(sent.headers.get('X-Forwarded-Proto')).toBe('https')
+    expect(sent.headers.get(PROXY_KEY_HEADER)).toBeNull()
+  })
+
+  it('adds the proxy key to API requests when one is set', async () => {
+    const fetchMock = vi.fn<(request: Request) => Promise<Response>>(() =>
+      Promise.resolve(new Response('api')),
+    )
+    vi.stubGlobal('fetch', fetchMock)
+    const { env } = makeEnv({ PROXY_KEY: 'secret' })
+
+    await worker.fetch(new Request('https://protolims.org/api/v1/projects'), env)
+
+    expect(fetchMock.mock.calls[0][0].headers.get(PROXY_KEY_HEADER)).toBe('secret')
   })
 })

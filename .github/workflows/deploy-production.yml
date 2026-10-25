@@ -64,7 +64,7 @@ jobs:
             --image="$IMAGE" \
             --region="$REGION" \
             --service-account=protolims-api-production@protolims.iam.gserviceaccount.com \
-            --set-secrets=PROTOLIMS_DATABASE_URL=production-database-url:latest \
+            --set-secrets=PROTOLIMS_DATABASE_URL=production-database-url:latest,PROTOLIMS_PROXY_KEY=production-proxy-key:latest \
             --port=8080 \
             --cpu=1 \
             --memory=512Mi \
@@ -118,6 +118,18 @@ jobs:
         run: pnpm wrangler deploy --env production
 
       - name: Smoke test
+        env:
+          CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
+          CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
         run: |
-          curl --fail --silent --show-error --output /dev/null https://protolims.org/
-          curl --fail --silent --show-error https://protolims.org/api/v1/projects
+          for path in / /api/v1/projects; do
+            status="$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' \
+              --header "CF-Access-Client-Id: $CF_ACCESS_CLIENT_ID" \
+              --header "CF-Access-Client-Secret: $CF_ACCESS_CLIENT_SECRET" \
+              "https://protolims.org$path")"
+            echo "$path: $status"
+            if [ "$status" != 200 ]; then
+              echo "::error::Expected 200 from $path, got $status"
+              exit 1
+            fi
+          done

@@ -136,7 +136,7 @@ jobs:
             --image="$IMAGE" \
             --region="$REGION" \
             --service-account=protolims-api-staging@protolims.iam.gserviceaccount.com \
-            --set-secrets=PROTOLIMS_DATABASE_URL=staging-database-url:latest \
+            --set-secrets=PROTOLIMS_DATABASE_URL=staging-database-url:latest,PROTOLIMS_PROXY_KEY=staging-proxy-key:latest \
             --port=8080 \
             --cpu=1 \
             --memory=512Mi \
