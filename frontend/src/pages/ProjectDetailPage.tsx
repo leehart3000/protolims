@@ -7,10 +7,10 @@ import type { components } from '../api/schema'
 import { DetailList } from '../components/DetailList'
 import { PageTitle } from '../components/PageTitle'
 import { NewStudyButton } from '../components/NewStudyButton'
+import { RowArrow } from '../components/RowArrow'
 import { formatDate } from '../format'
 import {
   errorBox,
-  rowChevron,
   rowLink,
   table,
   tableCell,
@@ -83,9 +83,7 @@ function StudyList({ projectCode }: { projectCode: string }) {
                   {study.title}
                 </Link>
               </td>
-              <td className={`${tableCell} ${rowChevron}`} aria-hidden="true">
-                ›
-              </td>
+              <RowArrow />
             </tr>
           ))}
         </tbody>

@@ -1,11 +1,9 @@
-import { RectangleEllipsis } from 'lucide-react'
 import { Link } from 'react-router'
 
 import type { SampleSort } from '../api/queries'
 import type { components } from '../api/schema'
 import { sampleStatusLabel } from '../labels'
 import {
-  rowChevron,
   rowLink,
   table,
   tableCell,
@@ -15,6 +13,7 @@ import {
   tableWrapper,
 } from '../styles'
 import { SortHeader } from './SortHeader'
+import { RowArrow } from './RowArrow'
 
 type Sample = components['schemas']['SampleRead']
 type SampleColumn = Exclude<SampleSort, `-${string}`>
@@ -90,9 +89,7 @@ export function SampleTable({
               <td className={`${tableCell} hidden whitespace-nowrap sm:table-cell`}>
                 {sampleStatusLabel(sample.status)}
               </td>
-              <td className={`${tableCell} ${rowChevron}`} aria-hidden="true">
-                <RectangleEllipsis className="size-5" />
-              </td>
+              <RowArrow />
             </tr>
           ))}
         </tbody>

@@ -75,15 +75,19 @@ All three fonts are under the SIL Open Font License.
 
 ## Icons
 
-No icons are used yet. `NewButton` and `SectionHeading` accept an optional
-`icon`, any icon from [Lucide](https://lucide.dev) (ISC licence), so they can
-be added later. If they are:
+Icons come from [Lucide](https://lucide.dev) (ISC licence), in its default line
+style. They mark **actions**, not kinds of record: a picture can't cover every
+kind of subject or sample, but it can say "new", "edit" or "open".
 
-- each kind of record has one icon, used wherever that kind appears
-- icons are 16 px on buttons and 20 px beside headings
-- they're the same colour as their text
-- they always appear with words, never on their own
+| Action | Icon | Where |
+| --- | --- | --- |
+| Create | `SquarePlus` | New … buttons (`NewButton`), Create … buttons |
+| Edit | `SquarePen` | Edit … buttons (`EditButton`) |
+| Save | `Save` | Save changes |
+| Open | `SquareArrowRight` | The end of each clickable table row (`RowArrow`) |
 
-Candidates tried and set aside: `UserRound` and `Fingerprint` (too
-human-centred for subjects), and `TestTube`, `TestTubeDiagonal` (unfortunate
-shape) and `TestTubes` (plural) for samples.
+Icons are 16 px on buttons and 20 px in table rows, in the same colour as their
+text, and on buttons they always appear with words, never on their own. They're
+hidden from screen readers, because the words already say what the button does.
+
+`SectionHeading` can also take an icon, but headings don't use one yet.

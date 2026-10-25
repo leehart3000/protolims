@@ -139,6 +139,7 @@ function EditSample({ sample }: { sample: Sample }) {
         <SampleForm
           subjects={subjects.data}
           samples={possibleParents(sample, samples.data)}
+          parentHint="This sample and the samples derived from it aren't listed, as a sample can't be derived from itself."
           initial={initial}
           submitLabel="Save changes"
           submitIcon={Save}

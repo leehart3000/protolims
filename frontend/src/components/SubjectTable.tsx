@@ -1,11 +1,9 @@
-import { RectangleEllipsis } from 'lucide-react'
 import { Link } from 'react-router'
 
 import type { SubjectSort } from '../api/queries'
 import type { components } from '../api/schema'
 import { subjectTypeLabel } from '../labels'
 import {
-  rowChevron,
   rowLink,
   table,
   tableCell,
@@ -15,6 +13,7 @@ import {
   tableWrapper,
 } from '../styles'
 import { SortHeader } from './SortHeader'
+import { RowArrow } from './RowArrow'
 
 type Subject = components['schemas']['SubjectRead']
 type SubjectColumn = Exclude<SubjectSort, `-${string}`>
@@ -74,9 +73,7 @@ export function SubjectTable({
               <td className={`${tableCell} hidden text-muted italic sm:table-cell`}>
                 {subject.species}
               </td>
-              <td className={`${tableCell} ${rowChevron}`} aria-hidden="true">
-                <RectangleEllipsis className="size-5" />
-              </td>
+              <RowArrow />
             </tr>
           ))}
         </tbody>

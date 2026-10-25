@@ -136,6 +136,10 @@ describe('EditSamplePage', () => {
       expect(parent.queryByRole('option', { name: excluded })).not.toBeInTheDocument()
     }
 
+    expect(screen.getByLabelText(/derived from/i)).toHaveAccessibleDescription(
+      /aren't listed, as a sample can't be derived from itself/,
+    )
+
     expect(screen.getByRole('link', { name: 'Cancel' })).toHaveAttribute(
       'href',
       `/samples/${tumour.id}`,

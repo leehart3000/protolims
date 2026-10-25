@@ -1,3 +1,4 @@
+import { SquarePlus } from 'lucide-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate, useParams } from 'react-router'
 
@@ -109,7 +110,12 @@ export default function NewStudyPage() {
         <TextAreaField label="Description" name="description" rows={4} optional />
 
         <div className="flex items-center gap-4 pt-2">
-          <button type="submit" disabled={mutation.isPending} className={primaryButton}>
+          <button
+            type="submit"
+            disabled={mutation.isPending}
+            className={`${primaryButton} inline-flex items-center gap-2`}
+          >
+            <SquarePlus aria-hidden="true" className="size-4 shrink-0" />
             {mutation.isPending ? 'Creating…' : 'Create study'}
           </button>
           <Link to={projectPath} className={textLink}>

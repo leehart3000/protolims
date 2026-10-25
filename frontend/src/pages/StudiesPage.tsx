@@ -7,9 +7,9 @@ import { Breadcrumbs } from '../components/Breadcrumbs'
 import { DetailList } from '../components/DetailList'
 import { NewStudyButton } from '../components/NewStudyButton'
 import { PageTitle } from '../components/PageTitle'
+import { RowArrow } from '../components/RowArrow'
 import {
   errorBox,
-  rowChevron,
   rowLink,
   table,
   tableCell,
@@ -122,9 +122,7 @@ function StudyList({ projectCode }: { projectCode: string | null }) {
               >
                 {study.project_code}
               </td>
-              <td className={`${tableCell} ${rowChevron}`} aria-hidden="true">
-                ›
-              </td>
+              <RowArrow />
             </tr>
           ))}
         </tbody>

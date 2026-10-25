@@ -89,17 +89,32 @@ export function SelectField({
   name,
   options,
   optional,
+  hint,
   ...selectProps
 }: {
   label: string
   name: string
   options: { value: string; label: string }[]
   optional?: boolean
+  hint?: string
 } & SelectHTMLAttributes<HTMLSelectElement>) {
+  const hintId = `${name}-hint`
+
   return (
     <div>
       <FieldLabel htmlFor={name} label={label} optional={optional} />
-      <select id={name} name={name} className={`${inputClass} border-line`} {...selectProps}>
+      {hint && (
+        <p id={hintId} className="mt-1 text-sm text-muted">
+          {hint}
+        </p>
+      )}
+      <select
+        id={name}
+        name={name}
+        aria-describedby={hint ? hintId : undefined}
+        className={`${inputClass} border-line`}
+        {...selectProps}
+      >
         <option value="" disabled={!optional}>
           {optional ? 'None' : 'Choose…'}
         </option>

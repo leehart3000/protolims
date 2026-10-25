@@ -18,6 +18,7 @@ const materialSuggestions = ['tissue', 'blood', 'plasma', 'serum', 'cells', 'DNA
 export function SampleForm({
   subjects,
   samples,
+  parentHint,
   initial,
   submitLabel,
   submitIcon: SubmitIcon,
@@ -30,6 +31,7 @@ export function SampleForm({
 }: {
   subjects: Subject[]
   samples: Sample[]
+  parentHint?: string
   initial: SampleFormValues
   submitLabel: string
   submitIcon: LucideIcon
@@ -106,6 +108,7 @@ export function SampleForm({
       <SelectField
         label="Derived from"
         name="parent_sample_id"
+        hint={parentHint}
         options={samples.map((sample) => ({
           value: sample.id,
           label: `${sample.name} (${sample.material_type})`,

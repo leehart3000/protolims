@@ -5,8 +5,6 @@ import { api } from '../api/client'
 import { PageTitle } from '../components/PageTitle'
 import {
   errorBox,
-  primaryButton,
-  rowChevron,
   rowLink,
   table,
   tableCell,
@@ -15,6 +13,8 @@ import {
   tableRow,
   tableWrapper,
 } from '../styles'
+import { RowArrow } from '../components/RowArrow'
+import { NewButton } from '../components/NewButton'
 
 async function fetchProjects() {
   const { data } = await api.GET('/api/v1/projects')
@@ -80,9 +80,7 @@ function ProjectList() {
               <td className={`${tableCell} hidden text-muted sm:table-cell`}>
                 {project.description}
               </td>
-              <td className={`${tableCell} ${rowChevron}`} aria-hidden="true">
-                ›
-              </td>
+              <RowArrow />
             </tr>
           ))}
         </tbody>
@@ -96,15 +94,11 @@ export default function ProjectsPage() {
     <>
       <div className="flex items-center justify-between gap-4">
         <PageTitle>Projects</PageTitle>
-        <Link to="/projects/new" className={`${primaryButton} inline-block text-sm`}>
-          New project
-        </Link>
+        <NewButton to="/projects/new">New project</NewButton>
       </div>
       <ProjectList />
       <p className="mt-4">
-        <Link to="/projects/new" className={`${primaryButton} inline-block text-sm`}>
-          New project
-        </Link>
+        <NewButton to="/projects/new">New project</NewButton>
       </p>
     </>
   )
