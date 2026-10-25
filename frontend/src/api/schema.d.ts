@@ -933,6 +933,8 @@ export interface operations {
     list_samples_api_v1_projects__project_code__studies__study_code__samples_get: {
         parameters: {
             query?: {
+                /** @description Only list samples from this subject */
+                subject?: string | null;
                 /** @description Only list samples derived from this sample */
                 parent?: string | null;
                 /** @description Search sample names and external IDs, ignoring case */

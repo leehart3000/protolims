@@ -141,6 +141,9 @@ async def list_samples(
     project_code: str,
     study_code: str,
     session: SessionDep,
+    subject: Annotated[
+        uuid.UUID | None, Query(description="Only list samples from this subject")
+    ] = None,
     parent: Annotated[
         uuid.UUID | None, Query(description="Only list samples derived from this sample")
     ] = None,
@@ -157,6 +160,8 @@ async def list_samples(
     """List a study's samples a page at a time, with the total number that match."""
     study = await get_study_or_404(session, project_code, study_code)
     conditions: list[ColumnElement[bool]] = [Sample.study_id == study.id]
+    if subject is not None:
+        conditions.append(Sample.subject_id == subject)
     if parent is not None:
         conditions.append(Sample.parent_sample_id == parent)
     if q:

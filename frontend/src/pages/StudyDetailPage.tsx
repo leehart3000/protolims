@@ -1,29 +1,20 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { useParams } from 'react-router'
 
-import {
-  fetchProject,
-  fetchSamplePage,
-  fetchStudy,
-  fetchSubjectPage,
-  type SampleSort,
-  type SubjectSort,
-} from '../api/queries'
+import { fetchProject, fetchStudy, fetchSubjectPage, type SubjectSort } from '../api/queries'
 import type { components } from '../api/schema'
 import { Breadcrumbs } from '../components/Breadcrumbs'
 import { DetailList } from '../components/DetailList'
 import { NewButton } from '../components/NewButton'
 import { PageTitle } from '../components/PageTitle'
 import { Pagination } from '../components/Pagination'
-import { SampleTable } from '../components/SampleTable'
+import { SampleList } from '../components/SampleList'
 import { SearchBox } from '../components/SearchBox'
 import { SectionHeading } from '../components/SectionHeading'
 import { SubjectTable } from '../components/SubjectTable'
 import { formatDate } from '../format'
 import { errorBox } from '../styles'
-import { useListControls } from '../useListControls'
-
-const PAGE_SIZE = 50
+import { PAGE_SIZE, useListControls } from '../useListControls'
 
 type Study = components['schemas']['StudyRead']
 
@@ -81,61 +72,6 @@ function SubjectList({ projectCode, studyCode }: { projectCode: string; studyCod
   )
 }
 
-function SampleList({ projectCode, studyCode }: { projectCode: string; studyCode: string }) {
-  const { search, q, sort, offset, setOffset, changeSearch, changeSort } =
-    useListControls<SampleSort>('name')
-  const query = useQuery({
-    queryKey: ['projects', projectCode, 'studies', studyCode, 'samples', { q, sort, offset }],
-    queryFn: () =>
-      fetchSamplePage(projectCode, studyCode, {
-        q: q || undefined,
-        sort,
-        limit: PAGE_SIZE,
-        offset,
-      }),
-    // Keep showing the current page while the next one loads, so the table doesn't flicker.
-    placeholderData: keepPreviousData,
-  })
-
-  if (query.isPending) {
-    return <p className="mt-4 text-muted">Loading samples…</p>
-  }
-
-  if (query.isError) {
-    return (
-      <p role="alert" className={`mt-4 ${errorBox}`}>
-        Could not load samples. Please try again later.
-      </p>
-    )
-  }
-
-  const { items, total } = query.data
-
-  return (
-    <>
-      {(total > 0 || q !== '') && (
-        <SearchBox
-          id="sample-search"
-          label="Search samples"
-          placeholder="Search by name or external ID"
-          value={search}
-          onChange={changeSearch}
-        />
-      )}
-      {total === 0 ? (
-        <p className="mt-4 text-muted">
-          {q ? `No samples match “${q}”.` : 'No samples in this study yet.'}
-        </p>
-      ) : (
-        <>
-          <SampleTable samples={items} label="Samples" sort={sort} onSort={changeSort} />
-          <Pagination offset={offset} limit={PAGE_SIZE} total={total} onChange={setOffset} />
-        </>
-      )}
-    </>
-  )
-}
-
 function StudyDetails({ projectCode, study }: { projectCode: string; study: Study }) {
   const project = useQuery({
     queryKey: ['projects', projectCode],
@@ -184,7 +120,11 @@ function StudyDetails({ projectCode, study }: { projectCode: string; study: Stud
         <SectionHeading>Samples</SectionHeading>
         <NewButton to={`${studyPath}/samples/new`}>New sample</NewButton>
       </div>
-      <SampleList projectCode={projectCode} studyCode={study.code} />
+      <SampleList
+        projectCode={projectCode}
+        studyCode={study.code}
+        emptyText="No samples in this study yet."
+      />
       <p className="mt-4">
         <NewButton to={`${studyPath}/samples/new`}>New sample</NewButton>
       </p>

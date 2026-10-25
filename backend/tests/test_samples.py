@@ -211,3 +211,15 @@ def test_list_samples_pages_through_results_with_a_total(client: TestClient) -> 
     body = client.get(f"{study}/samples", params={"q": "a", "limit": 1}).json()
     assert [s["name"] for s in body["items"]] == ["A"]
     assert body["total"] == 1
+
+
+def test_list_samples_can_filter_by_subject(client: TestClient) -> None:
+    study = create_study(client)
+    first = create_subject(client, study, "Patient-01")
+    second = create_subject(client, study, "Patient-02")
+    create_sample(client, study, "S1", subject_id=first)
+    create_sample(client, study, "S2", subject_id=second)
+    create_sample(client, study, "S3")
+
+    assert list_names(client, study, subject=first) == ["S1"]
+    assert list_names(client, study, subject=second) == ["S2"]

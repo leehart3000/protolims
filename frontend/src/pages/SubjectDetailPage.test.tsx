@@ -7,6 +7,7 @@ import { TestProviders } from '../test/TestProviders'
 import SubjectDetailPage from './SubjectDetailPage'
 
 type Subject = components['schemas']['SubjectRead']
+type Sample = components['schemas']['SampleRead']
 
 const subjectId = '0192a5b0-0000-7000-8000-000000000005'
 
@@ -25,11 +26,48 @@ const patient: Subject = {
   study_code: 'RNASEQ',
 }
 
-function respondWith(response: Response) {
+const tumour: Sample = {
+  id: '0192a5b0-0000-7000-8000-000000000010',
+  study_id: patient.study_id,
+  name: 'Tumour-01',
+  external_id: null,
+  subject_id: subjectId,
+  parent_sample_id: null,
+  material_type: 'tissue',
+  status: 'in_storage',
+  collected_at: null,
+  characteristics: {},
+  factor_values: {},
+  created_at: '2026-10-24T12:00:00Z',
+  updated_at: '2026-10-24T12:00:00Z',
+  created_by: null,
+  project_code: 'TCGA-BRCA',
+  study_code: 'RNASEQ',
+  subject_name: 'TCGA-A1-A0SB',
+  parent_sample_name: null,
+}
+
+const samplesPath = '/api/v1/projects/TCGA-BRCA/studies/RNASEQ/samples'
+
+// Answers the subject request with `subjectResponse`, and the samples request with a page of
+// samples. Returns the query of each samples request.
+function respondWith(
+  subjectResponse: Response,
+  samplePage: { items: Sample[]; total: number } = { items: [], total: 0 },
+) {
+  const sampleQueries: URLSearchParams[] = []
   vi.stubGlobal(
     'fetch',
-    vi.fn(() => Promise.resolve(response)),
+    vi.fn((request: Request) => {
+      const url = new URL(request.url)
+      if (url.pathname === samplesPath) {
+        sampleQueries.push(url.searchParams)
+        return Promise.resolve(Response.json(samplePage))
+      }
+      return Promise.resolve(subjectResponse)
+    }),
   )
+  return sampleQueries
 }
 
 function renderPage(id = subjectId) {
@@ -43,8 +81,8 @@ function renderPage(id = subjectId) {
 }
 
 describe('SubjectDetailPage', () => {
-  it('shows the subject, where it belongs and its attributes', async () => {
-    respondWith(Response.json(patient))
+  it('shows the subject, where it belongs, its attributes and its samples', async () => {
+    const sampleQueries = respondWith(Response.json(patient), { items: [tumour], total: 1 })
     renderPage()
 
     expect(screen.getByText('Loading subject…')).toBeInTheDocument()
@@ -67,15 +105,22 @@ describe('SubjectDetailPage', () => {
       '/studies?project=TCGA-BRCA',
     )
     expect(within(trail).getByText('TCGA-A1-A0SB')).toHaveAttribute('aria-current', 'page')
+
+    expect(await screen.findByRole('link', { name: 'Tumour-01' })).toHaveAttribute(
+      'href',
+      `/samples/${tumour.id}`,
+    )
+    expect(sampleQueries[0]?.get('subject')).toBe(subjectId)
   })
 
-  it('leaves out missing details and says when there are no attributes', async () => {
+  it('leaves out missing details and says when there are no attributes or samples', async () => {
     respondWith(Response.json({ ...patient, species: null, external_id: null, attributes: {} }))
     renderPage()
 
     expect(await screen.findByText('No attributes recorded.')).toBeInTheDocument()
     expect(screen.queryByText('Species:')).not.toBeInTheDocument()
     expect(screen.queryByText('External ID:')).not.toBeInTheDocument()
+    expect(await screen.findByText('No samples from this subject yet.')).toBeInTheDocument()
   })
 
   it('says when there is no such subject', async () => {

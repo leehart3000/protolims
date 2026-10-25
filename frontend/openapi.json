@@ -710,6 +710,25 @@
             }
           },
           {
+            "name": "subject",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only list samples from this subject",
+              "title": "Subject"
+            },
+            "description": "Only list samples from this subject"
+          },
+          {
             "name": "parent",
             "in": "query",
             "required": false,

@@ -7,6 +7,7 @@ import { Breadcrumbs } from '../components/Breadcrumbs'
 import { DetailList } from '../components/DetailList'
 import { PageTitle } from '../components/PageTitle'
 import { KeyValueList } from '../components/KeyValueList'
+import { SampleList } from '../components/SampleList'
 import { formatDate } from '../format'
 import { subjectTypeLabel } from '../labels'
 import { errorBox } from '../styles'
@@ -63,6 +64,14 @@ function SubjectDetails({ subject }: { subject: Subject }) {
 
       <h2 className="mt-10 text-xl font-semibold">Attributes</h2>
       <KeyValueList values={subject.attributes} emptyText="No attributes recorded." />
+
+      <h2 className="mt-10 text-xl font-semibold">Samples</h2>
+      <SampleList
+        projectCode={subject.project_code}
+        studyCode={subject.study_code}
+        subjectId={subject.id}
+        emptyText="No samples from this subject yet."
+      />
     </>
   )
 }
