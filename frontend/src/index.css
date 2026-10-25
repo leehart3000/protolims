@@ -61,3 +61,12 @@
     color: var(--color-primary);
   }
 }
+
+/* Tailwind v4 gives buttons the default arrow; show a hand, as for links, so it's clear
+   they can be clicked. Disabled buttons keep the arrow. */
+@layer base {
+  button:not(:disabled),
+  [role='button']:not(:disabled) {
+    cursor: pointer;
+  }
+}
