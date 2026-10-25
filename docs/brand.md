@@ -83,3 +83,7 @@ be added later. If they are:
 - icons are 16 px on buttons and 20 px beside headings
 - they're the same colour as their text
 - they always appear with words, never on their own
+
+Candidates tried and set aside: `UserRound` and `Fingerprint` (too
+human-centred for subjects), and `TestTube`, `TestTubeDiagonal` (unfortunate
+shape) and `TestTubes` (plural) for samples.
