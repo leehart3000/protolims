@@ -1,13 +1,14 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router'
 
-import { fetchSample, fetchSamples } from '../api/queries'
+import { fetchSample, fetchSampleAssays, fetchSamples } from '../api/queries'
 import type { components } from '../api/schema'
 import { Breadcrumbs } from '../components/Breadcrumbs'
 import { DetailList } from '../components/DetailList'
 import { KeyValueList } from '../components/KeyValueList'
 import { PageTitle } from '../components/PageTitle'
 import { SampleTable } from '../components/SampleTable'
+import { SampleAssayTable } from '../components/SampleAssayTable'
 import { NewButton } from '../components/NewButton'
 import { SectionHeading } from '../components/SectionHeading'
 import { DetailsCard } from '../components/DetailsCard'
@@ -47,6 +48,31 @@ function DerivedSamples({ sample }: { sample: Sample }) {
   }
 
   return <SampleTable samples={query.data} label="Derived samples" />
+}
+
+function SampleAssays({ sampleId }: { sampleId: string }) {
+  const query = useQuery({
+    queryKey: ['samples', sampleId, 'assays'],
+    queryFn: () => fetchSampleAssays(sampleId),
+  })
+
+  if (query.isPending) {
+    return <p className="mt-4 text-muted">Loading assays…</p>
+  }
+
+  if (query.isError) {
+    return (
+      <p role="alert" className={`mt-4 ${errorBox}`}>
+        Could not load assays. Please try again later.
+      </p>
+    )
+  }
+
+  if (query.data.length === 0) {
+    return <p className="mt-4 text-muted">Not measured in any assays yet.</p>
+  }
+
+  return <SampleAssayTable assays={query.data} />
 }
 
 function SampleDetails({ sample }: { sample: Sample }) {
@@ -114,6 +140,8 @@ function SampleDetails({ sample }: { sample: Sample }) {
       <p className="mt-4">
         <NewButton to={derivedPath}>New derived sample</NewButton>
       </p>
+      <h2 className="mt-10 text-xl font-semibold">Assays</h2>
+      <SampleAssays sampleId={sample.id} />
     </>
   )
 }

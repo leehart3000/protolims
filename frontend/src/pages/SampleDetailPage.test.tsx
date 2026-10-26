@@ -7,6 +7,7 @@ import { TestProviders } from '../test/TestProviders'
 import SampleDetailPage from './SampleDetailPage'
 
 type Sample = components['schemas']['SampleRead']
+type SampleAssay = components['schemas']['SampleAssayRead']
 
 const tumour: Sample = {
   id: '0192a5b0-0000-7000-8000-000000000010',
@@ -45,7 +46,20 @@ const rna: Sample = {
   factor_values: {},
 }
 
+const proteomics: SampleAssay = {
+  assay_id: '0192a5b0-0000-7000-8000-000000000020',
+  assay_name: 'Proteomics run 1',
+  measurement_type: 'protein expression profiling',
+  technology_type: 'mass spectrometry',
+  platform: 'Orbitrap',
+  label: '126',
+}
+
 const samplesPath = '/api/v1/projects/TCGA-BRCA/studies/RNASEQ/samples'
+
+function assaysPath(sample: Sample) {
+  return `/api/v1/samples/${sample.id}/assays`
+}
 
 function respondByPath(responses: Record<string, Response>) {
   vi.stubGlobal(
@@ -70,10 +84,11 @@ function renderPage(id: string) {
 }
 
 describe('SampleDetailPage', () => {
-  it('shows the sample, its subject, its data and what was derived from it', async () => {
+  it('shows the sample, its subject, its data, what was derived from it and its assays', async () => {
     respondByPath({
       [`/api/v1/samples/${tumour.id}`]: Response.json(tumour),
       [samplesPath]: Response.json({ items: [rna], total: 1 }),
+      [assaysPath(tumour)]: Response.json([proteomics]),
     })
     renderPage(tumour.id)
 
@@ -110,6 +125,14 @@ describe('SampleDetailPage', () => {
       )
     }
 
+    const assays = within(await screen.findByRole('table', { name: 'Assays' }))
+    expect(assays.getByRole('link', { name: 'Proteomics run 1' })).toHaveAttribute(
+      'href',
+      `/assays/${proteomics.assay_id}`,
+    )
+    expect(assays.getByRole('cell', { name: '126' })).toBeInTheDocument()
+    expect(assays.getByText('126 · protein expression profiling · Orbitrap')).toBeInTheDocument()
+
     const trail = screen.getByRole('navigation', { name: 'Breadcrumb' })
     expect(within(trail).getByRole('link', { name: 'RNASEQ' })).toHaveAttribute(
       'href',
@@ -121,6 +144,7 @@ describe('SampleDetailPage', () => {
     respondByPath({
       [`/api/v1/samples/${rna.id}`]: Response.json(rna),
       [samplesPath]: Response.json({ items: [], total: 0 }),
+      [assaysPath(rna)]: Response.json([]),
     })
     renderPage(rna.id)
 
@@ -143,6 +167,7 @@ describe('SampleDetailPage', () => {
     expect(
       await screen.findByText('No samples have been derived from this one yet.'),
     ).toBeInTheDocument()
+    expect(await screen.findByText('Not measured in any assays yet.')).toBeInTheDocument()
   })
 
   it('says when there is no such sample, or the ID is invalid', async () => {
@@ -169,8 +194,19 @@ describe('SampleDetailPage', () => {
     respondByPath({
       [`/api/v1/samples/${tumour.id}`]: Response.json(tumour),
       [samplesPath]: Response.json({ detail: 'Error' }, { status: 500 }),
+      [assaysPath(tumour)]: Response.json([]),
     })
     renderPage(tumour.id)
     expect(await screen.findByRole('alert')).toHaveTextContent('Could not load derived samples')
+  })
+
+  it('shows an error when the assays cannot be loaded', async () => {
+    respondByPath({
+      [`/api/v1/samples/${tumour.id}`]: Response.json(tumour),
+      [samplesPath]: Response.json({ items: [], total: 0 }),
+      [assaysPath(tumour)]: Response.json({ detail: 'Error' }, { status: 500 }),
+    })
+    renderPage(tumour.id)
+    expect(await screen.findByRole('alert')).toHaveTextContent('Could not load assays')
   })
 })

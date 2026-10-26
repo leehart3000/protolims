@@ -163,3 +163,14 @@ export async function fetchAssaySamplePage(assayId: string, query: AssaySampleLi
   }
   return data
 }
+
+// The assays a sample was measured in, with its label in each.
+export async function fetchSampleAssays(sampleId: string) {
+  const { data } = await api.GET('/api/v1/samples/{sample_id}/assays', {
+    params: { path: { sample_id: sampleId } },
+  })
+  if (!data) {
+    throw new Error('Could not load assays')
+  }
+  return data
+}
