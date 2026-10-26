@@ -136,8 +136,12 @@ function StudyDetails({ projectCode, study }: { projectCode: string; study: Stud
 
       <div className="mt-10 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
         <SectionHeading>Assays</SectionHeading>
+        <NewButton to={`${studyPath}/assays/new`}>New assay</NewButton>
       </div>
       <AssayList projectCode={projectCode} studyCode={study.code} />
+      <p className="mt-4">
+        <NewButton to={`${studyPath}/assays/new`}>New assay</NewButton>
+      </p>
     </>
   )
 }

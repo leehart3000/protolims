@@ -232,6 +232,12 @@ describe('StudyDetailPage', () => {
         'transcription profiling · nucleotide sequencing · Illumina HiSeq 2000 · 1 sample',
       ),
     ).toBeInTheDocument()
+
+    const newAssayLinks = screen.getAllByRole('link', { name: 'New assay' })
+    expect(newAssayLinks).toHaveLength(2)
+    for (const link of newAssayLinks) {
+      expect(link).toHaveAttribute('href', '/projects/TCGA-BRCA/studies/RNASEQ/assays/new')
+    }
   })
 
   it('shows a breadcrumb trail', () => {
@@ -422,12 +428,16 @@ describe('StudyDetailPage', () => {
     expect(subjectQueries.map((query) => query.get('q'))).toEqual([null, 'zzz'])
   })
 
-  it('sorts assays by a column heading', async () => {
-    const { assayQueries } = stubStudyApi()
+  it('sorts assays by a column heading, and counts their samples', async () => {
+    const { assayQueries } = stubStudyApi({
+      assays: () => ({ items: [{ ...rnaseqBatch, sample_count: 3 }], total: 1 }),
+    })
     const user = userEvent.setup()
     renderPage()
 
     const assays = within(await screen.findByRole('table', { name: 'Assays' }))
+    expect(assays.getByText(/· 3 samples$/)).toBeInTheDocument()
+
     await user.click(assays.getByRole('button', { name: 'Platform' }))
     await waitFor(() => {
       expect(assayQueries.at(-1)?.get('sort')).toBe('platform')
