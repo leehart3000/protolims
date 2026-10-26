@@ -73,7 +73,39 @@ class AssayFields(BaseModel):
 
 
 class AssayRead(AssayFields):
-    """An assay as returned by the API, with the project and study it belongs to."""
+    """An assay as returned by the API, with where it belongs and how many samples it measured."""
 
     project_code: str
     study_code: str
+    sample_count: int
+
+
+class AssaySampleLink(BaseModel):
+    """Links a sample to an assay, or changes its label there."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    # Where this sample is within the assay, e.g. a TMT channel such as "127N".
+    label: str | None = Field(default=None, min_length=1, max_length=100)
+
+
+class AssaySampleRead(BaseModel):
+    """A sample measured in an assay, with its label there."""
+
+    sample_id: uuid.UUID
+    sample_name: str
+    external_id: str | None
+    material_type: str
+    status: str
+    label: str | None
+
+
+class SampleAssayRead(BaseModel):
+    """An assay a sample was measured in, with the sample's label there."""
+
+    assay_id: uuid.UUID
+    assay_name: str
+    measurement_type: str
+    technology_type: str
+    platform: str | None
+    label: str | None

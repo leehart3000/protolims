@@ -1,29 +1,49 @@
 """Assay endpoints.
 
 Assays are created and listed under their study, and fetched by their permanent ID.
+An assay's samples must be in the same study: connections between studies are made only
+by explicit links.
 """
 
 import uuid
 from datetime import UTC, datetime
 from typing import Annotated, Any, Literal
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, HTTPException, Query, Response, status
 from sqlalchemy import ColumnElement, func, or_, select
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import InstrumentedAttribute
 
 from protolims_api.audit import record_event
 from protolims_api.db import SessionDep
-from protolims_api.models import Assay, Project, Study
+from protolims_api.models import Assay, AssaySample, Project, Sample, Study
 from protolims_api.routers.studies import get_study_or_404
-from protolims_api.schemas.assay import AssayCreate, AssayFields, AssayRead, AssayUpdate
+from protolims_api.schemas.assay import (
+    AssayCreate,
+    AssayFields,
+    AssayRead,
+    AssaySampleLink,
+    AssaySampleRead,
+    AssayUpdate,
+    SampleAssayRead,
+)
 from protolims_api.schemas.common import Page
 
 router = APIRouter(tags=["assays"])
 
-# Assays with their project and study codes.
+# How many samples each assay measured.
+SAMPLE_COUNT = (
+    select(func.count())
+    .select_from(AssaySample)
+    .where(AssaySample.assay_id == Assay.id)
+    .correlate(Assay)
+    .scalar_subquery()
+)
+
+# Assays with their project and study codes, and how many samples they measured.
 ASSAY_QUERY = (
-    select(Assay, Project.code, Study.code)
+    select(Assay, Project.code, Study.code, SAMPLE_COUNT)
     .join(Study, Assay.study_id == Study.id)
     .join(Project, Study.project_id == Project.id)
 )
@@ -53,13 +73,42 @@ ASSAY_SORT_COLUMNS: dict[str, InstrumentedAttribute[Any]] = {
     "created_at": Assay.created_at,
 }
 
+AssaySampleSort = Literal["name", "-name", "label", "-label"]
 
-def assay_read(assay: Assay, project_code: str, study_code: str) -> AssayRead:
+ASSAY_SAMPLE_SORT_COLUMNS: dict[str, InstrumentedAttribute[Any]] = {
+    "name": Sample.name,
+    "label": AssaySample.label,
+}
+
+
+def assay_read(assay: Assay, project_code: str, study_code: str, sample_count: int) -> AssayRead:
     return AssayRead(
         **AssayFields.model_validate(assay).model_dump(),
         project_code=project_code,
         study_code=study_code,
+        sample_count=sample_count,
     )
+
+
+def assay_sample_read(sample: Sample, label: str | None) -> AssaySampleRead:
+    return AssaySampleRead(
+        sample_id=sample.id,
+        sample_name=sample.name,
+        external_id=sample.external_id,
+        material_type=sample.material_type,
+        status=sample.status,
+        label=label,
+    )
+
+
+async def get_assay_or_404(session: AsyncSession, assay_id: uuid.UUID) -> Assay:
+    assay = await session.get(Assay, assay_id)
+    if assay is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Assay {assay_id} not found",
+        )
+    return assay
 
 
 @router.post(
@@ -96,7 +145,7 @@ async def create_assay(
     )
     await session.commit()
     await session.refresh(assay)
-    return assay_read(assay, project_code, study_code)
+    return assay_read(assay, project_code, study_code, 0)
 
 
 @router.get("/projects/{project_code}/studies/{study_code}/assays")
@@ -137,8 +186,8 @@ async def list_assays(
     )
     return Page[AssayRead](
         items=[
-            assay_read(assay, row_project_code, row_study_code)
-            for assay, row_project_code, row_study_code in result
+            assay_read(assay, row_project_code, row_study_code, sample_count)
+            for assay, row_project_code, row_study_code, sample_count in result
         ],
         total=total,
     )
@@ -153,19 +202,14 @@ async def get_assay(assay_id: uuid.UUID, session: SessionDep) -> AssayRead:
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Assay {assay_id} not found",
         )
-    assay, project_code, study_code = row
-    return assay_read(assay, project_code, study_code)
+    assay, project_code, study_code, sample_count = row
+    return assay_read(assay, project_code, study_code, sample_count)
 
 
 @router.patch("/assays/{assay_id}")
 async def update_assay(assay_id: uuid.UUID, payload: AssayUpdate, session: SessionDep) -> AssayRead:
     """Change some of an assay's details. Only the fields sent are changed; null clears one."""
-    assay = await session.get(Assay, assay_id)
-    if assay is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Assay {assay_id} not found",
-        )
+    assay = await get_assay_or_404(session, assay_id)
 
     requested = payload.model_dump(exclude_unset=True)
     changed = {field: value for field, value in requested.items() if getattr(assay, field) != value}
@@ -195,5 +239,156 @@ async def update_assay(assay_id: uuid.UUID, payload: AssayUpdate, session: Sessi
         await session.commit()
 
     row = (await session.execute(ASSAY_QUERY.where(Assay.id == assay_id))).one()
-    updated, project_code, study_code = row
-    return assay_read(updated, project_code, study_code)
+    updated, project_code, study_code, sample_count = row
+    return assay_read(updated, project_code, study_code, sample_count)
+
+
+@router.get("/assays/{assay_id}/samples")
+async def list_assay_samples(
+    assay_id: uuid.UUID,
+    session: SessionDep,
+    q: Annotated[
+        str | None,
+        Query(max_length=200, description="Search sample names and external IDs, ignoring case"),
+    ] = None,
+    sort: Annotated[
+        AssaySampleSort,
+        Query(description="The column to sort by; a leading - reverses the order"),
+    ] = "name",
+    limit: Annotated[int, Query(ge=1, le=500)] = 50,
+    offset: Annotated[int, Query(ge=0)] = 0,
+) -> Page[AssaySampleRead]:
+    """List the samples an assay measured, a page at a time, with the total number that match."""
+    await get_assay_or_404(session, assay_id)
+    conditions: list[ColumnElement[bool]] = [AssaySample.assay_id == assay_id]
+    if q:
+        conditions.append(
+            or_(
+                Sample.name.icontains(q, autoescape=True),
+                Sample.external_id.icontains(q, autoescape=True),
+            )
+        )
+    count_query = (
+        select(func.count())
+        .select_from(AssaySample)
+        .join(Sample, AssaySample.sample_id == Sample.id)
+        .where(*conditions)
+    )
+    total = (await session.execute(count_query)).scalar_one()
+
+    column = ASSAY_SAMPLE_SORT_COLUMNS[sort.removeprefix("-")]
+    order = column.desc() if sort.startswith("-") else column.asc()
+    result = await session.execute(
+        select(Sample, AssaySample.label)
+        .join(AssaySample, AssaySample.sample_id == Sample.id)
+        .where(*conditions)
+        .order_by(order.nulls_last(), Sample.name, Sample.id)
+        .limit(limit)
+        .offset(offset)
+    )
+    return Page[AssaySampleRead](
+        items=[assay_sample_read(sample, label) for sample, label in result],
+        total=total,
+    )
+
+
+@router.put("/assays/{assay_id}/samples/{sample_id}")
+async def link_sample(
+    assay_id: uuid.UUID,
+    sample_id: uuid.UUID,
+    payload: AssaySampleLink,
+    session: SessionDep,
+    response: Response,
+) -> AssaySampleRead:
+    """Record that an assay measured a sample, or change the sample's label in it.
+
+    Returns 201 when the link is new and 200 when it already existed, so it's safe to repeat.
+    """
+    assay = await get_assay_or_404(session, assay_id)
+    sample = await session.get(Sample, sample_id)
+    if sample is None or sample.study_id != assay.study_id:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="The sample must be an existing sample in the same study",
+        )
+    which = {"sample_id": str(sample.id), "sample": sample.name}
+
+    link = await session.get(AssaySample, (assay_id, sample_id))
+    if link is None:
+        link = AssaySample(assay_id=assay_id, sample_id=sample_id, label=payload.label)
+        session.add(link)
+        await record_event(
+            session,
+            action="add_sample",
+            entity_type="assay",
+            entity_id=assay_id,
+            changes={"after": {**which, "label": payload.label}},
+        )
+        response.status_code = status.HTTP_201_CREATED
+    elif link.label != payload.label:
+        await record_event(
+            session,
+            action="update_sample",
+            entity_type="assay",
+            entity_id=assay_id,
+            changes={
+                "before": {**which, "label": link.label},
+                "after": {**which, "label": payload.label},
+            },
+        )
+        link.label = payload.label
+        link.updated_at = datetime.now(UTC)
+
+    result = assay_sample_read(sample, payload.label)
+    await session.commit()
+    return result
+
+
+@router.delete("/assays/{assay_id}/samples/{sample_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def unlink_sample(assay_id: uuid.UUID, sample_id: uuid.UUID, session: SessionDep) -> None:
+    """Remove a sample from an assay."""
+    link = await session.get(AssaySample, (assay_id, sample_id))
+    if link is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Sample {sample_id} is not linked to assay {assay_id}",
+        )
+    sample_name = await session.scalar(select(Sample.name).where(Sample.id == sample_id))
+    await record_event(
+        session,
+        action="remove_sample",
+        entity_type="assay",
+        entity_id=assay_id,
+        changes={
+            "before": {"sample_id": str(sample_id), "sample": sample_name, "label": link.label}
+        },
+    )
+    await session.delete(link)
+    await session.commit()
+
+
+@router.get("/samples/{sample_id}/assays")
+async def list_sample_assays(sample_id: uuid.UUID, session: SessionDep) -> list[SampleAssayRead]:
+    """List the assays a sample was measured in, by name."""
+    if await session.get(Sample, sample_id) is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Sample {sample_id} not found",
+        )
+    result = await session.execute(
+        select(Assay, AssaySample.label)
+        .join(AssaySample, AssaySample.assay_id == Assay.id)
+        .where(AssaySample.sample_id == sample_id)
+        .order_by(Assay.name, Assay.id)
+    )
+    return [
+        SampleAssayRead(
+            assay_id=assay.id,
+            assay_name=assay.name,
+            measurement_type=assay.measurement_type,
+            technology_type=assay.technology_type,
+            platform=assay.platform,
+            label=label,
+        )
+        for assay, label in result
+    ]

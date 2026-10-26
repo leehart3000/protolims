@@ -261,3 +261,141 @@ def test_update_assay_rejects_a_name_used_in_the_study(client: TestClient) -> No
 def test_update_unknown_assay_returns_404(client: TestClient) -> None:
     unknown = f"{API}/assays/00000000-0000-7000-8000-000000000000"
     assert client.patch(unknown, json={"platform": "P1"}).status_code == 404
+
+
+UNKNOWN = "00000000-0000-7000-8000-000000000000"
+
+
+def create_sample(client: TestClient, study_url: str, name: str, **fields: object) -> str:
+    response = client.post(
+        f"{study_url}/samples", json={"name": name, "material_type": "RNA", **fields}
+    )
+    assert response.status_code == 201, response.json()
+    sample_id: str = response.json()["id"]
+    return sample_id
+
+
+def linked(client: TestClient, assay_id: str, **params: str | int) -> list[tuple[str, str | None]]:
+    response = client.get(f"{API}/assays/{assay_id}/samples", params=params)
+    assert response.status_code == 200, response.json()
+    return [(s["sample_name"], s["label"]) for s in response.json()["items"]]
+
+
+def test_link_samples_to_an_assay(client: TestClient) -> None:
+    study = create_study(client)
+    assay_id = create_assay(client, study, "TMT-1")
+    first = create_sample(client, study, "S1")
+    second = create_sample(client, study, "S2")
+
+    response = client.put(f"{API}/assays/{assay_id}/samples/{second}", json={"label": "126"})
+    assert response.status_code == 201
+    assert (response.json()["sample_name"], response.json()["label"]) == ("S2", "126")
+    assert client.put(f"{API}/assays/{assay_id}/samples/{first}", json={}).status_code == 201
+
+    assert linked(client, assay_id) == [("S1", None), ("S2", "126")]
+    assert client.get(f"{API}/assays/{assay_id}").json()["sample_count"] == 2
+    assert client.get(f"{study}/assays").json()["items"][0]["sample_count"] == 2
+
+
+def test_linking_again_only_changes_the_label(client: TestClient, database: Engine) -> None:
+    study = create_study(client)
+    assay_id = create_assay(client, study, "TMT-1")
+    sample_id = create_sample(client, study, "S1")
+    url = f"{API}/assays/{assay_id}/samples/{sample_id}"
+
+    assert client.put(url, json={"label": "126"}).status_code == 201
+    assert client.put(url, json={"label": "126"}).status_code == 200
+    assert client.put(url, json={"label": "127N"}).status_code == 200
+    assert client.put(url, json={}).status_code == 200
+    assert linked(client, assay_id) == [("S1", None)]
+
+    with database.connect() as conn:
+        rows = conn.execute(
+            text(
+                "SELECT action, changes FROM audit_event"
+                " WHERE entity_type = 'assay' AND action <> 'create' ORDER BY occurred_at, id"
+            )
+        ).all()
+    assert [row[0] for row in rows] == ["add_sample", "update_sample", "update_sample"]
+    which = {"sample_id": sample_id, "sample": "S1"}
+    assert rows[1][1] == {
+        "before": {**which, "label": "126"},
+        "after": {**which, "label": "127N"},
+    }
+
+
+def test_linked_samples_must_be_in_the_same_study(client: TestClient) -> None:
+    first = create_study(client, "P1", "S1")
+    second = create_study(client, "P1", "S2")
+    assay_id = create_assay(client, first, "A1")
+    other_sample = create_sample(client, second, "Other")
+
+    for sample_id in [other_sample, UNKNOWN]:
+        response = client.put(f"{API}/assays/{assay_id}/samples/{sample_id}", json={})
+        assert response.status_code == 422
+        assert "same study" in response.json()["detail"]
+
+
+def test_unknown_assay_returns_404_for_its_samples(client: TestClient) -> None:
+    study = create_study(client)
+    sample_id = create_sample(client, study, "S1")
+    unknown = f"{API}/assays/{UNKNOWN}"
+
+    assert client.put(f"{unknown}/samples/{sample_id}", json={}).status_code == 404
+    assert client.get(f"{unknown}/samples").status_code == 404
+    assert client.delete(f"{unknown}/samples/{sample_id}").status_code == 404
+
+
+def test_unlink_a_sample(client: TestClient, database: Engine) -> None:
+    study = create_study(client)
+    assay_id = create_assay(client, study, "TMT-1")
+    sample_id = create_sample(client, study, "S1")
+    url = f"{API}/assays/{assay_id}/samples/{sample_id}"
+    client.put(url, json={"label": "126"})
+
+    assert client.delete(url).status_code == 204
+    assert linked(client, assay_id) == []
+    assert client.delete(url).status_code == 404
+
+    with database.connect() as conn:
+        changes = conn.execute(
+            text("SELECT changes FROM audit_event WHERE action = 'remove_sample'")
+        ).scalar_one()
+    assert changes == {"before": {"sample_id": sample_id, "sample": "S1", "label": "126"}}
+
+
+def test_list_assay_samples_sorts_searches_and_pages(client: TestClient) -> None:
+    study = create_study(client)
+    assay_id = create_assay(client, study, "TMT-1")
+    for name, label, external_id in [("A", "127N", "X-99"), ("B", "126", None), ("C", None, None)]:
+        sample_id = create_sample(client, study, name, external_id=external_id)
+        client.put(f"{API}/assays/{assay_id}/samples/{sample_id}", json={"label": label})
+
+    assert linked(client, assay_id) == [("A", "127N"), ("B", "126"), ("C", None)]
+    assert linked(client, assay_id, sort="-name") == [("C", None), ("B", "126"), ("A", "127N")]
+    assert linked(client, assay_id, sort="label") == [("B", "126"), ("A", "127N"), ("C", None)]
+    assert linked(client, assay_id, sort="-label") == [("A", "127N"), ("B", "126"), ("C", None)]
+    assert linked(client, assay_id, q="x-99") == [("A", "127N")]
+
+    body = client.get(f"{API}/assays/{assay_id}/samples", params={"limit": 1, "offset": 1}).json()
+    assert [s["sample_name"] for s in body["items"]] == ["B"]
+    assert body["total"] == 3
+
+
+def test_list_a_samples_assays(client: TestClient) -> None:
+    study = create_study(client)
+    measured = create_sample(client, study, "S1")
+    unmeasured = create_sample(client, study, "S2")
+    rna = create_assay(client, study, "RNA-seq")
+    proteomics = create_assay(client, study, "Proteomics", platform="Orbitrap")
+    client.put(f"{API}/assays/{rna}/samples/{measured}", json={})
+    client.put(f"{API}/assays/{proteomics}/samples/{measured}", json={"label": "126"})
+
+    response = client.get(f"{API}/samples/{measured}/assays")
+    assert response.status_code == 200
+    assert [(a["assay_name"], a["platform"], a["label"]) for a in response.json()] == [
+        ("Proteomics", "Orbitrap", "126"),
+        ("RNA-seq", None, None),
+    ]
+    assert client.get(f"{API}/samples/{unmeasured}/assays").json() == []
+    assert client.get(f"{API}/samples/{UNKNOWN}/assays").status_code == 404
