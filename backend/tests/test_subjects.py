@@ -1,5 +1,7 @@
 """Tests for the subject endpoints."""
 
+from datetime import datetime
+
 from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
 
@@ -158,3 +160,93 @@ def test_list_subjects_pages_through_results_with_a_total(client: TestClient) ->
     body = client.get(subjects, params={"limit": 2, "offset": 2}).json()
     assert [s["name"] for s in body["items"]] == ["C", "D"]
     assert body["total"] == 5
+
+
+def create_subject_id(client: TestClient, subjects_url: str, name: str, **fields: object) -> str:
+    response = client.post(subjects_url, json={"name": name, "subject_type": "patient", **fields})
+    assert response.status_code == 201, response.json()
+    subject_id: str = response.json()["id"]
+    return subject_id
+
+
+def test_update_subject_changes_only_the_fields_sent(client: TestClient, database: Engine) -> None:
+    subjects = create_study(client)
+    subject_id = create_subject_id(client, subjects, "Hs 578T", species="Homo sapiens")
+
+    response = client.patch(
+        f"{API}/subjects/{subject_id}",
+        json={"subject_type": "cell_line", "attributes": {"cellosaurus": "CVCL_0332"}},
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert (body["name"], body["subject_type"], body["species"]) == (
+        "Hs 578T",
+        "cell_line",
+        "Homo sapiens",
+    )
+    assert body["attributes"] == {"cellosaurus": "CVCL_0332"}
+    assert (body["project_code"], body["study_code"]) == ("P1", "S1")
+    assert datetime.fromisoformat(body["updated_at"]) > datetime.fromisoformat(body["created_at"])
+
+    with database.connect() as conn:
+        changes = conn.execute(
+            text("SELECT changes FROM audit_event WHERE action = 'update'")
+        ).scalar_one()
+    assert changes == {
+        "before": {"subject_type": "patient", "attributes": {}},
+        "after": {"subject_type": "cell_line", "attributes": {"cellosaurus": "CVCL_0332"}},
+    }
+
+
+def test_update_subject_with_no_real_changes_records_nothing(
+    client: TestClient, database: Engine
+) -> None:
+    subjects = create_study(client)
+    subject_id = create_subject_id(client, subjects, "Patient-01")
+
+    response = client.patch(f"{API}/subjects/{subject_id}", json={"name": "Patient-01"})
+    assert response.status_code == 200
+
+    with database.connect() as conn:
+        updates = conn.execute(
+            text("SELECT count(*) FROM audit_event WHERE action = 'update'")
+        ).scalar_one()
+    assert updates == 0
+
+
+def test_update_subject_can_clear_optional_fields_but_not_required_ones(
+    client: TestClient,
+) -> None:
+    subjects = create_study(client)
+    subject_id = create_subject_id(
+        client, subjects, "Patient-01", species="Homo sapiens", external_id="X-1"
+    )
+
+    response = client.patch(
+        f"{API}/subjects/{subject_id}", json={"species": None, "external_id": None}
+    )
+    assert response.status_code == 200
+    assert (response.json()["species"], response.json()["external_id"]) == (None, None)
+
+    for fields in [
+        {"name": None},
+        {"subject_type": None},
+        {"attributes": None},
+        {"subject_type": "alien"},
+        {"study_id": "00000000-0000-7000-8000-000000000000"},
+    ]:
+        assert client.patch(f"{API}/subjects/{subject_id}", json=fields).status_code == 422, fields
+
+
+def test_update_subject_rejects_a_name_used_in_the_study(client: TestClient) -> None:
+    subjects = create_study(client)
+    create_subject_id(client, subjects, "Patient-01")
+    second = create_subject_id(client, subjects, "Patient-02")
+
+    response = client.patch(f"{API}/subjects/{second}", json={"name": "Patient-01"})
+    assert response.status_code == 409
+
+
+def test_update_unknown_subject_returns_404(client: TestClient) -> None:
+    unknown = f"{API}/subjects/00000000-0000-7000-8000-000000000000"
+    assert client.patch(unknown, json={"species": "Mus musculus"}).status_code == 404

@@ -153,7 +153,11 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        patch?: never;
+        /**
+         * Update Subject
+         * @description Change some of a subject's details. Only the fields sent are changed; null clears one.
+         */
+        patch: operations["update_subject_api_v1_subjects__subject_id__patch"];
         trace?: never;
     };
     "/api/v1/projects/{project_code}/studies/{study_code}/samples": {
@@ -605,6 +609,26 @@ export interface components {
             /** Study Code */
             study_code: string;
         };
+        /**
+         * SubjectUpdate
+         * @description Changes to a subject. Only the fields sent are changed; sending null clears a field.
+         *
+         *     The study can't be changed: a subject stays in the study it was created in.
+         */
+        SubjectUpdate: {
+            /** Name */
+            name?: string | null;
+            /** External Id */
+            external_id?: string | null;
+            /** Subject Type */
+            subject_type?: ("patient" | "cell_line" | "organism" | "other") | null;
+            /** Species */
+            species?: string | null;
+            /** Attributes */
+            attributes?: {
+                [key: string]: unknown;
+            } | null;
+        };
         /** ValidationError */
         ValidationError: {
             /** Location */
@@ -943,6 +967,41 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SubjectRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_subject_api_v1_subjects__subject_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                subject_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SubjectUpdate"];
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {

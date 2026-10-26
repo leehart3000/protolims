@@ -5,6 +5,7 @@ so links to a subject keep working even if its name is corrected.
 """
 
 import uuid
+from datetime import UTC, datetime
 from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, HTTPException, Query, status
@@ -17,7 +18,7 @@ from protolims_api.db import SessionDep
 from protolims_api.models import Project, Study, Subject
 from protolims_api.routers.studies import get_study_or_404
 from protolims_api.schemas.common import Page
-from protolims_api.schemas.subject import SubjectCreate, SubjectFields, SubjectRead
+from protolims_api.schemas.subject import SubjectCreate, SubjectFields, SubjectRead, SubjectUpdate
 
 router = APIRouter(tags=["subjects"])
 
@@ -39,6 +40,13 @@ SUBJECT_SORT_COLUMNS: dict[str, InstrumentedAttribute[Any]] = {
     "species": Subject.species,
     "created_at": Subject.created_at,
 }
+
+# A subject with its project and study codes.
+SUBJECT_QUERY = (
+    select(Subject, Project.code, Study.code)
+    .join(Study, Subject.study_id == Study.id)
+    .join(Project, Study.project_id == Project.id)
+)
 
 
 def subject_read(subject: Subject, project_code: str, study_code: str) -> SubjectRead:
@@ -132,14 +140,7 @@ async def list_subjects(
 @router.get("/subjects/{subject_id}")
 async def get_subject(subject_id: uuid.UUID, session: SessionDep) -> SubjectRead:
     """Get one subject by its permanent ID."""
-    row = (
-        await session.execute(
-            select(Subject, Project.code, Study.code)
-            .join(Study, Subject.study_id == Study.id)
-            .join(Project, Study.project_id == Project.id)
-            .where(Subject.id == subject_id)
-        )
-    ).one_or_none()
+    row = (await session.execute(SUBJECT_QUERY.where(Subject.id == subject_id))).one_or_none()
     if row is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -147,3 +148,49 @@ async def get_subject(subject_id: uuid.UUID, session: SessionDep) -> SubjectRead
         )
     subject, project_code, study_code = row
     return subject_read(subject, project_code, study_code)
+
+
+@router.patch("/subjects/{subject_id}")
+async def update_subject(
+    subject_id: uuid.UUID, payload: SubjectUpdate, session: SessionDep
+) -> SubjectRead:
+    """Change some of a subject's details. Only the fields sent are changed; null clears one."""
+    subject = await session.get(Subject, subject_id)
+    if subject is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Subject {subject_id} not found",
+        )
+
+    requested = payload.model_dump(exclude_unset=True)
+    changed = {
+        field: value for field, value in requested.items() if getattr(subject, field) != value
+    }
+    if changed:
+        before = SubjectFields.model_validate(subject).model_dump(mode="json")
+        for field, value in changed.items():
+            setattr(subject, field, value)
+        subject.updated_at = datetime.now(UTC)
+        try:
+            await session.flush()
+        except IntegrityError as exc:
+            await session.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"Subject {payload.name!r} already exists in this study",
+            ) from exc
+        await record_event(
+            session,
+            action="update",
+            entity_type="subject",
+            entity_id=subject.id,
+            changes={
+                "before": {field: before[field] for field in changed},
+                "after": payload.model_dump(mode="json", include=set(changed)),
+            },
+        )
+        await session.commit()
+
+    row = (await session.execute(SUBJECT_QUERY.where(Subject.id == subject_id))).one()
+    updated, project_code, study_code = row
+    return subject_read(updated, project_code, study_code)
