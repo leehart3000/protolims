@@ -91,3 +91,7 @@ text, and on buttons they always appear with words, never on their own. They're
 hidden from screen readers, because the words already say what the button does.
 
 `SectionHeading` can also take an icon, but headings don't use one yet.
+
+Record icons were tried and set aside: `UserRound` and `Fingerprint` were too
+human-centred for subjects, and `TestTube`, `TestTubeDiagonal` (unfortunate
+shape) and `TestTubes` (plural) didn't suit samples.
