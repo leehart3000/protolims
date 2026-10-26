@@ -106,6 +106,12 @@ describe('SubjectDetailPage', () => {
     )
     expect(within(trail).getByText('TCGA-A1-A0SB')).toHaveAttribute('aria-current', 'page')
 
+    const editLinks = screen.getAllByRole('link', { name: 'Edit subject' })
+    expect(editLinks).toHaveLength(2)
+    for (const link of editLinks) {
+      expect(link).toHaveAttribute('href', `/subjects/${subjectId}/edit`)
+    }
+
     expect(await screen.findByRole('link', { name: 'Tumour-01' })).toHaveAttribute(
       'href',
       `/samples/${tumour.id}`,

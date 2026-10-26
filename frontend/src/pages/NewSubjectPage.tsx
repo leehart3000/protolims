@@ -1,21 +1,17 @@
-import { SquarePlus } from 'lucide-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Link, useNavigate, useParams } from 'react-router'
+import { SquarePlus } from 'lucide-react'
+import { useNavigate, useParams } from 'react-router'
 
 import { api } from '../api/client'
 import { fetchStudy } from '../api/queries'
 import type { components } from '../api/schema'
 import { Breadcrumbs } from '../components/Breadcrumbs'
 import { DetailList } from '../components/DetailList'
-import { SelectField, TextField } from '../components/FormFields'
 import { PageTitle } from '../components/PageTitle'
-import { namePattern, optionalText, text } from '../forms'
-import { type SubjectType, subjectTypeOptions } from '../labels'
-import { errorBox, primaryButton, textLink } from '../styles'
+import { SubjectForm } from '../components/SubjectForm'
+import { DuplicateNameError } from '../forms'
 
 type SubjectCreate = components['schemas']['SubjectCreate']
-
-class DuplicateNameError extends Error {}
 
 async function createSubject(projectCode: string, studyCode: string, body: SubjectCreate) {
   const { data, response } = await api.POST(
@@ -57,11 +53,6 @@ export default function NewSubjectPage() {
     },
   })
 
-  const nameError =
-    mutation.error instanceof DuplicateNameError
-      ? 'This name is already used in this study. Please choose another.'
-      : undefined
-
   return (
     <>
       <Breadcrumbs
@@ -82,78 +73,19 @@ export default function NewSubjectPage() {
         ]}
       />
 
-      <form
-        className="mt-6 max-w-2xl space-y-5"
-        onChange={() => {
-          if (mutation.isError) {
-            mutation.reset()
-          }
+      <SubjectForm
+        initial={{ name: '', subject_type: '', species: null, external_id: null }}
+        submitLabel="Create subject"
+        submitIcon={SquarePlus}
+        pendingLabel="Creating…"
+        cancelTo={studyPath}
+        isPending={mutation.isPending}
+        error={mutation.error}
+        onEdit={mutation.reset}
+        onSubmit={(values) => {
+          mutation.mutate(values)
         }}
-        onSubmit={(event) => {
-          event.preventDefault()
-          const form = new FormData(event.currentTarget)
-          mutation.mutate({
-            name: text(form, 'name'),
-            subject_type: text(form, 'subject_type') as SubjectType,
-            species: optionalText(form, 'species'),
-            external_id: optionalText(form, 'external_id'),
-          })
-        }}
-      >
-        <TextField
-          label="Name"
-          name="name"
-          hint="The name used by the study or its source, such as TCGA-A1-A0SB or Hs 578T. Spaces are allowed; slashes are not."
-          error={nameError}
-          required
-          maxLength={200}
-          pattern={namePattern}
-          autoComplete="off"
-        />
-        <SelectField
-          label="Type"
-          name="subject_type"
-          options={subjectTypeOptions}
-          defaultValue=""
-          required
-        />
-        <TextField
-          label="Species"
-          name="species"
-          hint="For example, Homo sapiens."
-          maxLength={200}
-          optional
-        />
-        <TextField
-          label="External ID"
-          name="external_id"
-          hint="The subject's ID in its source repository, such as a GDC case UUID."
-          maxLength={200}
-          autoComplete="off"
-          optional
-          mono
-        />
-
-        <div className="flex items-center gap-4 pt-2">
-          <button
-            type="submit"
-            disabled={mutation.isPending}
-            className={`${primaryButton} inline-flex items-center gap-2`}
-          >
-            <SquarePlus aria-hidden="true" className="size-4 shrink-0" />
-            {mutation.isPending ? 'Creating…' : 'Create subject'}
-          </button>
-          <Link to={studyPath} className={textLink}>
-            Cancel
-          </Link>
-        </div>
-
-        {mutation.isError && (
-          <p role="alert" className={errorBox}>
-            {mutation.error.message}
-          </p>
-        )}
-      </form>
+      />
     </>
   )
 }

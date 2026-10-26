@@ -9,7 +9,8 @@ import { Breadcrumbs } from '../components/Breadcrumbs'
 import { PageTitle } from '../components/PageTitle'
 import { SampleForm } from '../components/SampleForm'
 import type { SampleStatus } from '../labels'
-import { collectedAt, DuplicateNameError, type SampleFormValues } from '../samples'
+import { DuplicateNameError } from '../forms'
+import { collectedAt, type SampleFormValues } from '../samples'
 import { errorBox } from '../styles'
 
 type Sample = components['schemas']['SampleRead']

@@ -12,3 +12,6 @@ export function text(form: FormData, name: string) {
 export function optionalText(form: FormData, name: string) {
   return text(form, name) || null
 }
+
+// Thrown when a name is already used, so the form can highlight the Name field.
+export class DuplicateNameError extends Error {}

@@ -1,8 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
 import { useParams } from 'react-router'
 
-import { api } from '../api/client'
 import type { components } from '../api/schema'
+import { fetchSubject } from '../api/queries'
+import { EditButton } from '../components/EditButton'
 import { Breadcrumbs } from '../components/Breadcrumbs'
 import { DetailList } from '../components/DetailList'
 import { PageTitle } from '../components/PageTitle'
@@ -13,20 +14,6 @@ import { subjectTypeLabel } from '../labels'
 import { errorBox } from '../styles'
 
 type Subject = components['schemas']['SubjectRead']
-
-// An address that isn't a valid ID (422) is treated like an unknown one (404).
-async function fetchSubject(subjectId: string) {
-  const { data, response } = await api.GET('/api/v1/subjects/{subject_id}', {
-    params: { path: { subject_id: subjectId } },
-  })
-  if (response.status === 404 || response.status === 422) {
-    return null
-  }
-  if (!data) {
-    throw new Error('Could not load subject')
-  }
-  return data
-}
 
 function SubjectDetails({ subject }: { subject: Subject }) {
   const projectPath = `/projects/${encodeURIComponent(subject.project_code)}`
@@ -46,7 +33,10 @@ function SubjectDetails({ subject }: { subject: Subject }) {
           { label: subject.name },
         ]}
       />
-      <PageTitle label="Subject">{subject.name}</PageTitle>
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        <PageTitle label="Subject">{subject.name}</PageTitle>
+        <EditButton to={`/subjects/${subject.id}/edit`}>Edit subject</EditButton>
+      </div>
 
       <DetailList
         items={[
@@ -61,6 +51,10 @@ function SubjectDetails({ subject }: { subject: Subject }) {
           ['Created', formatDate(subject.created_at)],
         ]}
       />
+
+      <p className="mt-6">
+        <EditButton to={`/subjects/${subject.id}/edit`}>Edit subject</EditButton>
+      </p>
 
       <h2 className="mt-10 text-xl font-semibold">Attributes</h2>
       <KeyValueList values={subject.attributes} emptyText="No attributes recorded." />

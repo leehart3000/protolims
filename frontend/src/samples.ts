@@ -12,8 +12,6 @@ export interface SampleFormValues {
   external_id: string | null
 }
 
-export class DuplicateNameError extends Error {}
-
 // A date without a time is stored as midday UTC, so it shows as the same day in any time zone.
 export function collectedAt(date: string | null) {
   return date && `${date}T12:00:00Z`

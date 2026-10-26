@@ -95,3 +95,18 @@ export async function fetchSample(sampleId: string) {
   }
   return data
 }
+
+// One subject by its permanent ID. An address that isn't a valid ID (422) is treated like an
+// unknown one (404).
+export async function fetchSubject(subjectId: string) {
+  const { data, response } = await api.GET('/api/v1/subjects/{subject_id}', {
+    params: { path: { subject_id: subjectId } },
+  })
+  if (response.status === 404 || response.status === 422) {
+    return null
+  }
+  if (!data) {
+    throw new Error('Could not load subject')
+  }
+  return data
+}

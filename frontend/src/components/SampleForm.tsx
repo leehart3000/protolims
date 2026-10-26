@@ -3,9 +3,9 @@ import { useState } from 'react'
 import { Link } from 'react-router'
 
 import type { components } from '../api/schema'
-import { namePattern, optionalText, text } from '../forms'
+import { DuplicateNameError, namePattern, optionalText, text } from '../forms'
 import { type SampleStatus, sampleStatusOptions } from '../labels'
-import { DuplicateNameError, type SampleFormValues } from '../samples'
+import type { SampleFormValues } from '../samples'
 import { errorBox, primaryButton, textLink } from '../styles'
 import { SelectField, TextField } from './FormFields'
 
