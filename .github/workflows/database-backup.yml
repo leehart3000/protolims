@@ -16,13 +16,34 @@ env:
 
 jobs:
   backup:
-    name: Back up production
+    name: Back up production and test the restore
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
+      contents: read
       id-token: write
 
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: restore
+          POSTGRES_PASSWORD: restore
+          POSTGRES_DB: restore_check
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
     steps:
+      - name: Check out code
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v3
         with:
@@ -55,4 +76,36 @@ jobs:
           set -euo pipefail
           name="production-$(date -u +%Y%m%d-%H%M%S).dump"
           gcloud storage cp backup.dump "$BUCKET/$name"
+          echo "DUMP_NAME=$name" >> "$GITHUB_ENV"
           echo "Uploaded $name"
+
+      - name: Download the uploaded copy
+        run: |
+          set -euo pipefail
+          gcloud storage cp "$BUCKET/$DUMP_NAME" restored.dump
+          cmp backup.dump restored.dump
+
+      - name: Restore into a temporary database
+        run: |
+          set -euo pipefail
+          docker run --rm --network=host -v "$PWD:/work:ro" -e PGPASSWORD=restore postgres:18-alpine \
+            pg_restore --host=localhost --username=restore --dbname=restore_check \
+              --no-owner --no-privileges --single-transaction --exit-on-error \
+              /work/restored.dump
+
+      - name: Read every table
+        run: |
+          set -euo pipefail
+          docker run --rm --network=host -e PGPASSWORD=restore postgres:18-alpine \
+            psql --host=localhost --username=restore --dbname=restore_check -v ON_ERROR_STOP=1 \
+              -c "SELECT version_num FROM alembic_version" \
+              -c "SELECT table_name, (xpath('/row/n/text()', query_to_xml(format('SELECT count(*) AS n FROM public.%I', table_name), false, true, '')))[1]::text AS row_count FROM information_schema.tables WHERE table_schema = 'public' AND table_type = 'BASE TABLE' ORDER BY table_name"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v10.3.0
+
+      - name: Upgrade the restored database to the latest migration
+        working-directory: backend
+        env:
+          PROTOLIMS_DATABASE_URL: postgresql+psycopg://restore:restore@localhost:5432/restore_check
+        run: uv run --locked alembic upgrade head
