@@ -12,7 +12,7 @@ import { SampleList } from '../components/SampleList'
 import { SearchBox } from '../components/SearchBox'
 import { SectionHeading } from '../components/SectionHeading'
 import { SubjectTable } from '../components/SubjectTable'
-import { EditButton } from '../components/EditButton'
+import { DetailsCard } from '../components/DetailsCard'
 import { formatDate } from '../format'
 import { errorBox } from '../styles'
 import { PAGE_SIZE, useListControls } from '../useListControls'
@@ -82,38 +82,34 @@ function StudyDetails({ projectCode, study }: { projectCode: string; study: Stud
 
   return (
     <>
-      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-        <PageTitle label="Study">{study.title}</PageTitle>
-        <EditButton to={`${studyPath}/edit`}>Edit study</EditButton>
-      </div>
-      {study.description && <p className="mt-3 max-w-3xl text-muted">{study.description}</p>}
+      <PageTitle label="Study">{study.title}</PageTitle>
 
-      <DetailList
-        items={[
-          ['Study code', <span className="font-mono">{study.code}</span>],
-          ['Created', formatDate(study.created_at)],
-          ['Project', project.data?.name ?? null],
-          ['Project code', <span className="font-mono">{projectCode}</span>],
-        ]}
-      />
+      <DetailsCard editTo={`${studyPath}/edit`} editLabel="Edit study">
+        {study.description && <p className="mt-3 max-w-3xl text-muted">{study.description}</p>}
 
-      <h2 className="mt-10 text-xl font-semibold">Design factors</h2>
-      {study.design_factors.length === 0 ? (
-        <p className="mt-4 text-muted">No design factors recorded.</p>
-      ) : (
-        <ul className="mt-4 space-y-2">
-          {study.design_factors.map((factor, index) => (
-            <li key={`${String(index)}-${factor.name}`}>
-              <span className="font-medium">{factor.name}</span>
-              {factor.description && <span className="text-muted"> – {factor.description}</span>}
-            </li>
-          ))}
-        </ul>
-      )}
+        <DetailList
+          items={[
+            ['Study code', <span className="font-mono">{study.code}</span>],
+            ['Created', formatDate(study.created_at)],
+            ['Project', project.data?.name ?? null],
+            ['Project code', <span className="font-mono">{projectCode}</span>],
+          ]}
+        />
 
-      <p className="mt-6">
-        <EditButton to={`${studyPath}/edit`}>Edit study</EditButton>
-      </p>
+        <h3 className="mt-6 font-semibold">Design factors</h3>
+        {study.design_factors.length === 0 ? (
+          <p className="mt-2 text-muted">No design factors recorded.</p>
+        ) : (
+          <ul className="mt-2 space-y-2">
+            {study.design_factors.map((factor, index) => (
+              <li key={`${String(index)}-${factor.name}`}>
+                <span className="font-medium">{factor.name}</span>
+                {factor.description && <span className="text-muted"> – {factor.description}</span>}
+              </li>
+            ))}
+          </ul>
+        )}
+      </DetailsCard>
 
       <div className="mt-10 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
         <SectionHeading>Subjects</SectionHeading>

@@ -10,7 +10,7 @@ import { PageTitle } from '../components/PageTitle'
 import { SampleTable } from '../components/SampleTable'
 import { NewButton } from '../components/NewButton'
 import { SectionHeading } from '../components/SectionHeading'
-import { EditButton } from '../components/EditButton'
+import { DetailsCard } from '../components/DetailsCard'
 import { formatDate } from '../format'
 import { sampleStatusLabel } from '../labels'
 import { errorBox, textLink } from '../styles'
@@ -65,45 +65,40 @@ function SampleDetails({ sample }: { sample: Sample }) {
           { label: sample.name },
         ]}
       />
-      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-        <PageTitle label="Sample">{sample.name}</PageTitle>
-        <EditButton to={`/samples/${sample.id}/edit`}>Edit sample</EditButton>
-      </div>
+      <PageTitle label="Sample">{sample.name}</PageTitle>
 
-      <DetailList
-        items={[
-          ['Material', sample.material_type],
-          ['Status', sampleStatusLabel(sample.status)],
-          ['Collected', sample.collected_at && formatDate(sample.collected_at)],
-          [
-            'Subject',
-            sample.subject_id && (
-              <Link to={`/subjects/${sample.subject_id}`} className={textLink}>
-                {sample.subject_name}
-              </Link>
-            ),
-          ],
-          [
-            'Derived from',
-            sample.parent_sample_id && (
-              <Link to={`/samples/${sample.parent_sample_id}`} className={textLink}>
-                {sample.parent_sample_name}
-              </Link>
-            ),
-          ],
-          [
-            'External ID',
-            sample.external_id && <span className="font-mono">{sample.external_id}</span>,
-          ],
-          ['Study code', <span className="font-mono">{sample.study_code}</span>],
-          ['Project code', <span className="font-mono">{sample.project_code}</span>],
-          ['Created', formatDate(sample.created_at)],
-        ]}
-      />
-
-      <p className="mt-6">
-        <EditButton to={`/samples/${sample.id}/edit`}>Edit sample</EditButton>
-      </p>
+      <DetailsCard editTo={`/samples/${sample.id}/edit`} editLabel="Edit sample">
+        <DetailList
+          items={[
+            ['Material', sample.material_type],
+            ['Status', sampleStatusLabel(sample.status)],
+            ['Collected', sample.collected_at && formatDate(sample.collected_at)],
+            [
+              'Subject',
+              sample.subject_id && (
+                <Link to={`/subjects/${sample.subject_id}`} className={textLink}>
+                  {sample.subject_name}
+                </Link>
+              ),
+            ],
+            [
+              'Derived from',
+              sample.parent_sample_id && (
+                <Link to={`/samples/${sample.parent_sample_id}`} className={textLink}>
+                  {sample.parent_sample_name}
+                </Link>
+              ),
+            ],
+            [
+              'External ID',
+              sample.external_id && <span className="font-mono">{sample.external_id}</span>,
+            ],
+            ['Study code', <span className="font-mono">{sample.study_code}</span>],
+            ['Project code', <span className="font-mono">{sample.project_code}</span>],
+            ['Created', formatDate(sample.created_at)],
+          ]}
+        />
+      </DetailsCard>
 
       <h2 className="mt-10 text-xl font-semibold">Characteristics</h2>
       <KeyValueList values={sample.characteristics} emptyText="No characteristics recorded." />

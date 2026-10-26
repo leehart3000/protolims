@@ -3,7 +3,7 @@ import { useParams } from 'react-router'
 
 import type { components } from '../api/schema'
 import { fetchSubject } from '../api/queries'
-import { EditButton } from '../components/EditButton'
+import { DetailsCard } from '../components/DetailsCard'
 import { Breadcrumbs } from '../components/Breadcrumbs'
 import { DetailList } from '../components/DetailList'
 import { PageTitle } from '../components/PageTitle'
@@ -33,28 +33,23 @@ function SubjectDetails({ subject }: { subject: Subject }) {
           { label: subject.name },
         ]}
       />
-      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-        <PageTitle label="Subject">{subject.name}</PageTitle>
-        <EditButton to={`/subjects/${subject.id}/edit`}>Edit subject</EditButton>
-      </div>
+      <PageTitle label="Subject">{subject.name}</PageTitle>
 
-      <DetailList
-        items={[
-          ['Type', subjectTypeLabel(subject.subject_type)],
-          ['Species', subject.species && <span className="italic">{subject.species}</span>],
-          [
-            'External ID',
-            subject.external_id && <span className="font-mono">{subject.external_id}</span>,
-          ],
-          ['Study code', <span className="font-mono">{subject.study_code}</span>],
-          ['Project code', <span className="font-mono">{subject.project_code}</span>],
-          ['Created', formatDate(subject.created_at)],
-        ]}
-      />
-
-      <p className="mt-6">
-        <EditButton to={`/subjects/${subject.id}/edit`}>Edit subject</EditButton>
-      </p>
+      <DetailsCard editTo={`/subjects/${subject.id}/edit`} editLabel="Edit subject">
+        <DetailList
+          items={[
+            ['Type', subjectTypeLabel(subject.subject_type)],
+            ['Species', subject.species && <span className="italic">{subject.species}</span>],
+            [
+              'External ID',
+              subject.external_id && <span className="font-mono">{subject.external_id}</span>,
+            ],
+            ['Study code', <span className="font-mono">{subject.study_code}</span>],
+            ['Project code', <span className="font-mono">{subject.project_code}</span>],
+            ['Created', formatDate(subject.created_at)],
+          ]}
+        />
+      </DetailsCard>
 
       <h2 className="mt-10 text-xl font-semibold">Attributes</h2>
       <KeyValueList values={subject.attributes} emptyText="No attributes recorded." />
