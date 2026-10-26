@@ -1,0 +1,58 @@
+name: Database backup
+
+on:
+  schedule:
+    - cron: '17 2 * * *'
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: database-backup
+  cancel-in-progress: false
+
+env:
+  BUCKET: gs://protolims-production-db-backups
+
+jobs:
+  backup:
+    name: Back up production
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      id-token: write
+
+    steps:
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: projects/516499981468/locations/global/workloadIdentityPools/github/providers/protolims-repo
+          service_account: protolims-backup@protolims.iam.gserviceaccount.com
+
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v3
+
+      - name: Dump the database
+        run: |
+          set -euo pipefail
+          DATABASE_URL="$(gcloud secrets versions access latest --secret=production-database-url-backup --project=protolims)"
+          echo "::add-mask::$DATABASE_URL"
+          export DATABASE_URL
+          docker run --rm -e DATABASE_URL postgres:18-alpine \
+            sh -c 'pg_dump --format=custom "$DATABASE_URL"' > backup.dump
+
+      - name: Check the dump can be read
+        run: |
+          set -euo pipefail
+          test -s backup.dump
+          docker run --rm -v "$PWD:/work:ro" postgres:18-alpine \
+            pg_restore --list /work/backup.dump > contents.txt
+          grep -q 'TABLE public alembic_version' contents.txt
+          ls -l backup.dump
+
+      - name: Upload to the bucket
+        run: |
+          set -euo pipefail
+          name="production-$(date -u +%Y%m%d-%H%M%S).dump"
+          gcloud storage cp backup.dump "$BUCKET/$name"
+          echo "Uploaded $name"
