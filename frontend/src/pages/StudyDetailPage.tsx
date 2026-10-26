@@ -3,6 +3,7 @@ import { useParams } from 'react-router'
 
 import { fetchProject, fetchStudy, fetchSubjectPage, type SubjectSort } from '../api/queries'
 import type { components } from '../api/schema'
+import { AssayList } from '../components/AssayList'
 import { Breadcrumbs } from '../components/Breadcrumbs'
 import { DetailList } from '../components/DetailList'
 import { NewButton } from '../components/NewButton'
@@ -132,6 +133,11 @@ function StudyDetails({ projectCode, study }: { projectCode: string; study: Stud
       <p className="mt-4">
         <NewButton to={`${studyPath}/samples/new`}>New sample</NewButton>
       </p>
+
+      <div className="mt-10 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        <SectionHeading>Assays</SectionHeading>
+      </div>
+      <AssayList projectCode={projectCode} studyCode={study.code} />
     </>
   )
 }

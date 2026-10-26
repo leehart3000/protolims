@@ -110,3 +110,56 @@ export async function fetchSubject(subjectId: string) {
   }
   return data
 }
+
+type AssayListQuery = NonNullable<
+  paths['/api/v1/projects/{project_code}/studies/{study_code}/assays']['get']['parameters']['query']
+>
+
+export type AssaySort = NonNullable<AssayListQuery['sort']>
+
+// One page of a study's assays, with the total number that match.
+export async function fetchAssayPage(
+  projectCode: string,
+  studyCode: string,
+  query: AssayListQuery,
+) {
+  const { data } = await api.GET('/api/v1/projects/{project_code}/studies/{study_code}/assays', {
+    params: { path: { project_code: projectCode, study_code: studyCode }, query },
+  })
+  if (!data) {
+    throw new Error('Could not load assays')
+  }
+  return data
+}
+
+// One assay by its permanent ID. An address that isn't a valid ID (422) is treated like an
+// unknown one (404).
+export async function fetchAssay(assayId: string) {
+  const { data, response } = await api.GET('/api/v1/assays/{assay_id}', {
+    params: { path: { assay_id: assayId } },
+  })
+  if (response.status === 404 || response.status === 422) {
+    return null
+  }
+  if (!data) {
+    throw new Error('Could not load assay')
+  }
+  return data
+}
+
+type AssaySampleListQuery = NonNullable<
+  paths['/api/v1/assays/{assay_id}/samples']['get']['parameters']['query']
+>
+
+export type AssaySampleSort = NonNullable<AssaySampleListQuery['sort']>
+
+// One page of the samples an assay measured, with the total number that match.
+export async function fetchAssaySamplePage(assayId: string, query: AssaySampleListQuery) {
+  const { data } = await api.GET('/api/v1/assays/{assay_id}/samples', {
+    params: { path: { assay_id: assayId }, query },
+  })
+  if (!data) {
+    throw new Error('Could not load samples')
+  }
+  return data
+}

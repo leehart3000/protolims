@@ -1097,6 +1097,543 @@
         }
       }
     },
+    "/api/v1/projects/{project_code}/studies/{study_code}/assays": {
+      "post": {
+        "tags": [
+          "assays"
+        ],
+        "summary": "Create Assay",
+        "description": "Create an assay within a study. Assay names are unique within their study.",
+        "operationId": "create_assay_api_v1_projects__project_code__studies__study_code__assays_post",
+        "parameters": [
+          {
+            "name": "project_code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Code"
+            }
+          },
+          {
+            "name": "study_code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Study Code"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssayCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssayRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "assays"
+        ],
+        "summary": "List Assays",
+        "description": "List a study's assays a page at a time, with the total number that match.",
+        "operationId": "list_assays_api_v1_projects__project_code__studies__study_code__assays_get",
+        "parameters": [
+          {
+            "name": "project_code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Code"
+            }
+          },
+          {
+            "name": "study_code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Study Code"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 200
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Search assay names and external IDs, ignoring case",
+              "title": "Q"
+            },
+            "description": "Search assay names and external IDs, ignoring case"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "name",
+                "-name",
+                "measurement_type",
+                "-measurement_type",
+                "technology_type",
+                "-technology_type",
+                "platform",
+                "-platform",
+                "performed_at",
+                "-performed_at",
+                "created_at",
+                "-created_at"
+              ],
+              "type": "string",
+              "description": "The column to sort by; a leading - reverses the order",
+              "default": "name",
+              "title": "Sort"
+            },
+            "description": "The column to sort by; a leading - reverses the order"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_AssayRead_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/assays/{assay_id}": {
+      "get": {
+        "tags": [
+          "assays"
+        ],
+        "summary": "Get Assay",
+        "description": "Get one assay by its permanent ID.",
+        "operationId": "get_assay_api_v1_assays__assay_id__get",
+        "parameters": [
+          {
+            "name": "assay_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Assay Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssayRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "assays"
+        ],
+        "summary": "Update Assay",
+        "description": "Change some of an assay's details. Only the fields sent are changed; null clears one.",
+        "operationId": "update_assay_api_v1_assays__assay_id__patch",
+        "parameters": [
+          {
+            "name": "assay_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Assay Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssayUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssayRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/assays/{assay_id}/samples": {
+      "get": {
+        "tags": [
+          "assays"
+        ],
+        "summary": "List Assay Samples",
+        "description": "List the samples an assay measured, a page at a time, with the total number that match.",
+        "operationId": "list_assay_samples_api_v1_assays__assay_id__samples_get",
+        "parameters": [
+          {
+            "name": "assay_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Assay Id"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 200
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Search sample names and external IDs, ignoring case",
+              "title": "Q"
+            },
+            "description": "Search sample names and external IDs, ignoring case"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "name",
+                "-name",
+                "label",
+                "-label"
+              ],
+              "type": "string",
+              "description": "The column to sort by; a leading - reverses the order",
+              "default": "name",
+              "title": "Sort"
+            },
+            "description": "The column to sort by; a leading - reverses the order"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_AssaySampleRead_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/assays/{assay_id}/samples/{sample_id}": {
+      "put": {
+        "tags": [
+          "assays"
+        ],
+        "summary": "Link Sample",
+        "description": "Record that an assay measured a sample, or change the sample's label in it.\n\nReturns 201 when the link is new and 200 when it already existed, so it's safe to repeat.",
+        "operationId": "link_sample_api_v1_assays__assay_id__samples__sample_id__put",
+        "parameters": [
+          {
+            "name": "assay_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Assay Id"
+            }
+          },
+          {
+            "name": "sample_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Sample Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssaySampleLink"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssaySampleRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "assays"
+        ],
+        "summary": "Unlink Sample",
+        "description": "Remove a sample from an assay.",
+        "operationId": "unlink_sample_api_v1_assays__assay_id__samples__sample_id__delete",
+        "parameters": [
+          {
+            "name": "assay_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Assay Id"
+            }
+          },
+          {
+            "name": "sample_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Sample Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/samples/{sample_id}/assays": {
+      "get": {
+        "tags": [
+          "assays"
+        ],
+        "summary": "List Sample Assays",
+        "description": "List the assays a sample was measured in, by name.",
+        "operationId": "list_sample_assays_api_v1_samples__sample_id__assays_get",
+        "parameters": [
+          {
+            "name": "sample_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Sample Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SampleAssayRead"
+                  },
+                  "title": "Response List Sample Assays Api V1 Samples  Sample Id  Assays Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "tags": [
@@ -1152,6 +1689,368 @@
   },
   "components": {
     "schemas": {
+      "AssayCreate": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "pattern": "^[^/\\s](?:[^/]*[^/\\s])?$",
+            "title": "Name"
+          },
+          "external_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "External Id"
+          },
+          "measurement_type": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Measurement Type"
+          },
+          "technology_type": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Technology Type"
+          },
+          "platform": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Platform"
+          },
+          "performed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Performed At"
+          },
+          "parameters": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Parameters"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name",
+          "measurement_type",
+          "technology_type"
+        ],
+        "title": "AssayCreate",
+        "description": "Data needed to create an assay."
+      },
+      "AssayRead": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "study_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Study Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "external_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "External Id"
+          },
+          "measurement_type": {
+            "type": "string",
+            "title": "Measurement Type"
+          },
+          "technology_type": {
+            "type": "string",
+            "title": "Technology Type"
+          },
+          "platform": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Platform"
+          },
+          "performed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Performed At"
+          },
+          "parameters": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Parameters"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "created_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created By"
+          },
+          "project_code": {
+            "type": "string",
+            "title": "Project Code"
+          },
+          "study_code": {
+            "type": "string",
+            "title": "Study Code"
+          },
+          "sample_count": {
+            "type": "integer",
+            "title": "Sample Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "study_id",
+          "name",
+          "external_id",
+          "measurement_type",
+          "technology_type",
+          "platform",
+          "performed_at",
+          "parameters",
+          "created_at",
+          "updated_at",
+          "created_by",
+          "project_code",
+          "study_code",
+          "sample_count"
+        ],
+        "title": "AssayRead",
+        "description": "An assay as returned by the API, with where it belongs and how many samples it measured."
+      },
+      "AssaySampleLink": {
+        "properties": {
+          "label": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "AssaySampleLink",
+        "description": "Links a sample to an assay, or changes its label there."
+      },
+      "AssaySampleRead": {
+        "properties": {
+          "sample_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Sample Id"
+          },
+          "sample_name": {
+            "type": "string",
+            "title": "Sample Name"
+          },
+          "external_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "External Id"
+          },
+          "material_type": {
+            "type": "string",
+            "title": "Material Type"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label"
+          }
+        },
+        "type": "object",
+        "required": [
+          "sample_id",
+          "sample_name",
+          "external_id",
+          "material_type",
+          "status",
+          "label"
+        ],
+        "title": "AssaySampleRead",
+        "description": "A sample measured in an assay, with its label there."
+      },
+      "AssayUpdate": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200,
+                "minLength": 1,
+                "pattern": "^[^/\\s](?:[^/]*[^/\\s])?$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "external_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "External Id"
+          },
+          "measurement_type": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Measurement Type"
+          },
+          "technology_type": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Technology Type"
+          },
+          "platform": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Platform"
+          },
+          "performed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Performed At"
+          },
+          "parameters": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parameters"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "AssayUpdate",
+        "description": "Changes to an assay. Only the fields sent are changed; sending null clears a field.\n\nThe study can't be changed: an assay stays in the study it was created in."
+      },
       "DesignFactor": {
         "properties": {
           "name": {
@@ -1192,6 +2091,48 @@
         },
         "type": "object",
         "title": "HTTPValidationError"
+      },
+      "Page_AssayRead_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AssayRead"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total"
+        ],
+        "title": "Page[AssayRead]"
+      },
+      "Page_AssaySampleRead_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AssaySampleRead"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total"
+        ],
+        "title": "Page[AssaySampleRead]"
       },
       "Page_SampleRead_": {
         "properties": {
@@ -1465,6 +2406,60 @@
         "type": "object",
         "title": "ProjectUpdate",
         "description": "Changes to a project. Only the fields sent are changed; sending null clears a field.\n\nThe code can't be changed, because it's part of the project's address and its studies'."
+      },
+      "SampleAssayRead": {
+        "properties": {
+          "assay_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Assay Id"
+          },
+          "assay_name": {
+            "type": "string",
+            "title": "Assay Name"
+          },
+          "measurement_type": {
+            "type": "string",
+            "title": "Measurement Type"
+          },
+          "technology_type": {
+            "type": "string",
+            "title": "Technology Type"
+          },
+          "platform": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Platform"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label"
+          }
+        },
+        "type": "object",
+        "required": [
+          "assay_id",
+          "assay_name",
+          "measurement_type",
+          "technology_type",
+          "platform",
+          "label"
+        ],
+        "title": "SampleAssayRead",
+        "description": "An assay a sample was measured in, with the sample's label there."
       },
       "SampleCreate": {
         "properties": {

@@ -17,6 +17,7 @@ import EditSamplePage from './pages/EditSamplePage'
 import EditSubjectPage from './pages/EditSubjectPage'
 import EditStudyPage from './pages/EditStudyPage'
 import EditProjectPage from './pages/EditProjectPage'
+import AssayDetailPage from './pages/AssayDetailPage'
 
 function navLinkClass({ isActive }: { isActive: boolean }) {
   return `rounded-md px-2 py-1.5 text-sm font-medium ${isActive ? 'text-primary' : 'text-muted hover:text-fg'}`
@@ -69,6 +70,7 @@ export default function App() {
           <Route path="/subjects/:subjectId/edit" element={<EditSubjectPage />} />
           <Route path="/samples/:sampleId" element={<SampleDetailPage />} />
           <Route path="/samples/:sampleId/edit" element={<EditSamplePage />} />
+          <Route path="/assays/:assayId" element={<AssayDetailPage />} />
           <Route path="/studies" element={<StudiesPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>

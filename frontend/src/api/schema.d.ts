@@ -216,6 +216,120 @@ export interface paths {
         patch: operations["update_sample_api_v1_samples__sample_id__patch"];
         trace?: never;
     };
+    "/api/v1/projects/{project_code}/studies/{study_code}/assays": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Assays
+         * @description List a study's assays a page at a time, with the total number that match.
+         */
+        get: operations["list_assays_api_v1_projects__project_code__studies__study_code__assays_get"];
+        put?: never;
+        /**
+         * Create Assay
+         * @description Create an assay within a study. Assay names are unique within their study.
+         */
+        post: operations["create_assay_api_v1_projects__project_code__studies__study_code__assays_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/assays/{assay_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Assay
+         * @description Get one assay by its permanent ID.
+         */
+        get: operations["get_assay_api_v1_assays__assay_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update Assay
+         * @description Change some of an assay's details. Only the fields sent are changed; null clears one.
+         */
+        patch: operations["update_assay_api_v1_assays__assay_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/assays/{assay_id}/samples": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Assay Samples
+         * @description List the samples an assay measured, a page at a time, with the total number that match.
+         */
+        get: operations["list_assay_samples_api_v1_assays__assay_id__samples_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/assays/{assay_id}/samples/{sample_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Link Sample
+         * @description Record that an assay measured a sample, or change the sample's label in it.
+         *
+         *     Returns 201 when the link is new and 200 when it already existed, so it's safe to repeat.
+         */
+        put: operations["link_sample_api_v1_assays__assay_id__samples__sample_id__put"];
+        post?: never;
+        /**
+         * Unlink Sample
+         * @description Remove a sample from an assay.
+         */
+        delete: operations["unlink_sample_api_v1_assays__assay_id__samples__sample_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/samples/{sample_id}/assays": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Sample Assays
+         * @description List the assays a sample was measured in, by name.
+         */
+        get: operations["list_sample_assays_api_v1_samples__sample_id__assays_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -261,6 +375,131 @@ export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
         /**
+         * AssayCreate
+         * @description Data needed to create an assay.
+         */
+        AssayCreate: {
+            /** Name */
+            name: string;
+            /** External Id */
+            external_id?: string | null;
+            /** Measurement Type */
+            measurement_type: string;
+            /** Technology Type */
+            technology_type: string;
+            /** Platform */
+            platform?: string | null;
+            /** Performed At */
+            performed_at?: string | null;
+            /** Parameters */
+            parameters?: {
+                [key: string]: unknown;
+            };
+        };
+        /**
+         * AssayRead
+         * @description An assay as returned by the API, with where it belongs and how many samples it measured.
+         */
+        AssayRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Study Id
+             * Format: uuid
+             */
+            study_id: string;
+            /** Name */
+            name: string;
+            /** External Id */
+            external_id: string | null;
+            /** Measurement Type */
+            measurement_type: string;
+            /** Technology Type */
+            technology_type: string;
+            /** Platform */
+            platform: string | null;
+            /** Performed At */
+            performed_at: string | null;
+            /** Parameters */
+            parameters: {
+                [key: string]: unknown;
+            };
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Created By */
+            created_by: string | null;
+            /** Project Code */
+            project_code: string;
+            /** Study Code */
+            study_code: string;
+            /** Sample Count */
+            sample_count: number;
+        };
+        /**
+         * AssaySampleLink
+         * @description Links a sample to an assay, or changes its label there.
+         */
+        AssaySampleLink: {
+            /** Label */
+            label?: string | null;
+        };
+        /**
+         * AssaySampleRead
+         * @description A sample measured in an assay, with its label there.
+         */
+        AssaySampleRead: {
+            /**
+             * Sample Id
+             * Format: uuid
+             */
+            sample_id: string;
+            /** Sample Name */
+            sample_name: string;
+            /** External Id */
+            external_id: string | null;
+            /** Material Type */
+            material_type: string;
+            /** Status */
+            status: string;
+            /** Label */
+            label: string | null;
+        };
+        /**
+         * AssayUpdate
+         * @description Changes to an assay. Only the fields sent are changed; sending null clears a field.
+         *
+         *     The study can't be changed: an assay stays in the study it was created in.
+         */
+        AssayUpdate: {
+            /** Name */
+            name?: string | null;
+            /** External Id */
+            external_id?: string | null;
+            /** Measurement Type */
+            measurement_type?: string | null;
+            /** Technology Type */
+            technology_type?: string | null;
+            /** Platform */
+            platform?: string | null;
+            /** Performed At */
+            performed_at?: string | null;
+            /** Parameters */
+            parameters?: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /**
          * DesignFactor
          * @description A variable under study, e.g. "compound", "dose" or "tissue type".
          */
@@ -274,6 +513,20 @@ export interface components {
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /** Page[AssayRead] */
+        Page_AssayRead_: {
+            /** Items */
+            items: components["schemas"]["AssayRead"][];
+            /** Total */
+            total: number;
+        };
+        /** Page[AssaySampleRead] */
+        Page_AssaySampleRead_: {
+            /** Items */
+            items: components["schemas"]["AssaySampleRead"][];
+            /** Total */
+            total: number;
         };
         /** Page[SampleRead] */
         Page_SampleRead_: {
@@ -359,6 +612,27 @@ export interface components {
             licence?: string | null;
             /** Citation */
             citation?: string | null;
+        };
+        /**
+         * SampleAssayRead
+         * @description An assay a sample was measured in, with the sample's label there.
+         */
+        SampleAssayRead: {
+            /**
+             * Assay Id
+             * Format: uuid
+             */
+            assay_id: string;
+            /** Assay Name */
+            assay_name: string;
+            /** Measurement Type */
+            measurement_type: string;
+            /** Technology Type */
+            technology_type: string;
+            /** Platform */
+            platform: string | null;
+            /** Label */
+            label: string | null;
         };
         /**
          * SampleCreate
@@ -1267,6 +1541,282 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SampleRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_assays_api_v1_projects__project_code__studies__study_code__assays_get: {
+        parameters: {
+            query?: {
+                /** @description Search assay names and external IDs, ignoring case */
+                q?: string | null;
+                /** @description The column to sort by; a leading - reverses the order */
+                sort?: "name" | "-name" | "measurement_type" | "-measurement_type" | "technology_type" | "-technology_type" | "platform" | "-platform" | "performed_at" | "-performed_at" | "created_at" | "-created_at";
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path: {
+                project_code: string;
+                study_code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_AssayRead_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_assay_api_v1_projects__project_code__studies__study_code__assays_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_code: string;
+                study_code: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssayCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssayRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_assay_api_v1_assays__assay_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assay_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssayRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_assay_api_v1_assays__assay_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assay_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssayUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssayRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_assay_samples_api_v1_assays__assay_id__samples_get: {
+        parameters: {
+            query?: {
+                /** @description Search sample names and external IDs, ignoring case */
+                q?: string | null;
+                /** @description The column to sort by; a leading - reverses the order */
+                sort?: "name" | "-name" | "label" | "-label";
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path: {
+                assay_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_AssaySampleRead_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    link_sample_api_v1_assays__assay_id__samples__sample_id__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assay_id: string;
+                sample_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssaySampleLink"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssaySampleRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    unlink_sample_api_v1_assays__assay_id__samples__sample_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assay_id: string;
+                sample_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_sample_assays_api_v1_samples__sample_id__assays_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                sample_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SampleAssayRead"][];
                 };
             };
             /** @description Validation Error */
