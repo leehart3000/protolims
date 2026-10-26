@@ -4,7 +4,7 @@ import uuid
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import DateTime, ForeignKey, Text, text
+from sqlalchemy import DateTime, ForeignKey, Text, UniqueConstraint, text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -12,11 +12,17 @@ from protolims_api.models.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
 
 
 class Assay(UUIDPrimaryKeyMixin, TimestampMixin, Base):
-    """A measurement run, e.g. an RNA-seq batch or an LC-MS/MS experiment."""
+    """A measurement run, e.g. an RNA-seq batch or an LC-MS/MS experiment.
+
+    An assay's name is unique within its study only.
+    """
 
     __tablename__ = "assay"
+    # The unique constraint's index starts with study_id, so it also speeds up
+    # "all assays in this study" queries; a separate study_id index isn't needed.
+    __table_args__ = (UniqueConstraint("study_id", "name"),)
 
-    study_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("study.id"), index=True)
+    study_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("study.id"))
     name: Mapped[str] = mapped_column(Text)
     external_id: Mapped[str | None] = mapped_column(Text, index=True)
     measurement_type: Mapped[str] = mapped_column(Text)
