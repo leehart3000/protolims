@@ -72,7 +72,7 @@ export function StudyForm({
         <TextField
           label="Code"
           name="code"
-          hint="A short identifier, unique within this project, such as RNASEQ. Letters, digits, dots, dashes and underscores; it must start with a letter or digit, and can't be new or edit."
+          hint="A short identifier, unique within this project, such as RNASEQ. It can contain letters, digits, dots, dashes or underscores, and must start with a letter or digit. It can't be ‘new’ or ‘edit’."
           error={codeError}
           defaultValue={initial.code}
           required
