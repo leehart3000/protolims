@@ -72,11 +72,12 @@ erDiagram
     ASSAY {
         uuid id PK
         uuid study_id FK
-        text name
+        text name "unique within its study"
         text external_id
         text measurement_type
         text technology_type
         text platform
+        timestamptz performed_at
         jsonb parameters
     }
     ASSAY_SAMPLE {
@@ -127,17 +128,20 @@ An append-only `audit_event` table records who changed what, and when.
   names.
 - **Projects are independent.** Project codes are unique across ProtoLIMS.
   Everything else is scoped to its parent: study codes are unique within their
-  project, and subject and sample names are unique within their study. So
-  different projects can each have a `PILOT` study, and different studies can
-  each have a sample called `S1`. Studies are addressed through their project,
-  e.g. `/projects/TCGA-BRCA/studies/RNASEQ`.
+  project, and subject, sample and assay names are unique within their study.
+  So different projects can each have a `PILOT` study, and different studies
+  can each have a sample called `S1`. Studies are addressed through their
+  project, e.g. `/projects/TCGA-BRCA/studies/RNASEQ`.
 - **Addresses:** projects and studies, of which there are few and whose codes
   are chosen deliberately, are addressed by code (e.g.
-  `/projects/TCGA-BRCA/studies/RNASEQ`). Subjects and samples, which are
-  numerous and whose names are imported and may be corrected, are addressed by
-  their permanent ID (e.g. `/subjects/{id}`), so links never break when a name
-  changes. Pages show names and breadcrumbs, never the ID. Creating and
-  listing subjects and samples still happens under their study.
+  `/projects/TCGA-BRCA/studies/RNASEQ`). Subjects, samples and assays, which
+  are numerous and whose names are imported and may be corrected, are addressed
+  by their permanent ID (e.g. `/subjects/{id}`, `/assays/{id}`), so links never
+  break when a name changes. Pages show names and breadcrumbs, never the ID.
+  Creating and listing them still happens under their study.
+- **Reserved codes:** project and study codes can't be `new` or `edit` (in any
+  capitalisation), as they would clash with page addresses. If more reserved
+  words are ever needed, consider GitLab-style `/-/` addresses instead.
 - **No assumed identity across studies.** Two samples (or subjects) with the
   same name in different studies are separate records; ProtoLIMS assumes neither
   that they are the same nor that they are different. Connections between
@@ -156,6 +160,12 @@ An append-only `audit_event` table records who changed what, and when.
 - **Metadata:** fixed columns for common fields; JSONB for type-specific
   `characteristics` (what a sample is) and `factor_values` (what was done to
   it), validated by Pydantic per type.
+- **Assays and their samples:** an assay's samples must be in the same study.
+  `assay_sample.label` records where each sample is within the assay (e.g. a
+  TMT channel). Linking is `PUT /assays/{id}/samples/{sample_id}`, which is
+  safe to repeat (imports rely on this); removing a link is a `DELETE`. Both
+  are recorded in the audit trail. Linking by hand in the website waits for the
+  search-as-you-type picker.
 - **Data files** are stored in object storage, not the database. `uri` uses a
   scheme per backend (`r2://…`, `gs://…`), so storage can be R2, GCS or both.
 - **Data files belong to a Study**; the Assay is optional, because analysis
