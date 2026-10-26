@@ -15,3 +15,6 @@ export function optionalText(form: FormData, name: string) {
 
 // Thrown when a name is already used, so the form can highlight the Name field.
 export class DuplicateNameError extends Error {}
+
+// Thrown when a code is already used, so the form can highlight the Code field.
+export class DuplicateCodeError extends Error {}

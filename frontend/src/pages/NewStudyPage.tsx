@@ -1,20 +1,17 @@
-import { SquarePlus } from 'lucide-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Link, useNavigate, useParams } from 'react-router'
+import { SquarePlus } from 'lucide-react'
+import { useNavigate, useParams } from 'react-router'
 
 import { api } from '../api/client'
 import { fetchProject } from '../api/queries'
 import type { components } from '../api/schema'
 import { Breadcrumbs } from '../components/Breadcrumbs'
 import { DetailList } from '../components/DetailList'
-import { TextAreaField, TextField } from '../components/FormFields'
 import { PageTitle } from '../components/PageTitle'
-import { codePattern, optionalText, text } from '../forms'
-import { errorBox, primaryButton, textLink } from '../styles'
+import { StudyForm } from '../components/StudyForm'
+import { DuplicateCodeError } from '../forms'
 
 type StudyCreate = components['schemas']['StudyCreate']
-
-class DuplicateCodeError extends Error {}
 
 async function createStudy(projectCode: string, body: StudyCreate) {
   const { data, response } = await api.POST('/api/v1/projects/{project_code}/studies', {
@@ -56,11 +53,6 @@ export default function NewStudyPage() {
     },
   })
 
-  const codeError =
-    mutation.error instanceof DuplicateCodeError
-      ? 'This code is already in use. Please choose another.'
-      : undefined
-
   return (
     <>
       <Breadcrumbs
@@ -78,57 +70,20 @@ export default function NewStudyPage() {
         ]}
       />
 
-      <form
-        className="mt-6 max-w-2xl space-y-5"
-        onChange={() => {
-          if (mutation.isError) {
-            mutation.reset()
-          }
+      <StudyForm
+        initial={{ code: '', title: '', description: null, design_factors: [] }}
+        withCode
+        submitLabel="Create study"
+        submitIcon={SquarePlus}
+        pendingLabel="Creating…"
+        cancelTo={projectPath}
+        isPending={mutation.isPending}
+        error={mutation.error}
+        onEdit={mutation.reset}
+        onSubmit={(values) => {
+          mutation.mutate(values)
         }}
-        onSubmit={(event) => {
-          event.preventDefault()
-          const form = new FormData(event.currentTarget)
-          mutation.mutate({
-            code: text(form, 'code'),
-            title: text(form, 'title'),
-            description: optionalText(form, 'description'),
-          })
-        }}
-      >
-        <TextField
-          label="Code"
-          name="code"
-          hint="A short identifier, unique within this project, such as RNASEQ. Letters, digits, dots, dashes and underscores; it must start with a letter or digit."
-          error={codeError}
-          required
-          maxLength={64}
-          pattern={codePattern}
-          autoComplete="off"
-          mono
-        />
-        <TextField label="Title" name="title" required maxLength={200} />
-        <TextAreaField label="Description" name="description" rows={4} optional />
-
-        <div className="flex items-center gap-4 pt-2">
-          <button
-            type="submit"
-            disabled={mutation.isPending}
-            className={`${primaryButton} inline-flex items-center gap-2`}
-          >
-            <SquarePlus aria-hidden="true" className="size-4 shrink-0" />
-            {mutation.isPending ? 'Creating…' : 'Create study'}
-          </button>
-          <Link to={projectPath} className={textLink}>
-            Cancel
-          </Link>
-        </div>
-
-        {mutation.isError && (
-          <p role="alert" className={errorBox}>
-            {mutation.error.message}
-          </p>
-        )}
-      </form>
+      />
     </>
   )
 }

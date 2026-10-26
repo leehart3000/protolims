@@ -83,6 +83,7 @@ kind of subject or sample, but it can say "new", "edit" or "open".
 | --- | --- | --- |
 | Create | `SquarePlus` | New … buttons (`NewButton`), Create … buttons |
 | Edit | `SquarePen` | Edit … buttons (`EditButton`) |
+| Remove | `SquareMinus` | Removing an item from a list in a form, such as a design factor |
 | Save | `Save` | Save changes |
 | Open | `SquareArrowRight` | The end of each clickable table row (`RowArrow`) |
 

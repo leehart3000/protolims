@@ -161,6 +161,12 @@ describe('StudyDetailPage', () => {
     expect(screen.getByText('sample type')).toBeInTheDocument()
     expect(screen.getByText('stage')).toBeInTheDocument()
 
+    const editLinks = screen.getAllByRole('link', { name: 'Edit study' })
+    expect(editLinks).toHaveLength(2)
+    for (const link of editLinks) {
+      expect(link).toHaveAttribute('href', '/projects/TCGA-BRCA/studies/RNASEQ/edit')
+    }
+
     expect(await screen.findByRole('link', { name: 'TCGA-A1-A0SB' })).toHaveAttribute(
       'href',
       `/subjects/${patient.id}`,

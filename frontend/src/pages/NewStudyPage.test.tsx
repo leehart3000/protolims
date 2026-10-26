@@ -112,6 +112,7 @@ describe('NewStudyPage', () => {
       code: 'RNASEQ',
       title: 'RNA-seq of primary tumours',
       description: null,
+      design_factors: [],
     })
   })
 

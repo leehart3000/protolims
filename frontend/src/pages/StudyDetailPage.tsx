@@ -12,6 +12,7 @@ import { SampleList } from '../components/SampleList'
 import { SearchBox } from '../components/SearchBox'
 import { SectionHeading } from '../components/SectionHeading'
 import { SubjectTable } from '../components/SubjectTable'
+import { EditButton } from '../components/EditButton'
 import { formatDate } from '../format'
 import { errorBox } from '../styles'
 import { PAGE_SIZE, useListControls } from '../useListControls'
@@ -81,7 +82,10 @@ function StudyDetails({ projectCode, study }: { projectCode: string; study: Stud
 
   return (
     <>
-      <PageTitle label="Study">{study.title}</PageTitle>
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        <PageTitle label="Study">{study.title}</PageTitle>
+        <EditButton to={`${studyPath}/edit`}>Edit study</EditButton>
+      </div>
       {study.description && <p className="mt-3 max-w-3xl text-muted">{study.description}</p>}
 
       <DetailList
@@ -106,6 +110,10 @@ function StudyDetails({ projectCode, study }: { projectCode: string; study: Stud
           ))}
         </ul>
       )}
+
+      <p className="mt-6">
+        <EditButton to={`${studyPath}/edit`}>Edit study</EditButton>
+      </p>
 
       <div className="mt-10 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
         <SectionHeading>Subjects</SectionHeading>
