@@ -11,6 +11,7 @@ type Project = components['schemas']['ProjectRead']
 type Study = components['schemas']['StudyRead']
 type Subject = components['schemas']['SubjectRead']
 type Sample = components['schemas']['SampleRead']
+type Assay = components['schemas']['AssayRead']
 
 const tcga: Project = {
   id: '0192a5b0-0000-7000-8000-000000000001',
@@ -76,10 +77,31 @@ const tumour: Sample = {
   parent_sample_name: null,
 }
 
+const rnaseqBatch: Assay = {
+  id: '0192a5b0-0000-7000-8000-000000000020',
+  study_id: rnaseq.id,
+  name: 'RNA-seq batch 1',
+  external_id: null,
+  measurement_type: 'transcription profiling',
+  technology_type: 'nucleotide sequencing',
+  platform: 'Illumina HiSeq 2000',
+  performed_at: null,
+  parameters: {},
+  created_at: '2026-10-24T12:00:00Z',
+  updated_at: '2026-10-24T12:00:00Z',
+  created_by: null,
+  project_code: 'TCGA-BRCA',
+  study_code: 'RNASEQ',
+  sample_count: 1,
+}
+
 const projectPath = '/api/v1/projects/TCGA-BRCA'
 const studyPath = '/api/v1/projects/TCGA-BRCA/studies/RNASEQ'
 const subjectsPath = '/api/v1/projects/TCGA-BRCA/studies/RNASEQ/subjects'
 const samplesPath = '/api/v1/projects/TCGA-BRCA/studies/RNASEQ/samples'
+const assaysPath = '/api/v1/projects/TCGA-BRCA/studies/RNASEQ/assays'
+
+const noItems = { items: [], total: 0 }
 
 function respondByPath(responses: Record<string, Response>) {
   vi.stubGlobal(
@@ -103,12 +125,15 @@ interface ListPage<T> {
 function stubStudyApi({
   samples = () => ({ items: [tumour], total: 1 }),
   subjects = () => ({ items: [patient], total: 1 }),
+  assays = () => ({ items: [rnaseqBatch], total: 1 }),
 }: {
   samples?: (query: URLSearchParams) => ListPage<Sample>
   subjects?: (query: URLSearchParams) => ListPage<Subject>
+  assays?: (query: URLSearchParams) => ListPage<Assay>
 } = {}) {
   const sampleQueries: URLSearchParams[] = []
   const subjectQueries: URLSearchParams[] = []
+  const assayQueries: URLSearchParams[] = []
   const bodies: Record<string, unknown> = { [projectPath]: tcga, [studyPath]: rnaseq }
   vi.stubGlobal(
     'fetch',
@@ -122,10 +147,14 @@ function stubStudyApi({
         subjectQueries.push(url.searchParams)
         return Promise.resolve(Response.json(subjects(url.searchParams)))
       }
+      if (url.pathname === assaysPath) {
+        assayQueries.push(url.searchParams)
+        return Promise.resolve(Response.json(assays(url.searchParams)))
+      }
       return Promise.resolve(Response.json(bodies[url.pathname]))
     }),
   )
-  return { sampleQueries, subjectQueries }
+  return { sampleQueries, subjectQueries, assayQueries }
 }
 
 function renderPage(studyCode = 'RNASEQ') {
@@ -139,12 +168,13 @@ function renderPage(studyCode = 'RNASEQ') {
 }
 
 describe('StudyDetailPage', () => {
-  it('shows the study, its project, design factors, subjects and samples', async () => {
+  it('shows the study, its project, design factors, subjects, samples and assays', async () => {
     respondByPath({
       [projectPath]: Response.json(tcga),
       [studyPath]: Response.json(rnaseq),
       [subjectsPath]: Response.json({ items: [patient], total: 1 }),
       [samplesPath]: Response.json({ items: [tumour], total: 1 }),
+      [assaysPath]: Response.json({ items: [rnaseqBatch], total: 1 }),
     })
     renderPage()
 
@@ -191,6 +221,17 @@ describe('StudyDetailPage', () => {
     for (const link of newSampleLinks) {
       expect(link).toHaveAttribute('href', '/projects/TCGA-BRCA/studies/RNASEQ/samples/new')
     }
+
+    expect(await screen.findByRole('link', { name: 'RNA-seq batch 1' })).toHaveAttribute(
+      'href',
+      `/assays/${rnaseqBatch.id}`,
+    )
+    expect(screen.getByRole('cell', { name: 'Illumina HiSeq 2000' })).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        'transcription profiling · nucleotide sequencing · Illumina HiSeq 2000 · 1 sample',
+      ),
+    ).toBeInTheDocument()
   })
 
   it('shows a breadcrumb trail', () => {
@@ -213,18 +254,20 @@ describe('StudyDetailPage', () => {
     expect(within(trail).getByText('RNASEQ')).toHaveAttribute('aria-current', 'page')
   })
 
-  it('says when there are no design factors, subjects or samples', async () => {
+  it('says when there are no design factors, subjects, samples or assays', async () => {
     respondByPath({
       [projectPath]: Response.json(tcga),
       [studyPath]: Response.json({ ...rnaseq, description: null, design_factors: [] }),
-      [subjectsPath]: Response.json({ items: [], total: 0 }),
-      [samplesPath]: Response.json({ items: [], total: 0 }),
+      [subjectsPath]: Response.json(noItems),
+      [samplesPath]: Response.json(noItems),
+      [assaysPath]: Response.json(noItems),
     })
     renderPage()
 
     expect(await screen.findByText('No design factors recorded.')).toBeInTheDocument()
     expect(await screen.findByText('No subjects in this study yet.')).toBeInTheDocument()
     expect(await screen.findByText('No samples in this study yet.')).toBeInTheDocument()
+    expect(await screen.findByText('No assays in this study yet.')).toBeInTheDocument()
     expect(screen.queryByRole('searchbox')).not.toBeInTheDocument()
   })
 
@@ -247,7 +290,8 @@ describe('StudyDetailPage', () => {
       [projectPath]: Response.json(tcga),
       [studyPath]: Response.json(rnaseq),
       [subjectsPath]: Response.json({ detail: 'Internal error' }, { status: 500 }),
-      [samplesPath]: Response.json({ items: [], total: 0 }),
+      [samplesPath]: Response.json(noItems),
+      [assaysPath]: Response.json(noItems),
     })
     renderPage()
 
@@ -258,12 +302,26 @@ describe('StudyDetailPage', () => {
     respondByPath({
       [projectPath]: Response.json(tcga),
       [studyPath]: Response.json(rnaseq),
-      [subjectsPath]: Response.json({ items: [], total: 0 }),
+      [subjectsPath]: Response.json(noItems),
       [samplesPath]: Response.json({ detail: 'Internal error' }, { status: 500 }),
+      [assaysPath]: Response.json(noItems),
     })
     renderPage()
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Could not load samples')
+  })
+
+  it('shows an error when the assays cannot be loaded', async () => {
+    respondByPath({
+      [projectPath]: Response.json(tcga),
+      [studyPath]: Response.json(rnaseq),
+      [subjectsPath]: Response.json(noItems),
+      [samplesPath]: Response.json(noItems),
+      [assaysPath]: Response.json({ detail: 'Internal error' }, { status: 500 }),
+    })
+    renderPage()
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Could not load assays')
   })
 
   it('sorts samples by a column heading', async () => {
@@ -304,7 +362,10 @@ describe('StudyDetailPage', () => {
   })
 
   it('pages through a long list of samples', async () => {
-    const { sampleQueries } = stubStudyApi({ samples: () => ({ items: [tumour], total: 120 }) })
+    const { sampleQueries } = stubStudyApi({
+      samples: () => ({ items: [tumour], total: 120 }),
+      assays: () => noItems,
+    })
     const user = userEvent.setup()
     renderPage()
 
@@ -359,5 +420,31 @@ describe('StudyDetailPage', () => {
 
     expect(await screen.findByText('No subjects match “zzz”.')).toBeInTheDocument()
     expect(subjectQueries.map((query) => query.get('q'))).toEqual([null, 'zzz'])
+  })
+
+  it('sorts assays by a column heading', async () => {
+    const { assayQueries } = stubStudyApi()
+    const user = userEvent.setup()
+    renderPage()
+
+    const assays = within(await screen.findByRole('table', { name: 'Assays' }))
+    await user.click(assays.getByRole('button', { name: 'Platform' }))
+    await waitFor(() => {
+      expect(assayQueries.at(-1)?.get('sort')).toBe('platform')
+    })
+  })
+
+  it('searches assays once typing pauses', async () => {
+    const { assayQueries } = stubStudyApi({
+      assays: (query) =>
+        query.get('q') === 'zzz' ? { items: [], total: 0 } : { items: [rnaseqBatch], total: 1 },
+    })
+    const user = userEvent.setup()
+    renderPage()
+
+    await user.type(await screen.findByRole('searchbox', { name: 'Search assays' }), 'zzz')
+
+    expect(await screen.findByText('No assays match “zzz”.')).toBeInTheDocument()
+    expect(assayQueries.map((query) => query.get('q'))).toEqual([null, 'zzz'])
   })
 })
