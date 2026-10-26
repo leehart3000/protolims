@@ -83,7 +83,6 @@ kind of subject or sample, but it can say "new", "edit" or "open".
 | --- | --- | --- |
 | Create | `SquarePlus` | New … buttons (`NewButton`), Create … buttons |
 | Edit | `SquarePen` | Edit … buttons (`EditButton`) |
-| Remove | `SquareMinus` | Removing an item from a list in a form, such as a design factor |
 | Save | `Save` | Save changes |
 | Open | `SquareArrowRight` | The end of each clickable table row (`RowArrow`) |
 
@@ -96,12 +95,3 @@ hidden from screen readers, because the words already say what the button does.
 Record icons were tried and set aside: `UserRound` and `Fingerprint` were too
 human-centred for subjects, and `TestTube`, `TestTubeDiagonal` (unfortunate
 shape) and `TestTubes` (plural) didn't suit samples.
-
-## Page layout
-
-A record's page starts with its title. What the record's Edit form changes sits
-in a **details card** (`DetailsCard`), a box in the `panel` colour with a thin
-`line` border. It has a "Details" heading and the Edit button in its top-right
-corner, so it's clear what the button applies to. Anything the form doesn't
-edit, and lists of related records, sit below the card, each with its own
-heading and buttons.

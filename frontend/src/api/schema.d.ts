@@ -45,7 +45,11 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        patch?: never;
+        /**
+         * Update Project
+         * @description Change some of a project's details. Only the fields sent are changed; null clears one.
+         */
+        patch: operations["update_project_api_v1_projects__code__patch"];
         trace?: never;
     };
     "/api/v1/projects/{project_code}/studies": {
@@ -337,6 +341,24 @@ export interface components {
             updated_at: string;
             /** Created By */
             created_by: string | null;
+        };
+        /**
+         * ProjectUpdate
+         * @description Changes to a project. Only the fields sent are changed; sending null clears a field.
+         *
+         *     The code can't be changed, because it's part of the project's address and its studies'.
+         */
+        ProjectUpdate: {
+            /** Name */
+            name?: string | null;
+            /** Description */
+            description?: string | null;
+            /** Source Repository */
+            source_repository?: string | null;
+            /** Licence */
+            licence?: string | null;
+            /** Citation */
+            citation?: string | null;
         };
         /**
          * SampleCreate
@@ -745,6 +767,41 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProjectRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_project_api_v1_projects__code__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                code: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProjectUpdate"];
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {

@@ -1,5 +1,6 @@
 """Project endpoints."""
 
+from datetime import UTC, datetime
 from typing import Annotated
 
 from fastapi import APIRouter, HTTPException, Query, status
@@ -10,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from protolims_api.audit import record_event
 from protolims_api.db import SessionDep
 from protolims_api.models import Project
-from protolims_api.schemas.project import ProjectCreate, ProjectRead
+from protolims_api.schemas.project import ProjectCreate, ProjectRead, ProjectUpdate
 
 router = APIRouter(prefix="/projects", tags=["projects"])
 
@@ -68,3 +69,33 @@ async def list_projects(
 async def get_project(code: str, session: SessionDep) -> ProjectRead:
     """Get one project by its code."""
     return ProjectRead.model_validate(await get_project_or_404(session, code))
+
+
+@router.patch("/{code}")
+async def update_project(code: str, payload: ProjectUpdate, session: SessionDep) -> ProjectRead:
+    """Change some of a project's details. Only the fields sent are changed; null clears one."""
+    project = await get_project_or_404(session, code)
+
+    requested = payload.model_dump(exclude_unset=True)
+    changed = {
+        field: value for field, value in requested.items() if getattr(project, field) != value
+    }
+    if changed:
+        before = ProjectRead.model_validate(project).model_dump(mode="json")
+        for field, value in changed.items():
+            setattr(project, field, value)
+        project.updated_at = datetime.now(UTC)
+        await record_event(
+            session,
+            action="update",
+            entity_type="project",
+            entity_id=project.id,
+            changes={
+                "before": {field: before[field] for field in changed},
+                "after": payload.model_dump(mode="json", include=set(changed)),
+            },
+        )
+        await session.commit()
+        await session.refresh(project)
+
+    return ProjectRead.model_validate(project)
