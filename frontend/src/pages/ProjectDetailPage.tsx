@@ -8,6 +8,7 @@ import { DetailList } from '../components/DetailList'
 import { PageTitle } from '../components/PageTitle'
 import { NewStudyButton } from '../components/NewStudyButton'
 import { RowArrow } from '../components/RowArrow'
+import { DetailsCard } from '../components/DetailsCard'
 import { formatDate } from '../format'
 import {
   errorBox,
@@ -96,17 +97,22 @@ function ProjectDetails({ project }: { project: Project }) {
   return (
     <>
       <PageTitle label="Project">{project.name}</PageTitle>
-      {project.description && <p className="mt-3 max-w-3xl text-muted">{project.description}</p>}
 
-      <DetailList
-        items={[
-          ['Code', <span className="font-mono">{project.code}</span>],
-          ['Source repository', project.source_repository],
-          ['Licence', project.licence],
-          ['Citation', project.citation],
-          ['Created', formatDate(project.created_at)],
-        ]}
-      />
+      <DetailsCard
+        editTo={`/projects/${encodeURIComponent(project.code)}/edit`}
+        editLabel="Edit project"
+      >
+        {project.description && <p className="mt-3 max-w-3xl text-muted">{project.description}</p>}
+        <DetailList
+          items={[
+            ['Code', <span className="font-mono">{project.code}</span>],
+            ['Source repository', project.source_repository],
+            ['Licence', project.licence],
+            ['Citation', project.citation],
+            ['Created', formatDate(project.created_at)],
+          ]}
+        />
+      </DetailsCard>
 
       <div className="mt-10 flex items-center justify-between gap-4">
         <h2 className="text-xl font-semibold">Studies</h2>

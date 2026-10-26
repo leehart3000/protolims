@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import { Route, Routes } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 
@@ -86,6 +86,12 @@ describe('ProjectDetailPage', () => {
     for (const link of newStudyLinks) {
       expect(link).toHaveAttribute('href', '/projects/TCGA-BRCA/studies/new')
     }
+
+    const details = screen.getByRole('region', { name: 'Details' })
+    expect(within(details).getByRole('link', { name: 'Edit project' })).toHaveAttribute(
+      'href',
+      '/projects/TCGA-BRCA/edit',
+    )
   })
 
   it('says when the project has no studies', async () => {
