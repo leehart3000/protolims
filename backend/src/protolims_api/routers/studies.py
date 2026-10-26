@@ -1,5 +1,6 @@
 """Study endpoints."""
 
+from datetime import UTC, datetime
 from typing import Annotated
 
 from fastapi import APIRouter, HTTPException, Query, status
@@ -11,7 +12,12 @@ from protolims_api.audit import record_event
 from protolims_api.db import SessionDep
 from protolims_api.models import Project, Study
 from protolims_api.routers.projects import get_project_or_404
-from protolims_api.schemas.study import StudyCreate, StudyRead, StudyWithProjectRead
+from protolims_api.schemas.study import (
+    StudyCreate,
+    StudyRead,
+    StudyUpdate,
+    StudyWithProjectRead,
+)
 
 router = APIRouter(tags=["studies"])
 
@@ -79,6 +85,36 @@ async def get_study_or_404(session: AsyncSession, project_code: str, study_code:
 async def get_study(project_code: str, study_code: str, session: SessionDep) -> StudyRead:
     """Get one study by its project's code and its own code."""
     return StudyRead.model_validate(await get_study_or_404(session, project_code, study_code))
+
+
+@router.patch("/projects/{project_code}/studies/{study_code}")
+async def update_study(
+    project_code: str, study_code: str, payload: StudyUpdate, session: SessionDep
+) -> StudyRead:
+    """Change a study's title, description or design factors. Only the fields sent change."""
+    study = await get_study_or_404(session, project_code, study_code)
+
+    requested = payload.model_dump(exclude_unset=True)
+    changed = {field: value for field, value in requested.items() if getattr(study, field) != value}
+    if changed:
+        before = StudyRead.model_validate(study).model_dump(mode="json")
+        for field, value in changed.items():
+            setattr(study, field, value)
+        study.updated_at = datetime.now(UTC)
+        await record_event(
+            session,
+            action="update",
+            entity_type="study",
+            entity_id=study.id,
+            changes={
+                "before": {field: before[field] for field in changed},
+                "after": payload.model_dump(mode="json", include=set(changed)),
+            },
+        )
+        await session.commit()
+        await session.refresh(study)
+
+    return StudyRead.model_validate(study)
 
 
 @router.get("/studies")

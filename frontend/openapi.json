@@ -321,6 +321,66 @@
             }
           }
         }
+      },
+      "patch": {
+        "tags": [
+          "studies"
+        ],
+        "summary": "Update Study",
+        "description": "Change a study's title, description or design factors. Only the fields sent change.",
+        "operationId": "update_study_api_v1_projects__project_code__studies__study_code__patch",
+        "parameters": [
+          {
+            "name": "project_code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Code"
+            }
+          },
+          {
+            "name": "study_code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Study Code"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StudyUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudyRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/v1/studies": {
@@ -1786,6 +1846,52 @@
         ],
         "title": "StudyRead",
         "description": "A study as returned by the API."
+      },
+      "StudyUpdate": {
+        "properties": {
+          "title": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 300,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "design_factors": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/DesignFactor"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Design Factors"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "StudyUpdate",
+        "description": "Changes to a study. Only the fields sent are changed; sending null clears the description.\n\nThe code can't be changed, because it's part of the study's address, and a study stays in\nthe project it was created in."
       },
       "StudyWithProjectRead": {
         "properties": {

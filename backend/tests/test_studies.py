@@ -1,5 +1,7 @@
 """Tests for the study endpoints."""
 
+from datetime import datetime
+
 from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
 
@@ -118,3 +120,74 @@ def test_list_all_studies_for_unknown_project_is_empty(client: TestClient) -> No
     response = client.get(f"{API}/studies", params={"project": "NOPE"})
     assert response.status_code == 200
     assert response.json() == []
+
+
+def create_study(client: TestClient, **fields: object) -> str:
+    """Create study S1 in project P1; return its URL."""
+    create_project(client, "P1")
+    response = client.post(
+        f"{API}/projects/P1/studies", json={"code": "S1", "title": "Pilot", **fields}
+    )
+    assert response.status_code == 201, response.json()
+    return f"{API}/projects/P1/studies/S1"
+
+
+def test_update_study_changes_only_the_fields_sent(client: TestClient, database: Engine) -> None:
+    study = create_study(client, description="First look")
+    factors = [{"name": "dose", "description": "mg/kg"}, {"name": "time", "description": None}]
+
+    response = client.patch(study, json={"title": "Pilot study", "design_factors": factors})
+    assert response.status_code == 200
+    body = response.json()
+    assert (body["code"], body["title"], body["description"]) == ("S1", "Pilot study", "First look")
+    assert body["design_factors"] == factors
+    assert datetime.fromisoformat(body["updated_at"]) > datetime.fromisoformat(body["created_at"])
+    assert client.get(study).json()["design_factors"] == factors
+
+    with database.connect() as conn:
+        changes = conn.execute(
+            text("SELECT changes FROM audit_event WHERE action = 'update'")
+        ).scalar_one()
+    assert changes == {
+        "before": {"title": "Pilot", "design_factors": []},
+        "after": {"title": "Pilot study", "design_factors": factors},
+    }
+
+
+def test_update_study_with_no_real_changes_records_nothing(
+    client: TestClient, database: Engine
+) -> None:
+    study = create_study(client)
+
+    assert client.patch(study, json={"title": "Pilot", "design_factors": []}).status_code == 200
+
+    with database.connect() as conn:
+        updates = conn.execute(
+            text("SELECT count(*) FROM audit_event WHERE action = 'update'")
+        ).scalar_one()
+    assert updates == 0
+
+
+def test_update_study_can_clear_the_description_but_not_required_fields(
+    client: TestClient,
+) -> None:
+    study = create_study(client, description="First look")
+
+    response = client.patch(study, json={"description": None})
+    assert response.status_code == 200
+    assert response.json()["description"] is None
+
+    for fields in [
+        {"title": None},
+        {"title": ""},
+        {"design_factors": None},
+        {"design_factors": [{"name": ""}]},
+        {"code": "S2"},
+    ]:
+        assert client.patch(study, json=fields).status_code == 422, fields
+
+
+def test_update_unknown_study_returns_404(client: TestClient) -> None:
+    create_project(client, "P1")
+    response = client.patch(f"{API}/projects/P1/studies/NOPE", json={"title": "X"})
+    assert response.status_code == 404

@@ -89,7 +89,11 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        patch?: never;
+        /**
+         * Update Study
+         * @description Change a study's title, description or design factors. Only the fields sent change.
+         */
+        patch: operations["update_study_api_v1_projects__project_code__studies__study_code__patch"];
         trace?: never;
     };
     "/api/v1/studies": {
@@ -505,6 +509,21 @@ export interface components {
             created_by: string | null;
         };
         /**
+         * StudyUpdate
+         * @description Changes to a study. Only the fields sent are changed; sending null clears the description.
+         *
+         *     The code can't be changed, because it's part of the study's address, and a study stays in
+         *     the project it was created in.
+         */
+        StudyUpdate: {
+            /** Title */
+            title?: string | null;
+            /** Description */
+            description?: string | null;
+            /** Design Factors */
+            design_factors?: components["schemas"]["DesignFactor"][] | null;
+        };
+        /**
          * StudyWithProjectRead
          * @description A study plus its project's code and name, for lists that span projects.
          */
@@ -827,6 +846,42 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudyRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_study_api_v1_projects__project_code__studies__study_code__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_code: string;
+                study_code: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StudyUpdate"];
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {
