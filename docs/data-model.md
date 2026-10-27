@@ -89,11 +89,11 @@ erDiagram
         uuid id PK
         uuid study_id FK
         uuid assay_id FK
-        text name
+        text name "not unique"
         text external_id
         text level
         text format
-        text uri UK
+        text uri "unique within its study"
         bigint size_bytes
         text sha256
         jsonb summary
@@ -128,17 +128,20 @@ An append-only `audit_event` table records who changed what, and when.
   names.
 - **Projects are independent.** Project codes are unique across ProtoLIMS.
   Everything else is scoped to its parent: study codes are unique within their
-  project, and subject, sample and assay names are unique within their study.
-  So different projects can each have a `PILOT` study, and different studies
-  can each have a sample called `S1`. Studies are addressed through their
-  project, e.g. `/projects/TCGA-BRCA/studies/RNASEQ`.
+  project; subject, sample and assay names, and data file locations (`uri`),
+  are unique within their study. So different projects can each have a `PILOT`
+  study, different studies can each have a sample called `S1`, and two studies
+  can each record the same file. Someone working on one study never interferes
+  with another. Studies are addressed through their project, e.g.
+  `/projects/TCGA-BRCA/studies/RNASEQ`.
 - **Addresses:** projects and studies, of which there are few and whose codes
   are chosen deliberately, are addressed by code (e.g.
-  `/projects/TCGA-BRCA/studies/RNASEQ`). Subjects, samples and assays, which
-  are numerous and whose names are imported and may be corrected, are addressed
-  by their permanent ID (e.g. `/subjects/{id}`, `/assays/{id}`), so links never
-  break when a name changes. Pages show names and breadcrumbs, never the ID.
-  Creating and listing them still happens under their study.
+  `/projects/TCGA-BRCA/studies/RNASEQ`). Subjects, samples, assays and data
+  files, which are numerous and whose names are imported and may be corrected,
+  are addressed by their permanent ID (e.g. `/subjects/{id}`, `/assays/{id}`,
+  `/data-files/{id}`), so links never break when a name changes. Pages show
+  names and breadcrumbs, never the ID. Creating and listing them still happens
+  under their study.
 - **Reserved codes:** project and study codes can't be `new` or `edit` (in any
   capitalisation), as they would clash with page addresses. If more reserved
   words are ever needed, consider GitLab-style `/-/` addresses instead.
@@ -166,13 +169,35 @@ An append-only `audit_event` table records who changed what, and when.
   safe to repeat (imports rely on this); removing a link is a `DELETE`. Both
   are recorded in the audit trail. Linking by hand in the website waits for the
   search-as-you-type picker.
-- **Data files** are stored in object storage, not the database. `uri` uses a
-  scheme per backend (`r2://…`, `gs://…`), so storage can be R2, GCS or both.
+- **Data file locations (`uri`):** where the file is. Allowed: `s3://` (AWS S3
+  and S3-compatible storage such as Cloudflare R2), `gs://` (Google Cloud
+  Storage), `az://` (Azure Blob Storage) and `https://` (files still only at
+  their source, e.g. GDC download links). Rejected: any other scheme (including
+  `http://`, `javascript:`, `data:`, `file://`), user names or passwords in the
+  link, signed links with temporary keys (`X-Amz-Signature`, `X-Goog-Signature`,
+  `sig`, `Signature`), spaces, and anything over 2,000 characters. The API only
+  stores locations and never fetches them; fetching (e.g. to check `sha256`)
+  would need its own safeguards against probing internal addresses.
+- **Data file names** aren't unique, as files often share names (e.g.
+  `counts.tsv`); the location tells them apart and is shown under the name in
+  lists. The name is kept separately because many locations contain no file
+  name (GDC links are IDs), a file's location changes when it's copied into our
+  storage, and the name will be the download name. `format` is the authority on
+  what a file is. A later idea: when names clash, show just enough of the
+  location to tell them apart (as code editors do with tabs).
 - **Data files belong to a Study**; the Assay is optional, because analysis
-  outputs may combine several assays.
+  outputs may combine several assays. A file's assay, samples and inputs must
+  be in the same study.
 - **Files can contain many samples** (e.g. TMT channels, matrix columns);
   `data_file_sample.label` records where each sample is within the file.
-- **No hard deletes:** samples change `status` instead.
+  Linking is `PUT /data-files/{id}/samples/{sample_id}`, safe to repeat.
+- **File provenance:** `data_file_input` records which files a file was made
+  from (`PUT /data-files/{id}/inputs/{input_id}`, safe to repeat). A file can't
+  be derived from itself or from a file derived from it.
+- **Deleting stored files (later):** before removing a file from our storage,
+  check that no other study's record still points at it.
+- **No hard deletes:** samples change `status` instead. Links (assay and file
+  samples, file inputs) can be removed; the audit trail keeps the record.
 - **Audit trail:** recorded by the application (to revisit later).
 
 ## Demo data and licensing rules
@@ -182,6 +207,8 @@ An append-only `audit_event` table records who changed what, and when.
 - Do not commit datasets to this repository; import scripts download from the
   official sources, and small processed subsets are kept in object storage.
 - Every Project records its `licence` and `citation`, shown in the app.
+- PDC downloads are temporary signed links, which are rejected; record a stable
+  link or the PDC file ID instead.
 
 Planned demo datasets: TCGA-BRCA RNA-seq (GDC, open access), CPTAC breast
 cancer proteomics (PDC), a small LINCS L1000 subset (GEO), and optionally one
