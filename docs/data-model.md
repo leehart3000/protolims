@@ -52,7 +52,7 @@ erDiagram
         uuid id PK
         uuid study_id FK
         text name "unique within its study"
-        text external_id "ID in the source repository"
+        text external_id "unique within its study"
         text subject_type
         text species
         jsonb attributes
@@ -61,7 +61,7 @@ erDiagram
         uuid id PK
         uuid study_id FK
         text name "unique within its study"
-        text external_id "ID in the source repository"
+        text external_id "unique within its study"
         uuid subject_id FK
         uuid parent_sample_id FK
         text material_type
@@ -73,7 +73,7 @@ erDiagram
         uuid id PK
         uuid study_id FK
         text name "unique within its study"
-        text external_id
+        text external_id "unique within its study"
         text measurement_type
         text technology_type
         text platform
@@ -90,7 +90,7 @@ erDiagram
         uuid study_id FK
         uuid assay_id FK
         text name "not unique"
-        text external_id
+        text external_id "unique within its study"
         text level
         text format
         text uri "unique within its study"
@@ -134,6 +134,9 @@ An append-only `audit_event` table records who changed what, and when.
   can each record the same file. Someone working on one study never interferes
   with another. Studies are addressed through their project, e.g.
   `/projects/TCGA-BRCA/studies/RNASEQ`.
+- **External IDs** (a record's ID in its source repository) are optional, and
+  unique within their study for subjects, samples, assays and data files. A
+  clash is refused with a 409 whose message starts "External ID …".
 - **Addresses:** projects and studies, of which there are few and whose codes
   are chosen deliberately, are addressed by code (e.g.
   `/projects/TCGA-BRCA/studies/RNASEQ`). Subjects, samples, assays and data
@@ -185,15 +188,25 @@ An append-only `audit_event` table records who changed what, and when.
   storage, and the name will be the download name. `format` is the authority on
   what a file is. A later idea: when names clash, show just enough of the
   location to tell them apart (as code editors do with tabs).
-- **Data files belong to a Study**; the Assay is optional, because analysis
-  outputs may combine several assays. A file's assay, samples and inputs must
-  be in the same study.
+- **Data files belong to a Study** and have at most one Assay, which is
+  optional: a file that combines several assays (e.g. a merged matrix) is
+  usually made from other files, and its inputs show which assays contributed.
+  Change to many-to-many only if real data needs it. A file's assay, samples
+  and inputs must be in the same study.
 - **Files can contain many samples** (e.g. TMT channels, matrix columns);
   `data_file_sample.label` records where each sample is within the file.
   Linking is `PUT /data-files/{id}/samples/{sample_id}`, safe to repeat.
 - **File provenance:** `data_file_input` records which files a file was made
   from (`PUT /data-files/{id}/inputs/{input_id}`, safe to repeat). A file can't
   be derived from itself or from a file derived from it.
+- **Importing:** `POST /projects/{p}/studies/{s}/import` brings in subjects,
+  samples, assays, data files and their links for one existing study. Records
+  are matched by external ID, else by name (a file by its `uri`); ambiguous
+  matches are refused. Existing records and links are never changed or
+  removed; differences are reported instead. All or nothing; `dry_run` is
+  required; at most 5,000 records and links per request; the audit actor and
+  `created_by` are `import: <source>`. Guide: `docs/importing.md`. Planned: an
+  export in the same shape.
 - **Deleting stored files (later):** before removing a file from our storage,
   check that no other study's record still points at it.
 - **No hard deletes:** samples change `status` instead. Links (assay and file
