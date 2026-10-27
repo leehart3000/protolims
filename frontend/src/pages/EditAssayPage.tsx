@@ -9,19 +9,22 @@ import { type AssayFormValues, performedAt } from '../assays'
 import { AssayForm } from '../components/AssayForm'
 import { Breadcrumbs } from '../components/Breadcrumbs'
 import { PageTitle } from '../components/PageTitle'
-import { DuplicateNameError } from '../forms'
+import { DuplicateNameError, DuplicateExternalIdError, isExternalIdConflict } from '../forms'
 import { errorBox } from '../styles'
 
 type Assay = components['schemas']['AssayRead']
 type AssayUpdate = components['schemas']['AssayUpdate']
 
 async function updateAssay(assayId: string, body: AssayUpdate, name: string) {
-  const { data, response } = await api.PATCH('/api/v1/assays/{assay_id}', {
+  const { data, error, response } = await api.PATCH('/api/v1/assays/{assay_id}', {
     params: { path: { assay_id: assayId } },
     body,
   })
   if (data) {
     return data
+  }
+  if (response.status === 409 && isExternalIdConflict(error)) {
+    throw new DuplicateExternalIdError('Another assay in this study already has this external ID.')
   }
   if (response.status === 409) {
     throw new DuplicateNameError(`An assay called ${name} already exists in this study.`)

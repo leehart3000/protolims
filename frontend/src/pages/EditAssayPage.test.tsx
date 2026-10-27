@@ -188,4 +188,24 @@ describe('EditAssayPage', () => {
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Could not load assay')
   })
+
+  it('highlights the external ID when it is already used', async () => {
+    stubApi({
+      update: () =>
+        Response.json(
+          { detail: "External ID 'X-1' is already used by another assay" },
+          { status: 409 },
+        ),
+    })
+    const user = userEvent.setup()
+    renderPage()
+
+    await user.click(await screen.findByRole('button', { name: 'Save changes' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Another assay in this study already has this external ID.',
+    )
+    expect(screen.getByLabelText(/external id/i)).toHaveAttribute('aria-invalid', 'true')
+    expect(screen.getByLabelText('Name')).not.toHaveAttribute('aria-invalid')
+  })
 })

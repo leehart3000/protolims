@@ -1,7 +1,7 @@
 import type { LucideIcon } from 'lucide-react'
 import { Link } from 'react-router'
 
-import { DuplicateNameError, namePattern, optionalText, text } from '../forms'
+import { DuplicateNameError, externalIdError, namePattern, optionalText, text } from '../forms'
 import { type SubjectType, subjectTypeOptions } from '../labels'
 import { errorBox, primaryButton, textLink } from '../styles'
 import type { SubjectDetails, SubjectFormValues } from '../subjects'
@@ -83,6 +83,7 @@ export function SubjectForm({
         label="External ID"
         name="external_id"
         hint="The subject's ID in its source repository, such as a GDC case UUID."
+        error={externalIdError(error)}
         defaultValue={initial.external_id ?? ''}
         maxLength={200}
         autoComplete="off"

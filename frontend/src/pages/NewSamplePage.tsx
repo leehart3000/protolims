@@ -9,7 +9,7 @@ import { Breadcrumbs } from '../components/Breadcrumbs'
 import { DetailList } from '../components/DetailList'
 import { PageTitle } from '../components/PageTitle'
 import { SampleForm } from '../components/SampleForm'
-import { DuplicateNameError } from '../forms'
+import { DuplicateNameError, DuplicateExternalIdError, isExternalIdConflict } from '../forms'
 import { collectedAt } from '../samples'
 import { errorBox } from '../styles'
 
@@ -18,12 +18,15 @@ type Sample = components['schemas']['SampleRead']
 type Subject = components['schemas']['SubjectRead']
 
 async function createSample(projectCode: string, studyCode: string, body: SampleCreate) {
-  const { data, response } = await api.POST(
+  const { data, error, response } = await api.POST(
     '/api/v1/projects/{project_code}/studies/{study_code}/samples',
     { params: { path: { project_code: projectCode, study_code: studyCode } }, body },
   )
   if (data) {
     return data
+  }
+  if (response.status === 409 && isExternalIdConflict(error)) {
+    throw new DuplicateExternalIdError('Another sample in this study already has this external ID.')
   }
   if (response.status === 409) {
     throw new DuplicateNameError(`A sample called ${body.name} already exists in this study.`)

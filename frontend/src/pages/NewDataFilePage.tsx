@@ -11,6 +11,7 @@ import { DetailList } from '../components/DetailList'
 import { PageTitle } from '../components/PageTitle'
 import { DuplicateLocationError, invalidDetailsMessage } from '../dataFiles'
 import { errorBox } from '../styles'
+import { DuplicateExternalIdError, isExternalIdConflict } from '../forms'
 
 type Assay = components['schemas']['AssayRead']
 type DataFileCreate = components['schemas']['DataFileCreate']
@@ -22,6 +23,11 @@ async function createDataFile(projectCode: string, studyCode: string, body: Data
   )
   if (data) {
     return data
+  }
+  if (response.status === 409 && isExternalIdConflict(error)) {
+    throw new DuplicateExternalIdError(
+      'Another data file in this study already has this external ID.',
+    )
   }
   if (response.status === 409) {
     throw new DuplicateLocationError('A file at this location is already recorded in this study.')

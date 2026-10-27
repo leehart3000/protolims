@@ -245,4 +245,24 @@ describe('NewDataFilePage', () => {
 
     expect(await screen.findByRole('alert')).toHaveTextContent("Could not load the study's assays.")
   })
+
+  it('highlights the external ID when it is already used', async () => {
+    stubApi({
+      create: () =>
+        Response.json(
+          { detail: "External ID 'X-1' is already used by another data file" },
+          { status: 409 },
+        ),
+    })
+    const user = userEvent.setup()
+    renderPage()
+
+    await fillInAndSubmit(user)
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Another data file in this study already has this external ID.',
+    )
+    expect(screen.getByLabelText(/external id/i)).toHaveAttribute('aria-invalid', 'true')
+    expect(screen.getByLabelText('Location')).not.toHaveAttribute('aria-invalid')
+  })
 })

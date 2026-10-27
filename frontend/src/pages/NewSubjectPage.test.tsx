@@ -173,4 +173,23 @@ describe('NewSubjectPage', () => {
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Could not create the subject.')
   })
+
+  it('highlights the external ID when it is already used', async () => {
+    respondWith(
+      Response.json(
+        { detail: "External ID 'X-1' is already used by another subject" },
+        { status: 409 },
+      ),
+    )
+    const user = userEvent.setup()
+    renderPage()
+
+    await fillInAndSubmit(user)
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Another subject in this study already has this external ID.',
+    )
+    expect(screen.getByLabelText(/external id/i)).toHaveAttribute('aria-invalid', 'true')
+    expect(screen.getByLabelText('Name')).not.toHaveAttribute('aria-invalid')
+  })
 })

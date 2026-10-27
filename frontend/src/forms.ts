@@ -20,3 +20,21 @@ export class DuplicateNameError extends Error {}
 
 // Thrown when a code is already used, so the form can highlight the Code field.
 export class DuplicateCodeError extends Error {}
+
+// Thrown when an external ID is already used in the study, so the form can highlight it.
+export class DuplicateExternalIdError extends Error {}
+
+// The API's 409 reply starts "External ID" when the clash is over the external ID, rather
+// than the name (or a data file's location).
+export function isExternalIdConflict(error: unknown) {
+  const detail =
+    typeof error === 'object' && error !== null && 'detail' in error ? error.detail : undefined
+  return typeof detail === 'string' && detail.startsWith('External ID')
+}
+
+// The message for a form's External ID field, if the error is about it.
+export function externalIdError(error: Error | null) {
+  return error instanceof DuplicateExternalIdError
+    ? 'This external ID is already used in this study.'
+    : undefined
+}

@@ -3,7 +3,7 @@ import { Link } from 'react-router'
 
 import type { components } from '../api/schema'
 import { type DataFileFormValues, DuplicateLocationError } from '../dataFiles'
-import { namePattern, optionalText, text } from '../forms'
+import { externalIdError, namePattern, optionalText, text } from '../forms'
 import { type DataFileLevel, dataFileLevelOptions } from '../labels'
 import { errorBox, primaryButton, textLink } from '../styles'
 import { SelectField, TextField } from './FormFields'
@@ -156,6 +156,7 @@ export function DataFileForm({
         label="External ID"
         name="external_id"
         hint="The file's ID in its source repository, such as a GDC file UUID."
+        error={externalIdError(error)}
         defaultValue={initial.external_id ?? ''}
         maxLength={200}
         autoComplete="off"

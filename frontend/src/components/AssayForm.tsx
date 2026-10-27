@@ -2,7 +2,7 @@ import type { LucideIcon } from 'lucide-react'
 import { Link } from 'react-router'
 
 import type { AssayFormValues } from '../assays'
-import { DuplicateNameError, namePattern, optionalText, text } from '../forms'
+import { DuplicateNameError, externalIdError, namePattern, optionalText, text } from '../forms'
 import { errorBox, primaryButton, textLink } from '../styles'
 import { TextField } from './FormFields'
 
@@ -130,6 +130,7 @@ export function AssayForm({
         label="External ID"
         name="external_id"
         hint="The assay's ID in its source repository."
+        error={externalIdError(error)}
         defaultValue={initial.external_id ?? ''}
         maxLength={200}
         autoComplete="off"

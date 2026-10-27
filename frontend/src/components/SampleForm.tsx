@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { Link } from 'react-router'
 
 import type { components } from '../api/schema'
-import { DuplicateNameError, namePattern, optionalText, text } from '../forms'
+import { DuplicateNameError, externalIdError, namePattern, optionalText, text } from '../forms'
 import { type SampleStatus, sampleStatusOptions } from '../labels'
 import type { SampleFormValues } from '../samples'
 import { errorBox, primaryButton, textLink } from '../styles'
@@ -144,6 +144,7 @@ export function SampleForm({
         label="External ID"
         name="external_id"
         hint="The sample's ID in its source repository, such as a GDC sample UUID."
+        error={externalIdError(error)}
         defaultValue={initial.external_id ?? ''}
         maxLength={200}
         autoComplete="off"

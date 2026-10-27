@@ -9,7 +9,7 @@ import { Breadcrumbs } from '../components/Breadcrumbs'
 import { PageTitle } from '../components/PageTitle'
 import { SampleForm } from '../components/SampleForm'
 import type { SampleStatus } from '../labels'
-import { DuplicateNameError } from '../forms'
+import { DuplicateNameError, DuplicateExternalIdError, isExternalIdConflict } from '../forms'
 import { collectedAt, type SampleFormValues } from '../samples'
 import { errorBox } from '../styles'
 
@@ -23,6 +23,9 @@ async function updateSample(sampleId: string, body: SampleUpdate, name: string) 
   })
   if (data) {
     return data
+  }
+  if (response.status === 409 && isExternalIdConflict(error)) {
+    throw new DuplicateExternalIdError('Another sample in this study already has this external ID.')
   }
   if (response.status === 409) {
     throw new DuplicateNameError(`A sample called ${name} already exists in this study.`)

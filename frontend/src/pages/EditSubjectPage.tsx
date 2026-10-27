@@ -8,7 +8,7 @@ import type { components } from '../api/schema'
 import { Breadcrumbs } from '../components/Breadcrumbs'
 import { PageTitle } from '../components/PageTitle'
 import { SubjectForm } from '../components/SubjectForm'
-import { DuplicateNameError } from '../forms'
+import { DuplicateNameError, DuplicateExternalIdError, isExternalIdConflict } from '../forms'
 import type { SubjectType } from '../labels'
 import { errorBox } from '../styles'
 import type { SubjectDetails } from '../subjects'
@@ -17,12 +17,17 @@ type Subject = components['schemas']['SubjectRead']
 type SubjectUpdate = components['schemas']['SubjectUpdate']
 
 async function updateSubject(subjectId: string, body: SubjectUpdate, name: string) {
-  const { data, response } = await api.PATCH('/api/v1/subjects/{subject_id}', {
+  const { data, error, response } = await api.PATCH('/api/v1/subjects/{subject_id}', {
     params: { path: { subject_id: subjectId } },
     body,
   })
   if (data) {
     return data
+  }
+  if (response.status === 409 && isExternalIdConflict(error)) {
+    throw new DuplicateExternalIdError(
+      'Another subject in this study already has this external ID.',
+    )
   }
   if (response.status === 409) {
     throw new DuplicateNameError(`A subject called ${name} already exists in this study.`)
