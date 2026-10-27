@@ -330,6 +330,186 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/projects/{project_code}/studies/{study_code}/data-files": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Data Files
+         * @description List a study's data files a page at a time, with the total number that match.
+         */
+        get: operations["list_data_files_api_v1_projects__project_code__studies__study_code__data_files_get"];
+        put?: never;
+        /**
+         * Create Data File
+         * @description Record a data file in a study. A URI can be recorded only once in each study.
+         */
+        post: operations["create_data_file_api_v1_projects__project_code__studies__study_code__data_files_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/data-files/{data_file_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Data File
+         * @description Get one data file by its permanent ID.
+         */
+        get: operations["get_data_file_api_v1_data_files__data_file_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update Data File
+         * @description Change some of a data file's details. Only the fields sent are changed; null clears one.
+         */
+        patch: operations["update_data_file_api_v1_data_files__data_file_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/data-files/{data_file_id}/samples": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Data File Samples
+         * @description List the samples whose data is in a file, a page at a time, with the total that match.
+         */
+        get: operations["list_data_file_samples_api_v1_data_files__data_file_id__samples_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/data-files/{data_file_id}/samples/{sample_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Link Data File Sample
+         * @description Record that a file holds a sample's data, or change the sample's label in it.
+         *
+         *     Returns 201 when the link is new and 200 when it already existed, so it's safe to repeat.
+         */
+        put: operations["link_data_file_sample_api_v1_data_files__data_file_id__samples__sample_id__put"];
+        post?: never;
+        /**
+         * Unlink Data File Sample
+         * @description Remove a sample from a data file.
+         */
+        delete: operations["unlink_data_file_sample_api_v1_data_files__data_file_id__samples__sample_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/samples/{sample_id}/data-files": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Sample Data Files
+         * @description List the data files a sample appears in, by name.
+         */
+        get: operations["list_sample_data_files_api_v1_samples__sample_id__data_files_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/data-files/{data_file_id}/inputs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Inputs
+         * @description List the files this file was derived from, by name.
+         */
+        get: operations["list_inputs_api_v1_data_files__data_file_id__inputs_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/data-files/{data_file_id}/outputs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Outputs
+         * @description List the files derived from this file, by name.
+         */
+        get: operations["list_outputs_api_v1_data_files__data_file_id__outputs_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/data-files/{data_file_id}/inputs/{input_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Add Input
+         * @description Record that a file was derived from another file in the same study.
+         *
+         *     Returns 201 when this is new and 200 when it was already recorded, so it's safe to repeat.
+         */
+        put: operations["add_input_api_v1_data_files__data_file_id__inputs__input_id__put"];
+        post?: never;
+        /**
+         * Remove Input
+         * @description Remove the record that a file was derived from another.
+         */
+        delete: operations["remove_input_api_v1_data_files__data_file_id__inputs__input_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -500,6 +680,167 @@ export interface components {
             } | null;
         };
         /**
+         * DataFileCreate
+         * @description Data needed to record a data file.
+         */
+        DataFileCreate: {
+            /** Name */
+            name: string;
+            /** External Id */
+            external_id?: string | null;
+            /** Assay Id */
+            assay_id?: string | null;
+            /**
+             * Level
+             * @enum {string}
+             */
+            level: "raw" | "processed" | "analysis";
+            /** Format */
+            format: string;
+            /** Uri */
+            uri: string;
+            /** Size Bytes */
+            size_bytes?: number | null;
+            /** Sha256 */
+            sha256?: string | null;
+            /** Summary */
+            summary?: {
+                [key: string]: unknown;
+            };
+        };
+        /**
+         * DataFileRead
+         * @description A data file as returned by the API, with where it belongs and how many samples it holds.
+         */
+        DataFileRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Study Id
+             * Format: uuid
+             */
+            study_id: string;
+            /** Assay Id */
+            assay_id: string | null;
+            /** Name */
+            name: string;
+            /** External Id */
+            external_id: string | null;
+            /** Level */
+            level: string;
+            /** Format */
+            format: string;
+            /** Uri */
+            uri: string;
+            /** Size Bytes */
+            size_bytes: number | null;
+            /** Sha256 */
+            sha256: string | null;
+            /** Summary */
+            summary: {
+                [key: string]: unknown;
+            };
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Created By */
+            created_by: string | null;
+            /** Project Code */
+            project_code: string;
+            /** Study Code */
+            study_code: string;
+            /** Assay Name */
+            assay_name: string | null;
+            /** Sample Count */
+            sample_count: number;
+        };
+        /**
+         * DataFileSampleLink
+         * @description Links a sample to a data file, or changes its label there.
+         */
+        DataFileSampleLink: {
+            /** Label */
+            label?: string | null;
+        };
+        /**
+         * DataFileSampleRead
+         * @description A sample whose data is in a file, with its label there.
+         */
+        DataFileSampleRead: {
+            /**
+             * Sample Id
+             * Format: uuid
+             */
+            sample_id: string;
+            /** Sample Name */
+            sample_name: string;
+            /** External Id */
+            external_id: string | null;
+            /** Material Type */
+            material_type: string;
+            /** Status */
+            status: string;
+            /** Label */
+            label: string | null;
+        };
+        /**
+         * DataFileSummary
+         * @description Enough about a data file to list and link to it, e.g. as another file's input.
+         */
+        DataFileSummary: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Level */
+            level: string;
+            /** Format */
+            format: string;
+            /** Uri */
+            uri: string;
+        };
+        /**
+         * DataFileUpdate
+         * @description Changes to a data file. Only the fields sent are changed; sending null clears a field.
+         *
+         *     The study can't be changed: a file record stays in the study it was created in.
+         */
+        DataFileUpdate: {
+            /** Name */
+            name?: string | null;
+            /** External Id */
+            external_id?: string | null;
+            /** Assay Id */
+            assay_id?: string | null;
+            /** Level */
+            level?: ("raw" | "processed" | "analysis") | null;
+            /** Format */
+            format?: string | null;
+            /** Uri */
+            uri?: string | null;
+            /** Size Bytes */
+            size_bytes?: number | null;
+            /** Sha256 */
+            sha256?: string | null;
+            /** Summary */
+            summary?: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /**
          * DesignFactor
          * @description A variable under study, e.g. "compound", "dose" or "tissue type".
          */
@@ -525,6 +866,20 @@ export interface components {
         Page_AssaySampleRead_: {
             /** Items */
             items: components["schemas"]["AssaySampleRead"][];
+            /** Total */
+            total: number;
+        };
+        /** Page[DataFileRead] */
+        Page_DataFileRead_: {
+            /** Items */
+            items: components["schemas"]["DataFileRead"][];
+            /** Total */
+            total: number;
+        };
+        /** Page[DataFileSampleRead] */
+        Page_DataFileSampleRead_: {
+            /** Items */
+            items: components["schemas"]["DataFileSampleRead"][];
             /** Total */
             total: number;
         };
@@ -665,6 +1020,27 @@ export interface components {
             factor_values?: {
                 [key: string]: unknown;
             };
+        };
+        /**
+         * SampleDataFileRead
+         * @description A data file a sample appears in, with the sample's label there.
+         */
+        SampleDataFileRead: {
+            /**
+             * Data File Id
+             * Format: uuid
+             */
+            data_file_id: string;
+            /** Name */
+            name: string;
+            /** Level */
+            level: string;
+            /** Format */
+            format: string;
+            /** Uri */
+            uri: string;
+            /** Label */
+            label: string | null;
         };
         /**
          * SampleRead
@@ -1818,6 +2194,410 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["SampleAssayRead"][];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_data_files_api_v1_projects__project_code__studies__study_code__data_files_get: {
+        parameters: {
+            query?: {
+                /** @description Only list files from this assay */
+                assay?: string | null;
+                /** @description Only list files at this level */
+                level?: ("raw" | "processed" | "analysis") | null;
+                /** @description Search file names, external IDs and URIs, ignoring case */
+                q?: string | null;
+                /** @description The column to sort by; a leading - reverses the order */
+                sort?: "name" | "-name" | "level" | "-level" | "format" | "-format" | "size_bytes" | "-size_bytes" | "created_at" | "-created_at";
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path: {
+                project_code: string;
+                study_code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_DataFileRead_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_data_file_api_v1_projects__project_code__studies__study_code__data_files_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_code: string;
+                study_code: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DataFileCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DataFileRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_data_file_api_v1_data_files__data_file_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                data_file_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DataFileRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_data_file_api_v1_data_files__data_file_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                data_file_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DataFileUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DataFileRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_data_file_samples_api_v1_data_files__data_file_id__samples_get: {
+        parameters: {
+            query?: {
+                /** @description Search sample names and external IDs, ignoring case */
+                q?: string | null;
+                /** @description The column to sort by; a leading - reverses the order */
+                sort?: "name" | "-name" | "label" | "-label";
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path: {
+                data_file_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_DataFileSampleRead_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    link_data_file_sample_api_v1_data_files__data_file_id__samples__sample_id__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                data_file_id: string;
+                sample_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DataFileSampleLink"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DataFileSampleRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    unlink_data_file_sample_api_v1_data_files__data_file_id__samples__sample_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                data_file_id: string;
+                sample_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_sample_data_files_api_v1_samples__sample_id__data_files_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                sample_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SampleDataFileRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_inputs_api_v1_data_files__data_file_id__inputs_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                data_file_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DataFileSummary"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_outputs_api_v1_data_files__data_file_id__outputs_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                data_file_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DataFileSummary"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    add_input_api_v1_data_files__data_file_id__inputs__input_id__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                data_file_id: string;
+                input_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DataFileSummary"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    remove_input_api_v1_data_files__data_file_id__inputs__input_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                data_file_id: string;
+                input_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

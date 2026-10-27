@@ -174,3 +174,77 @@ export async function fetchSampleAssays(sampleId: string) {
   }
   return data
 }
+
+type DataFileListQuery = NonNullable<
+  paths['/api/v1/projects/{project_code}/studies/{study_code}/data-files']['get']['parameters']['query']
+>
+
+export type DataFileSort = NonNullable<DataFileListQuery['sort']>
+
+// One page of a study's data files, with the total number that match.
+export async function fetchDataFilePage(
+  projectCode: string,
+  studyCode: string,
+  query: DataFileListQuery,
+) {
+  const { data } = await api.GET(
+    '/api/v1/projects/{project_code}/studies/{study_code}/data-files',
+    { params: { path: { project_code: projectCode, study_code: studyCode }, query } },
+  )
+  if (!data) {
+    throw new Error('Could not load data files')
+  }
+  return data
+}
+
+// One data file by its permanent ID. An address that isn't a valid ID (422) is treated like an
+// unknown one (404).
+export async function fetchDataFile(dataFileId: string) {
+  const { data, response } = await api.GET('/api/v1/data-files/{data_file_id}', {
+    params: { path: { data_file_id: dataFileId } },
+  })
+  if (response.status === 404 || response.status === 422) {
+    return null
+  }
+  if (!data) {
+    throw new Error('Could not load data file')
+  }
+  return data
+}
+
+type DataFileSampleListQuery = NonNullable<
+  paths['/api/v1/data-files/{data_file_id}/samples']['get']['parameters']['query']
+>
+
+// One page of the samples whose data is in a file, with the total number that match.
+export async function fetchDataFileSamplePage(dataFileId: string, query: DataFileSampleListQuery) {
+  const { data } = await api.GET('/api/v1/data-files/{data_file_id}/samples', {
+    params: { path: { data_file_id: dataFileId }, query },
+  })
+  if (!data) {
+    throw new Error('Could not load samples')
+  }
+  return data
+}
+
+// The files a data file was made from.
+export async function fetchDataFileInputs(dataFileId: string) {
+  const { data } = await api.GET('/api/v1/data-files/{data_file_id}/inputs', {
+    params: { path: { data_file_id: dataFileId } },
+  })
+  if (!data) {
+    throw new Error('Could not load input files')
+  }
+  return data
+}
+
+// The files made from a data file.
+export async function fetchDataFileOutputs(dataFileId: string) {
+  const { data } = await api.GET('/api/v1/data-files/{data_file_id}/outputs', {
+    params: { path: { data_file_id: dataFileId } },
+  })
+  if (!data) {
+    throw new Error('Could not load output files')
+  }
+  return data
+}

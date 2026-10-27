@@ -4,6 +4,7 @@ import { useParams } from 'react-router'
 import { fetchProject, fetchStudy, fetchSubjectPage, type SubjectSort } from '../api/queries'
 import type { components } from '../api/schema'
 import { AssayList } from '../components/AssayList'
+import { DataFileList } from '../components/DataFileList'
 import { Breadcrumbs } from '../components/Breadcrumbs'
 import { DetailList } from '../components/DetailList'
 import { NewButton } from '../components/NewButton'
@@ -142,6 +143,14 @@ function StudyDetails({ projectCode, study }: { projectCode: string; study: Stud
       <p className="mt-4">
         <NewButton to={`${studyPath}/assays/new`}>New assay</NewButton>
       </p>
+      <div className="mt-10 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        <SectionHeading>Data files</SectionHeading>
+      </div>
+      <DataFileList
+        projectCode={projectCode}
+        studyCode={study.code}
+        emptyText="No data files in this study yet."
+      />
     </>
   )
 }

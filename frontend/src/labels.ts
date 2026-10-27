@@ -27,3 +27,15 @@ export const sampleStatusOptions: { value: SampleStatus; label: string }[] = [
 export function sampleStatusLabel(status: string) {
   return sampleStatusOptions.find((option) => option.value === status)?.label ?? status
 }
+
+export type DataFileLevel = components['schemas']['DataFileCreate']['level']
+
+export const dataFileLevelOptions: { value: DataFileLevel; label: string }[] = [
+  { value: 'raw', label: 'Raw' },
+  { value: 'processed', label: 'Processed' },
+  { value: 'analysis', label: 'Analysis' },
+]
+
+export function dataFileLevelLabel(level: string) {
+  return dataFileLevelOptions.find((option) => option.value === level)?.label ?? level
+}

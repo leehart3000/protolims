@@ -12,6 +12,7 @@ type Study = components['schemas']['StudyRead']
 type Subject = components['schemas']['SubjectRead']
 type Sample = components['schemas']['SampleRead']
 type Assay = components['schemas']['AssayRead']
+type DataFile = components['schemas']['DataFileRead']
 
 const tcga: Project = {
   id: '0192a5b0-0000-7000-8000-000000000001',
@@ -95,11 +96,33 @@ const rnaseqBatch: Assay = {
   sample_count: 1,
 }
 
+const countsFile: DataFile = {
+  id: '0192a5b0-0000-7000-8000-000000000030',
+  study_id: rnaseq.id,
+  assay_id: rnaseqBatch.id,
+  name: 'counts.tsv',
+  external_id: null,
+  level: 'processed',
+  format: 'TSV',
+  uri: 'https://example.org/RNASEQ/counts.tsv',
+  size_bytes: 2_500_000,
+  sha256: null,
+  summary: {},
+  created_at: '2026-10-24T12:00:00Z',
+  updated_at: '2026-10-24T12:00:00Z',
+  created_by: null,
+  project_code: 'TCGA-BRCA',
+  study_code: 'RNASEQ',
+  assay_name: 'RNA-seq batch 1',
+  sample_count: 1,
+}
+
 const projectPath = '/api/v1/projects/TCGA-BRCA'
 const studyPath = '/api/v1/projects/TCGA-BRCA/studies/RNASEQ'
 const subjectsPath = '/api/v1/projects/TCGA-BRCA/studies/RNASEQ/subjects'
 const samplesPath = '/api/v1/projects/TCGA-BRCA/studies/RNASEQ/samples'
 const assaysPath = '/api/v1/projects/TCGA-BRCA/studies/RNASEQ/assays'
+const dataFilesPath = '/api/v1/projects/TCGA-BRCA/studies/RNASEQ/data-files'
 
 const noItems = { items: [], total: 0 }
 
@@ -134,7 +157,11 @@ function stubStudyApi({
   const sampleQueries: URLSearchParams[] = []
   const subjectQueries: URLSearchParams[] = []
   const assayQueries: URLSearchParams[] = []
-  const bodies: Record<string, unknown> = { [projectPath]: tcga, [studyPath]: rnaseq }
+  const bodies: Record<string, unknown> = {
+    [projectPath]: tcga,
+    [studyPath]: rnaseq,
+    [dataFilesPath]: noItems,
+  }
   vi.stubGlobal(
     'fetch',
     vi.fn((request: Request) => {
@@ -175,6 +202,7 @@ describe('StudyDetailPage', () => {
       [subjectsPath]: Response.json({ items: [patient], total: 1 }),
       [samplesPath]: Response.json({ items: [tumour], total: 1 }),
       [assaysPath]: Response.json({ items: [rnaseqBatch], total: 1 }),
+      [dataFilesPath]: Response.json({ items: [countsFile], total: 1 }),
     })
     renderPage()
 
@@ -238,6 +266,13 @@ describe('StudyDetailPage', () => {
     for (const link of newAssayLinks) {
       expect(link).toHaveAttribute('href', '/projects/TCGA-BRCA/studies/RNASEQ/assays/new')
     }
+
+    expect(await screen.findByRole('link', { name: 'counts.tsv' })).toHaveAttribute(
+      'href',
+      `/data-files/${countsFile.id}`,
+    )
+    expect(screen.getByText('https://example.org/RNASEQ/counts.tsv')).toBeInTheDocument()
+    expect(screen.getByText('Processed · TSV · 2.5 MB · 1 sample')).toBeInTheDocument()
   })
 
   it('shows a breadcrumb trail', () => {
@@ -267,6 +302,7 @@ describe('StudyDetailPage', () => {
       [subjectsPath]: Response.json(noItems),
       [samplesPath]: Response.json(noItems),
       [assaysPath]: Response.json(noItems),
+      [dataFilesPath]: Response.json(noItems),
     })
     renderPage()
 
@@ -274,6 +310,7 @@ describe('StudyDetailPage', () => {
     expect(await screen.findByText('No subjects in this study yet.')).toBeInTheDocument()
     expect(await screen.findByText('No samples in this study yet.')).toBeInTheDocument()
     expect(await screen.findByText('No assays in this study yet.')).toBeInTheDocument()
+    expect(await screen.findByText('No data files in this study yet.')).toBeInTheDocument()
     expect(screen.queryByRole('searchbox')).not.toBeInTheDocument()
   })
 
@@ -298,6 +335,7 @@ describe('StudyDetailPage', () => {
       [subjectsPath]: Response.json({ detail: 'Internal error' }, { status: 500 }),
       [samplesPath]: Response.json(noItems),
       [assaysPath]: Response.json(noItems),
+      [dataFilesPath]: Response.json(noItems),
     })
     renderPage()
 
@@ -311,6 +349,7 @@ describe('StudyDetailPage', () => {
       [subjectsPath]: Response.json(noItems),
       [samplesPath]: Response.json({ detail: 'Internal error' }, { status: 500 }),
       [assaysPath]: Response.json(noItems),
+      [dataFilesPath]: Response.json(noItems),
     })
     renderPage()
 
@@ -324,10 +363,25 @@ describe('StudyDetailPage', () => {
       [subjectsPath]: Response.json(noItems),
       [samplesPath]: Response.json(noItems),
       [assaysPath]: Response.json({ detail: 'Internal error' }, { status: 500 }),
+      [dataFilesPath]: Response.json(noItems),
     })
     renderPage()
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Could not load assays')
+  })
+
+  it('shows an error when the data files cannot be loaded', async () => {
+    respondByPath({
+      [projectPath]: Response.json(tcga),
+      [studyPath]: Response.json(rnaseq),
+      [subjectsPath]: Response.json(noItems),
+      [samplesPath]: Response.json(noItems),
+      [assaysPath]: Response.json(noItems),
+      [dataFilesPath]: Response.json({ detail: 'Internal error' }, { status: 500 }),
+    })
+    renderPage()
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Could not load data files')
   })
 
   it('sorts samples by a column heading', async () => {

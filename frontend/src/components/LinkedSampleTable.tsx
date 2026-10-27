@@ -24,8 +24,8 @@ function summary(sample: AssaySample) {
     .join(' · ')
 }
 
-// The samples an assay measured, with each one's label in the assay (e.g. a TMT channel).
-export function AssaySampleTable({
+// Samples linked to an assay or a data file, with each one's label there (e.g. a TMT channel).
+export function LinkedSampleTable({
   samples,
   sort,
   onSort,

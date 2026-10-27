@@ -3,7 +3,7 @@ import { useParams } from 'react-router'
 
 import { type AssaySampleSort, fetchAssay, fetchAssaySamplePage } from '../api/queries'
 import type { components } from '../api/schema'
-import { AssaySampleTable } from '../components/AssaySampleTable'
+import { LinkedSampleTable } from '../components/LinkedSampleTable'
 import { Breadcrumbs } from '../components/Breadcrumbs'
 import { DetailList } from '../components/DetailList'
 import { DetailsCard } from '../components/DetailsCard'
@@ -58,7 +58,7 @@ function AssaySampleList({ assayId }: { assayId: string }) {
         </p>
       ) : (
         <>
-          <AssaySampleTable samples={items} sort={sort} onSort={changeSort} />
+          <LinkedSampleTable samples={items} sort={sort} onSort={changeSort} />
           <Pagination offset={offset} limit={PAGE_SIZE} total={total} onChange={setOffset} />
         </>
       )}
