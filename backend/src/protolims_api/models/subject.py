@@ -20,10 +20,11 @@ class Subject(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     """
 
     __tablename__ = "subject"
-    # The unique constraint's index starts with study_id, so it also speeds up
+    # The unique constraints' indexes start with study_id, so they also speed up
     # "all subjects in this study" queries; a separate study_id index isn't needed.
     __table_args__ = (
         UniqueConstraint("study_id", "name"),
+        UniqueConstraint("study_id", "external_id"),
         CheckConstraint(
             "subject_type IN (" + ", ".join(f"'{t}'" for t in SUBJECT_TYPES) + ")",
             name="subject_type",

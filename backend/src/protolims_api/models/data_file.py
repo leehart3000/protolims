@@ -24,6 +24,7 @@ class DataFile(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     # "all files in this study" queries; a separate study_id index isn't needed.
     __table_args__ = (
         UniqueConstraint("study_id", "uri"),
+        UniqueConstraint("study_id", "external_id"),
         CheckConstraint(
             "level IN (" + ", ".join(f"'{v}'" for v in DATA_FILE_LEVELS) + ")",
             name="level",

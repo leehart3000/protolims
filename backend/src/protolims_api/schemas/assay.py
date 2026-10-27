@@ -15,7 +15,7 @@ class AssayCreate(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     name: Name
-    external_id: str | None = Field(default=None, max_length=200)
+    external_id: str | None = Field(default=None, min_length=1, max_length=200)
     # What was measured, e.g. "transcription profiling" or "protein expression profiling".
     measurement_type: str = Field(min_length=1, max_length=100)
     # How it was measured, e.g. "nucleotide sequencing" or "mass spectrometry".
@@ -36,7 +36,7 @@ class AssayUpdate(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     name: Name | None = None
-    external_id: str | None = Field(default=None, max_length=200)
+    external_id: str | None = Field(default=None, min_length=1, max_length=200)
     measurement_type: str | None = Field(default=None, min_length=1, max_length=100)
     technology_type: str | None = Field(default=None, min_length=1, max_length=100)
     platform: str | None = Field(default=None, max_length=200)

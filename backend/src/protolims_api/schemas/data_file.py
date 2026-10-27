@@ -55,7 +55,7 @@ class DataFileCreate(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     name: Name
-    external_id: str | None = Field(default=None, max_length=200)
+    external_id: str | None = Field(default=None, min_length=1, max_length=200)
     assay_id: uuid.UUID | None = None
     level: DataFileLevel
     # The file format, e.g. "FASTQ", "BAM", "TSV" or "mzML".
@@ -75,7 +75,7 @@ class DataFileUpdate(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     name: Name | None = None
-    external_id: str | None = Field(default=None, max_length=200)
+    external_id: str | None = Field(default=None, min_length=1, max_length=200)
     assay_id: uuid.UUID | None = None
     level: DataFileLevel | None = None
     format: str | None = Field(default=None, min_length=1, max_length=50)

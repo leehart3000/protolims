@@ -17,7 +17,7 @@ class SampleCreate(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     name: Name
-    external_id: str | None = Field(default=None, max_length=200)
+    external_id: str | None = Field(default=None, min_length=1, max_length=200)
     subject_id: uuid.UUID | None = None
     parent_sample_id: uuid.UUID | None = None
     material_type: str = Field(min_length=1, max_length=100)
@@ -37,7 +37,7 @@ class SampleUpdate(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     name: Name | None = None
-    external_id: str | None = Field(default=None, max_length=200)
+    external_id: str | None = Field(default=None, min_length=1, max_length=200)
     subject_id: uuid.UUID | None = None
     parent_sample_id: uuid.UUID | None = None
     material_type: str | None = Field(default=None, min_length=1, max_length=100)

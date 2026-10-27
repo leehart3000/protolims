@@ -23,6 +23,7 @@ class Sample(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __tablename__ = "sample"
     __table_args__ = (
         UniqueConstraint("study_id", "name"),
+        UniqueConstraint("study_id", "external_id"),
         CheckConstraint(
             "status IN (" + ", ".join(f"'{s}'" for s in SAMPLE_STATUSES) + ")",
             name="status",

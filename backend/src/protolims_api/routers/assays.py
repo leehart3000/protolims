@@ -16,6 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import InstrumentedAttribute
 
 from protolims_api.audit import record_event
+from protolims_api.conflicts import external_id_conflict, is_external_id_conflict
 from protolims_api.db import SessionDep
 from protolims_api.models import Assay, AssaySample, Project, Sample, Study
 from protolims_api.routers.studies import get_study_or_404
@@ -126,6 +127,10 @@ async def create_assay(
         await session.flush()
     except IntegrityError as exc:
         await session.rollback()
+        if is_external_id_conflict(exc):
+            raise external_id_conflict(
+                "assay", payload.external_id, f"in study {study_code!r}"
+            ) from exc
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail=f"Assay {payload.name!r} already exists in study {study_code!r}",
@@ -222,6 +227,8 @@ async def update_assay(assay_id: uuid.UUID, payload: AssayUpdate, session: Sessi
             await session.flush()
         except IntegrityError as exc:
             await session.rollback()
+            if is_external_id_conflict(exc):
+                raise external_id_conflict("assay", payload.external_id, "in this study") from exc
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail=f"Assay {payload.name!r} already exists in this study",

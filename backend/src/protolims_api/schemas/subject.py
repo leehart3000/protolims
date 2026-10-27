@@ -17,7 +17,7 @@ class SubjectCreate(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     name: Name
-    external_id: str | None = Field(default=None, max_length=200)
+    external_id: str | None = Field(default=None, min_length=1, max_length=200)
     subject_type: SubjectType
     species: str | None = Field(default=None, max_length=200)
     attributes: dict[str, Any] = Field(default_factory=dict)
@@ -32,7 +32,7 @@ class SubjectUpdate(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     name: Name | None = None
-    external_id: str | None = Field(default=None, max_length=200)
+    external_id: str | None = Field(default=None, min_length=1, max_length=200)
     subject_type: SubjectType | None = None
     species: str | None = Field(default=None, max_length=200)
     attributes: dict[str, Any] | None = None
