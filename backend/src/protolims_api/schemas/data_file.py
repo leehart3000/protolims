@@ -122,3 +122,46 @@ class DataFileRead(DataFileFields):
     study_code: str
     assay_name: str | None
     sample_count: int
+
+
+class DataFileSampleLink(BaseModel):
+    """Links a sample to a data file, or changes its label there."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    # Where this sample's data is within the file, e.g. a matrix column or TMT channel.
+    label: str | None = Field(default=None, min_length=1, max_length=100)
+
+
+class DataFileSampleRead(BaseModel):
+    """A sample whose data is in a file, with its label there."""
+
+    sample_id: uuid.UUID
+    sample_name: str
+    external_id: str | None
+    material_type: str
+    status: str
+    label: str | None
+
+
+class SampleDataFileRead(BaseModel):
+    """A data file a sample appears in, with the sample's label there."""
+
+    data_file_id: uuid.UUID
+    name: str
+    level: str
+    format: str
+    uri: str
+    label: str | None
+
+
+class DataFileSummary(BaseModel):
+    """Enough about a data file to list and link to it, e.g. as another file's input."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    name: str
+    level: str
+    format: str
+    uri: str
