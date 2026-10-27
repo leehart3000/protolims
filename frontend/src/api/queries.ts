@@ -248,3 +248,14 @@ export async function fetchDataFileOutputs(dataFileId: string) {
   }
   return data
 }
+
+// The data files a sample appears in, with its label in each.
+export async function fetchSampleDataFiles(sampleId: string) {
+  const { data } = await api.GET('/api/v1/samples/{sample_id}/data-files', {
+    params: { path: { sample_id: sampleId } },
+  })
+  if (!data) {
+    throw new Error('Could not load data files')
+  }
+  return data
+}

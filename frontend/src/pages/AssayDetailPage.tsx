@@ -5,12 +5,15 @@ import { type AssaySampleSort, fetchAssay, fetchAssaySamplePage } from '../api/q
 import type { components } from '../api/schema'
 import { LinkedSampleTable } from '../components/LinkedSampleTable'
 import { Breadcrumbs } from '../components/Breadcrumbs'
+import { DataFileList } from '../components/DataFileList'
 import { DetailList } from '../components/DetailList'
 import { DetailsCard } from '../components/DetailsCard'
 import { KeyValueList } from '../components/KeyValueList'
+import { NewButton } from '../components/NewButton'
 import { PageTitle } from '../components/PageTitle'
 import { Pagination } from '../components/Pagination'
 import { SearchBox } from '../components/SearchBox'
+import { SectionHeading } from '../components/SectionHeading'
 import { formatDate } from '../format'
 import { errorBox } from '../styles'
 import { PAGE_SIZE, useListControls } from '../useListControls'
@@ -69,6 +72,7 @@ function AssaySampleList({ assayId }: { assayId: string }) {
 function AssayDetails({ assay }: { assay: Assay }) {
   const projectPath = `/projects/${encodeURIComponent(assay.project_code)}`
   const studyPath = `${projectPath}/studies/${encodeURIComponent(assay.study_code)}`
+  const newFilePath = `${studyPath}/data-files/new?assay=${assay.id}`
 
   return (
     <>
@@ -106,6 +110,20 @@ function AssayDetails({ assay }: { assay: Assay }) {
 
       <h2 className="mt-10 text-xl font-semibold">Samples</h2>
       <AssaySampleList assayId={assay.id} />
+
+      <div className="mt-10 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        <SectionHeading>Data files</SectionHeading>
+        <NewButton to={newFilePath}>New data file</NewButton>
+      </div>
+      <DataFileList
+        projectCode={assay.project_code}
+        studyCode={assay.study_code}
+        assayId={assay.id}
+        emptyText="No data files from this assay yet."
+      />
+      <p className="mt-4">
+        <NewButton to={newFilePath}>New data file</NewButton>
+      </p>
     </>
   )
 }

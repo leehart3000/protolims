@@ -9,6 +9,7 @@ import AssayDetailPage from './AssayDetailPage'
 
 type Assay = components['schemas']['AssayRead']
 type AssaySample = components['schemas']['AssaySampleRead']
+type DataFile = components['schemas']['DataFileRead']
 
 const assayId = '0192a5b0-0000-7000-8000-000000000020'
 
@@ -39,13 +40,40 @@ const tumourRna: AssaySample = {
   label: '126',
 }
 
-const samplesPath = `/api/v1/assays/${assayId}/samples`
+const counts: DataFile = {
+  id: '0192a5b0-0000-7000-8000-000000000030',
+  study_id: rnaseq.study_id,
+  assay_id: assayId,
+  name: 'counts.tsv',
+  external_id: null,
+  level: 'processed',
+  format: 'TSV',
+  uri: 'https://example.org/counts.tsv',
+  size_bytes: null,
+  sha256: null,
+  summary: {},
+  created_at: '2026-10-24T12:00:00Z',
+  updated_at: '2026-10-24T12:00:00Z',
+  created_by: null,
+  project_code: 'TCGA-BRCA',
+  study_code: 'RNASEQ',
+  assay_name: rnaseq.name,
+  sample_count: 0,
+}
 
-// Answers the assay request with `assayResponse`, and the samples request with `samples`.
-// Returns the query of each samples request.
+const samplesPath = `/api/v1/assays/${assayId}/samples`
+const dataFilesPath = '/api/v1/projects/TCGA-BRCA/studies/RNASEQ/data-files'
+const noItems = { items: [], total: 0 }
+
+// The query of the last data files request, to check it asks for this assay's files.
+let dataFileQuery: URLSearchParams | undefined
+
+// Answers the assay request with `assayResponse`, and the samples and data files requests with
+// `samples` and `dataFiles`. Returns the query of each samples request.
 function respondWith(
   assayResponse: Response,
-  samples: (query: URLSearchParams) => Response = () => Response.json({ items: [], total: 0 }),
+  samples: (query: URLSearchParams) => Response = () => Response.json(noItems),
+  dataFiles: () => Response = () => Response.json(noItems),
 ) {
   const sampleQueries: URLSearchParams[] = []
   vi.stubGlobal(
@@ -55,6 +83,10 @@ function respondWith(
       if (url.pathname === samplesPath) {
         sampleQueries.push(url.searchParams)
         return Promise.resolve(samples(url.searchParams))
+      }
+      if (url.pathname === dataFilesPath) {
+        dataFileQuery = url.searchParams
+        return Promise.resolve(dataFiles())
       }
       return Promise.resolve(assayResponse)
     }),
@@ -74,7 +106,11 @@ function renderPage(id = assayId) {
 
 describe('AssayDetailPage', () => {
   it('shows the assay, where it belongs, its parameters and its samples', async () => {
-    respondWith(Response.json(rnaseq), () => Response.json({ items: [tumourRna], total: 1 }))
+    respondWith(
+      Response.json(rnaseq),
+      () => Response.json({ items: [tumourRna], total: 1 }),
+      () => Response.json({ items: [counts], total: 1 }),
+    )
     renderPage()
 
     expect(screen.getByText('Loading assay…')).toBeInTheDocument()
@@ -108,6 +144,20 @@ describe('AssayDetailPage', () => {
     )
     expect(screen.getByRole('cell', { name: '126' })).toBeInTheDocument()
     expect(screen.getByText('126 · RNA · In use')).toBeInTheDocument()
+
+    expect(await screen.findByRole('link', { name: 'counts.tsv' })).toHaveAttribute(
+      'href',
+      `/data-files/${counts.id}`,
+    )
+    expect(dataFileQuery?.get('assay')).toBe(assayId)
+    const newFileLinks = screen.getAllByRole('link', { name: 'New data file' })
+    expect(newFileLinks).toHaveLength(2)
+    for (const link of newFileLinks) {
+      expect(link).toHaveAttribute(
+        'href',
+        `/projects/TCGA-BRCA/studies/RNASEQ/data-files/new?assay=${assayId}`,
+      )
+    }
   })
 
   it('leaves out missing details and says when there are no parameters or samples', async () => {
@@ -129,6 +179,7 @@ describe('AssayDetailPage', () => {
     expect(screen.queryByText('External ID:')).not.toBeInTheDocument()
     expect(await screen.findByText('No samples linked to this assay yet.')).toBeInTheDocument()
     expect(screen.queryByRole('searchbox')).not.toBeInTheDocument()
+    expect(await screen.findByText('No data files from this assay yet.')).toBeInTheDocument()
   })
 
   it('sorts and searches its samples', async () => {

@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router'
 
-import { fetchSample, fetchSampleAssays, fetchSamples } from '../api/queries'
+import { fetchSample, fetchSampleAssays, fetchSampleDataFiles, fetchSamples } from '../api/queries'
 import type { components } from '../api/schema'
 import { Breadcrumbs } from '../components/Breadcrumbs'
 import { DetailList } from '../components/DetailList'
@@ -9,6 +9,7 @@ import { KeyValueList } from '../components/KeyValueList'
 import { PageTitle } from '../components/PageTitle'
 import { SampleTable } from '../components/SampleTable'
 import { SampleAssayTable } from '../components/SampleAssayTable'
+import { SampleDataFileTable } from '../components/SampleDataFileTable'
 import { NewButton } from '../components/NewButton'
 import { SectionHeading } from '../components/SectionHeading'
 import { DetailsCard } from '../components/DetailsCard'
@@ -73,6 +74,31 @@ function SampleAssays({ sampleId }: { sampleId: string }) {
   }
 
   return <SampleAssayTable assays={query.data} />
+}
+
+function SampleDataFiles({ sampleId }: { sampleId: string }) {
+  const query = useQuery({
+    queryKey: ['samples', sampleId, 'data-files'],
+    queryFn: () => fetchSampleDataFiles(sampleId),
+  })
+
+  if (query.isPending) {
+    return <p className="mt-4 text-muted">Loading data files…</p>
+  }
+
+  if (query.isError) {
+    return (
+      <p role="alert" className={`mt-4 ${errorBox}`}>
+        Could not load data files. Please try again later.
+      </p>
+    )
+  }
+
+  if (query.data.length === 0) {
+    return <p className="mt-4 text-muted">Not in any data files yet.</p>
+  }
+
+  return <SampleDataFileTable files={query.data} />
 }
 
 function SampleDetails({ sample }: { sample: Sample }) {
@@ -142,6 +168,8 @@ function SampleDetails({ sample }: { sample: Sample }) {
       </p>
       <h2 className="mt-10 text-xl font-semibold">Assays</h2>
       <SampleAssays sampleId={sample.id} />
+      <h2 className="mt-10 text-xl font-semibold">Data files</h2>
+      <SampleDataFiles sampleId={sample.id} />
     </>
   )
 }
