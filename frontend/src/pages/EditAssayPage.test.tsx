@@ -79,6 +79,17 @@ describe('EditAssayPage', () => {
     )
   })
 
+  it('shows an assay with no platform, date or external ID', async () => {
+    stubApi({
+      assay: () => Response.json({ ...run, platform: null, performed_at: null, external_id: null }),
+    })
+    renderPage()
+
+    expect(await screen.findByLabelText(/performed/i)).toHaveValue('')
+    expect(screen.getByLabelText(/platform/i)).toHaveValue('')
+    expect(screen.getByLabelText(/external id/i)).toHaveValue('')
+  })
+
   it('saves only the changed fields, then goes back to the assay', async () => {
     let sentBody: unknown
     stubApi({

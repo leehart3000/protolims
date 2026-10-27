@@ -145,12 +145,16 @@ function StudyDetails({ projectCode, study }: { projectCode: string; study: Stud
       </p>
       <div className="mt-10 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
         <SectionHeading>Data files</SectionHeading>
+        <NewButton to={`${studyPath}/data-files/new`}>New data file</NewButton>
       </div>
       <DataFileList
         projectCode={projectCode}
         studyCode={study.code}
         emptyText="No data files in this study yet."
       />
+      <p className="mt-4">
+        <NewButton to={`${studyPath}/data-files/new`}>New data file</NewButton>
+      </p>
     </>
   )
 }

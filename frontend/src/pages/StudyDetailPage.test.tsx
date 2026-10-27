@@ -149,39 +149,40 @@ function stubStudyApi({
   samples = () => ({ items: [tumour], total: 1 }),
   subjects = () => ({ items: [patient], total: 1 }),
   assays = () => ({ items: [rnaseqBatch], total: 1 }),
+  dataFiles = () => noItems,
 }: {
   samples?: (query: URLSearchParams) => ListPage<Sample>
   subjects?: (query: URLSearchParams) => ListPage<Subject>
   assays?: (query: URLSearchParams) => ListPage<Assay>
+  dataFiles?: (query: URLSearchParams) => ListPage<DataFile>
 } = {}) {
-  const sampleQueries: URLSearchParams[] = []
-  const subjectQueries: URLSearchParams[] = []
-  const assayQueries: URLSearchParams[] = []
-  const bodies: Record<string, unknown> = {
-    [projectPath]: tcga,
-    [studyPath]: rnaseq,
-    [dataFilesPath]: noItems,
+  const lists: Record<string, [(query: URLSearchParams) => unknown, URLSearchParams[]]> = {
+    [samplesPath]: [samples, []],
+    [subjectsPath]: [subjects, []],
+    [assaysPath]: [assays, []],
+    [dataFilesPath]: [dataFiles, []],
   }
+  const bodies: Record<string, unknown> = { [projectPath]: tcga, [studyPath]: rnaseq }
   vi.stubGlobal(
     'fetch',
     vi.fn((request: Request) => {
       const url = new URL(request.url)
-      if (url.pathname === samplesPath) {
-        sampleQueries.push(url.searchParams)
-        return Promise.resolve(Response.json(samples(url.searchParams)))
-      }
-      if (url.pathname === subjectsPath) {
-        subjectQueries.push(url.searchParams)
-        return Promise.resolve(Response.json(subjects(url.searchParams)))
-      }
-      if (url.pathname === assaysPath) {
-        assayQueries.push(url.searchParams)
-        return Promise.resolve(Response.json(assays(url.searchParams)))
+      const list = lists[url.pathname]
+      if (list) {
+        const [respond, queries] = list
+        queries.push(url.searchParams)
+        return Promise.resolve(Response.json(respond(url.searchParams)))
       }
       return Promise.resolve(Response.json(bodies[url.pathname]))
     }),
   )
-  return { sampleQueries, subjectQueries, assayQueries }
+  const queriesFor = (path: string) => lists[path]?.[1] ?? []
+  return {
+    sampleQueries: queriesFor(samplesPath),
+    subjectQueries: queriesFor(subjectsPath),
+    assayQueries: queriesFor(assaysPath),
+    dataFileQueries: queriesFor(dataFilesPath),
+  }
 }
 
 function renderPage(studyCode = 'RNASEQ') {
@@ -273,6 +274,12 @@ describe('StudyDetailPage', () => {
     )
     expect(screen.getByText('https://example.org/RNASEQ/counts.tsv')).toBeInTheDocument()
     expect(screen.getByText('Processed · TSV · 2.5 MB · 1 sample')).toBeInTheDocument()
+
+    const newDataFileLinks = screen.getAllByRole('link', { name: 'New data file' })
+    expect(newDataFileLinks).toHaveLength(2)
+    for (const link of newDataFileLinks) {
+      expect(link).toHaveAttribute('href', '/projects/TCGA-BRCA/studies/RNASEQ/data-files/new')
+    }
   })
 
   it('shows a breadcrumb trail', () => {
@@ -510,5 +517,23 @@ describe('StudyDetailPage', () => {
 
     expect(await screen.findByText('No assays match “zzz”.')).toBeInTheDocument()
     expect(assayQueries.map((query) => query.get('q'))).toEqual([null, 'zzz'])
+  })
+
+  it('searches data files, and shows a file without a size', async () => {
+    const { dataFileQueries } = stubStudyApi({
+      dataFiles: (query) =>
+        query.get('q') === 'zzz'
+          ? noItems
+          : { items: [{ ...countsFile, size_bytes: null, sample_count: 3 }], total: 1 },
+    })
+    const user = userEvent.setup()
+    renderPage()
+
+    expect(await screen.findByText('Processed · TSV · 3 samples')).toBeInTheDocument()
+
+    await user.type(screen.getByRole('searchbox', { name: 'Search data files' }), 'zzz')
+
+    expect(await screen.findByText('No data files match “zzz”.')).toBeInTheDocument()
+    expect(dataFileQueries.map((query) => query.get('q'))).toEqual([null, 'zzz'])
   })
 })
