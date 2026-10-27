@@ -510,6 +510,42 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/projects/{project_code}/studies/{study_code}/import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Import Records
+         * @description Import subjects and samples into a study, safely and repeatably.
+         *
+         *     - **Matching:** each record is matched to one already in the study by its external ID (its
+         *       ID in the source) if it has one, otherwise by its name. An ambiguous match is refused:
+         *       for example, an external ID that belongs to one record while the name belongs to another.
+         *     - **Existing records are never changed.** A matched record that differs from the import is
+         *       left as it is, and the reply lists the differences for you to review. Only the fields the
+         *       import sends are compared.
+         *     - **New records are created.** A sample's `subject` and `parent` are names, of a record in
+         *       the same request or one already in the study, in any order.
+         *     - **All or nothing:** if anything is wrong, nothing is saved, and the reply (422) lists every
+         *       problem found.
+         *     - **Dry run:** `dry_run` must be given. With `true`, everything is checked and the reply says
+         *       what would happen, but nothing is saved. Do a dry run first.
+         *     - **Limits:** at most 5,000 records per request; send bigger studies in batches. An import
+         *       never creates projects or studies.
+         *     - **Audit trail:** each new record is recorded as created by `import: <source>`.
+         */
+        post: operations["import_records_api_v1_projects__project_code__studies__study_code__import_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -850,10 +886,83 @@ export interface components {
             /** Description */
             description?: string | null;
         };
+        /**
+         * Difference
+         * @description An existing record that differs from the import. It was left unchanged.
+         */
+        Difference: {
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "subject" | "sample";
+            /** Name */
+            name: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Fields */
+            fields: {
+                [key: string]: {
+                    [key: string]: unknown;
+                };
+            };
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /**
+         * ImportRequest
+         * @description Records to import into a study.
+         */
+        ImportRequest: {
+            /** Source */
+            source: string;
+            /** Dry Run */
+            dry_run: boolean;
+            /** Subjects */
+            subjects?: components["schemas"]["SubjectImport"][];
+            /** Samples */
+            samples?: components["schemas"]["SampleImport"][];
+        };
+        /**
+         * ImportResult
+         * @description What an import did, or with a dry run, what it would do.
+         */
+        ImportResult: {
+            /** Dry Run */
+            dry_run: boolean;
+            /** Saved */
+            saved: boolean;
+            subjects: components["schemas"]["KindSummary"];
+            samples: components["schemas"]["KindSummary"];
+            /** Differences */
+            differences: components["schemas"]["Difference"][];
+        };
+        /**
+         * KindSummary
+         * @description How many records of one kind were (or would be) created, and how many already existed.
+         */
+        KindSummary: {
+            /**
+             * Created
+             * @default 0
+             */
+            created: number;
+            /**
+             * Unchanged
+             * @default 0
+             */
+            unchanged: number;
+            /**
+             * Different
+             * @default 0
+             */
+            different: number;
         };
         /** Page[AssayRead] */
         Page_AssayRead_: {
@@ -1041,6 +1150,41 @@ export interface components {
             uri: string;
             /** Label */
             label: string | null;
+        };
+        /**
+         * SampleImport
+         * @description A sample to import. It's matched by external ID, or by name if it has none.
+         *
+         *     Its subject and parent are given by name: of a record in the same request, or of one
+         *     already in the study.
+         */
+        SampleImport: {
+            /** Name */
+            name: string;
+            /** External Id */
+            external_id?: string | null;
+            /** Subject */
+            subject?: string | null;
+            /** Parent */
+            parent?: string | null;
+            /** Material Type */
+            material_type: string;
+            /**
+             * Status
+             * @default registered
+             * @enum {string}
+             */
+            status: "registered" | "received" | "in_storage" | "in_use" | "consumed" | "disposed";
+            /** Collected At */
+            collected_at?: string | null;
+            /** Characteristics */
+            characteristics?: {
+                [key: string]: unknown;
+            };
+            /** Factor Values */
+            factor_values?: {
+                [key: string]: unknown;
+            };
         };
         /**
          * SampleRead
@@ -1240,6 +1384,27 @@ export interface components {
          * @description Data needed to create a subject.
          */
         SubjectCreate: {
+            /** Name */
+            name: string;
+            /** External Id */
+            external_id?: string | null;
+            /**
+             * Subject Type
+             * @enum {string}
+             */
+            subject_type: "patient" | "cell_line" | "organism" | "other";
+            /** Species */
+            species?: string | null;
+            /** Attributes */
+            attributes?: {
+                [key: string]: unknown;
+            };
+        };
+        /**
+         * SubjectImport
+         * @description A subject to import. It's matched by external ID, or by name if it has none.
+         */
+        SubjectImport: {
             /** Name */
             name: string;
             /** External Id */
@@ -2598,6 +2763,42 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    import_records_api_v1_projects__project_code__studies__study_code__import_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_code: string;
+                study_code: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ImportRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportResult"];
+                };
             };
             /** @description Validation Error */
             422: {

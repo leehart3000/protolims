@@ -2406,6 +2406,68 @@
         }
       }
     },
+    "/api/v1/projects/{project_code}/studies/{study_code}/import": {
+      "post": {
+        "tags": [
+          "import"
+        ],
+        "summary": "Import Records",
+        "description": "Import subjects and samples into a study, safely and repeatably.\n\n- **Matching:** each record is matched to one already in the study by its external ID (its\n  ID in the source) if it has one, otherwise by its name. An ambiguous match is refused:\n  for example, an external ID that belongs to one record while the name belongs to another.\n- **Existing records are never changed.** A matched record that differs from the import is\n  left as it is, and the reply lists the differences for you to review. Only the fields the\n  import sends are compared.\n- **New records are created.** A sample's `subject` and `parent` are names, of a record in\n  the same request or one already in the study, in any order.\n- **All or nothing:** if anything is wrong, nothing is saved, and the reply (422) lists every\n  problem found.\n- **Dry run:** `dry_run` must be given. With `true`, everything is checked and the reply says\n  what would happen, but nothing is saved. Do a dry run first.\n- **Limits:** at most 5,000 records per request; send bigger studies in batches. An import\n  never creates projects or studies.\n- **Audit trail:** each new record is recorded as created by `import: <source>`.",
+        "operationId": "import_records_api_v1_projects__project_code__studies__study_code__import_post",
+        "parameters": [
+          {
+            "name": "project_code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Code"
+            }
+          },
+          {
+            "name": "study_code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Study Code"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "tags": [
@@ -2474,7 +2536,8 @@
             "anyOf": [
               {
                 "type": "string",
-                "maxLength": 200
+                "maxLength": 200,
+                "minLength": 1
               },
               {
                 "type": "null"
@@ -2747,7 +2810,8 @@
             "anyOf": [
               {
                 "type": "string",
-                "maxLength": 200
+                "maxLength": 200,
+                "minLength": 1
               },
               {
                 "type": "null"
@@ -2836,7 +2900,8 @@
             "anyOf": [
               {
                 "type": "string",
-                "maxLength": 200
+                "maxLength": 200,
+                "minLength": 1
               },
               {
                 "type": "null"
@@ -3196,7 +3261,8 @@
             "anyOf": [
               {
                 "type": "string",
-                "maxLength": 200
+                "maxLength": 200,
+                "minLength": 1
               },
               {
                 "type": "null"
@@ -3329,6 +3395,44 @@
         "title": "DesignFactor",
         "description": "A variable under study, e.g. \"compound\", \"dose\" or \"tissue type\"."
       },
+      "Difference": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "subject",
+              "sample"
+            ],
+            "title": "Kind"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "fields": {
+            "additionalProperties": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "object",
+            "title": "Fields"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "name",
+          "id",
+          "fields"
+        ],
+        "title": "Difference",
+        "description": "An existing record that differs from the import. It was left unchanged."
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -3341,6 +3445,99 @@
         },
         "type": "object",
         "title": "HTTPValidationError"
+      },
+      "ImportRequest": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Source"
+          },
+          "dry_run": {
+            "type": "boolean",
+            "title": "Dry Run"
+          },
+          "subjects": {
+            "items": {
+              "$ref": "#/components/schemas/SubjectImport"
+            },
+            "type": "array",
+            "title": "Subjects"
+          },
+          "samples": {
+            "items": {
+              "$ref": "#/components/schemas/SampleImport"
+            },
+            "type": "array",
+            "title": "Samples"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "dry_run"
+        ],
+        "title": "ImportRequest",
+        "description": "Records to import into a study."
+      },
+      "ImportResult": {
+        "properties": {
+          "dry_run": {
+            "type": "boolean",
+            "title": "Dry Run"
+          },
+          "saved": {
+            "type": "boolean",
+            "title": "Saved"
+          },
+          "subjects": {
+            "$ref": "#/components/schemas/KindSummary"
+          },
+          "samples": {
+            "$ref": "#/components/schemas/KindSummary"
+          },
+          "differences": {
+            "items": {
+              "$ref": "#/components/schemas/Difference"
+            },
+            "type": "array",
+            "title": "Differences"
+          }
+        },
+        "type": "object",
+        "required": [
+          "dry_run",
+          "saved",
+          "subjects",
+          "samples",
+          "differences"
+        ],
+        "title": "ImportResult",
+        "description": "What an import did, or with a dry run, what it would do."
+      },
+      "KindSummary": {
+        "properties": {
+          "created": {
+            "type": "integer",
+            "title": "Created",
+            "default": 0
+          },
+          "unchanged": {
+            "type": "integer",
+            "title": "Unchanged",
+            "default": 0
+          },
+          "different": {
+            "type": "integer",
+            "title": "Different",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "title": "KindSummary",
+        "description": "How many records of one kind were (or would be) created, and how many already existed."
       },
       "Page_AssayRead_": {
         "properties": {
@@ -3766,7 +3963,8 @@
             "anyOf": [
               {
                 "type": "string",
-                "maxLength": 200
+                "maxLength": 200,
+                "minLength": 1
               },
               {
                 "type": "null"
@@ -3895,6 +4093,107 @@
         ],
         "title": "SampleDataFileRead",
         "description": "A data file a sample appears in, with the sample's label there."
+      },
+      "SampleImport": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "pattern": "^[^/\\s](?:[^/]*[^/\\s])?$",
+            "title": "Name"
+          },
+          "external_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "External Id"
+          },
+          "subject": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200,
+                "minLength": 1,
+                "pattern": "^[^/\\s](?:[^/]*[^/\\s])?$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subject"
+          },
+          "parent": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200,
+                "minLength": 1,
+                "pattern": "^[^/\\s](?:[^/]*[^/\\s])?$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent"
+          },
+          "material_type": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Material Type"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "registered",
+              "received",
+              "in_storage",
+              "in_use",
+              "consumed",
+              "disposed"
+            ],
+            "title": "Status",
+            "default": "registered"
+          },
+          "collected_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Collected At"
+          },
+          "characteristics": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Characteristics"
+          },
+          "factor_values": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Factor Values"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name",
+          "material_type"
+        ],
+        "title": "SampleImport",
+        "description": "A sample to import. It's matched by external ID, or by name if it has none.\n\nIts subject and parent are given by name: of a record in the same request, or of one\nalready in the study."
       },
       "SampleRead": {
         "properties": {
@@ -4073,7 +4372,8 @@
             "anyOf": [
               {
                 "type": "string",
-                "maxLength": 200
+                "maxLength": 200,
+                "minLength": 1
               },
               {
                 "type": "null"
@@ -4441,7 +4741,8 @@
             "anyOf": [
               {
                 "type": "string",
-                "maxLength": 200
+                "maxLength": 200,
+                "minLength": 1
               },
               {
                 "type": "null"
@@ -4485,6 +4786,65 @@
         ],
         "title": "SubjectCreate",
         "description": "Data needed to create a subject."
+      },
+      "SubjectImport": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "pattern": "^[^/\\s](?:[^/]*[^/\\s])?$",
+            "title": "Name"
+          },
+          "external_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "External Id"
+          },
+          "subject_type": {
+            "type": "string",
+            "enum": [
+              "patient",
+              "cell_line",
+              "organism",
+              "other"
+            ],
+            "title": "Subject Type"
+          },
+          "species": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Species"
+          },
+          "attributes": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Attributes"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name",
+          "subject_type"
+        ],
+        "title": "SubjectImport",
+        "description": "A subject to import. It's matched by external ID, or by name if it has none."
       },
       "SubjectRead": {
         "properties": {
@@ -4601,7 +4961,8 @@
             "anyOf": [
               {
                 "type": "string",
-                "maxLength": 200
+                "maxLength": 200,
+                "minLength": 1
               },
               {
                 "type": "null"
