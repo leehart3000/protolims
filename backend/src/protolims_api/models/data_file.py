@@ -3,7 +3,7 @@
 import uuid
 from typing import Any
 
-from sqlalchemy import BigInteger, CheckConstraint, ForeignKey, Text, text
+from sqlalchemy import BigInteger, CheckConstraint, ForeignKey, Text, UniqueConstraint, text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -13,23 +13,30 @@ DATA_FILE_LEVELS = ("raw", "processed", "analysis")
 
 
 class DataFile(UUIDPrimaryKeyMixin, TimestampMixin, Base):
-    """A file in object storage: raw data, processed data or analysis output."""
+    """A file in object storage or at its source: raw data, processed data or analysis output.
+
+    A file's uri is unique within its study only, so studies stay independent: two studies can
+    each record the same file. Names needn't be unique, as files often share names.
+    """
 
     __tablename__ = "data_file"
+    # The unique constraint's index starts with study_id, so it also speeds up
+    # "all files in this study" queries; a separate study_id index isn't needed.
     __table_args__ = (
+        UniqueConstraint("study_id", "uri"),
         CheckConstraint(
             "level IN (" + ", ".join(f"'{v}'" for v in DATA_FILE_LEVELS) + ")",
             name="level",
         ),
     )
 
-    study_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("study.id"), index=True)
+    study_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("study.id"))
     assay_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("assay.id"), index=True)
     name: Mapped[str] = mapped_column(Text)
     external_id: Mapped[str | None] = mapped_column(Text, index=True)
     level: Mapped[str] = mapped_column(Text)
     format: Mapped[str] = mapped_column(Text)
-    uri: Mapped[str] = mapped_column(Text, unique=True)
+    uri: Mapped[str] = mapped_column(Text)
     size_bytes: Mapped[int | None] = mapped_column(BigInteger)
     sha256: Mapped[str | None] = mapped_column(Text)
     summary: Mapped[dict[str, Any]] = mapped_column(JSONB, server_default=text("'{}'::jsonb"))
