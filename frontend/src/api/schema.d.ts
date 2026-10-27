@@ -521,23 +521,31 @@ export interface paths {
         put?: never;
         /**
          * Import Records
-         * @description Import subjects and samples into a study, safely and repeatably.
+         * @description Import subjects, samples, assays and data files into a study, safely and repeatably.
          *
          *     - **Matching:** each record is matched to one already in the study by its external ID (its
-         *       ID in the source) if it has one, otherwise by its name. An ambiguous match is refused:
-         *       for example, an external ID that belongs to one record while the name belongs to another.
+         *       ID in the source) if it has one, otherwise by its name (a data file's location, `uri`, as
+         *       file names often repeat). An ambiguous match is refused: for example, an external ID
+         *       that belongs to one record while the name belongs to another.
          *     - **Existing records are never changed.** A matched record that differs from the import is
          *       left as it is, and the reply lists the differences for you to review. Only the fields the
          *       import sends are compared.
          *     - **New records are created.** A sample's `subject` and `parent` are names, of a record in
          *       the same request or one already in the study, in any order.
+         *     - **Assays and their samples:** an assay lists the samples it measured by name, each with
+         *       an optional label. A missing link is added, even to an existing assay. An existing link
+         *       with a different label is reported, not changed. Links the import doesn't mention are
+         *       left alone.
+         *     - **Data files:** a file gives its `assay` and `samples` by name, and the files it was made
+         *       from (`inputs`) by location. Links follow the same rules as an assay's. A file can't be
+         *       derived from itself, directly or through other files.
          *     - **All or nothing:** if anything is wrong, nothing is saved, and the reply (422) lists every
          *       problem found.
          *     - **Dry run:** `dry_run` must be given. With `true`, everything is checked and the reply says
          *       what would happen, but nothing is saved. Do a dry run first.
-         *     - **Limits:** at most 5,000 records per request; send bigger studies in batches. An import
-         *       never creates projects or studies.
-         *     - **Audit trail:** each new record is recorded as created by `import: <source>`.
+         *     - **Limits:** at most 5,000 records and links per request; send bigger studies in batches.
+         *       An import never creates projects or studies.
+         *     - **Audit trail:** each new record and link is recorded as made by `import: <source>`.
          */
         post: operations["import_records_api_v1_projects__project_code__studies__study_code__import_post"];
         delete?: never;
@@ -613,6 +621,33 @@ export interface components {
             };
         };
         /**
+         * AssayImport
+         * @description An assay to import. It's matched by external ID, or by name if it has none.
+         *
+         *     Its samples are given by name: of a sample in the same request, or of one already in
+         *     the study.
+         */
+        AssayImport: {
+            /** Name */
+            name: string;
+            /** External Id */
+            external_id?: string | null;
+            /** Measurement Type */
+            measurement_type: string;
+            /** Technology Type */
+            technology_type: string;
+            /** Platform */
+            platform?: string | null;
+            /** Performed At */
+            performed_at?: string | null;
+            /** Parameters */
+            parameters?: {
+                [key: string]: unknown;
+            };
+            /** Samples */
+            samples?: components["schemas"]["AssaySampleImport"][];
+        };
+        /**
          * AssayRead
          * @description An assay as returned by the API, with where it belongs and how many samples it measured.
          */
@@ -661,6 +696,16 @@ export interface components {
             study_code: string;
             /** Sample Count */
             sample_count: number;
+        };
+        /**
+         * AssaySampleImport
+         * @description A sample an assay measured, by name, with its label in the assay (e.g. a TMT channel).
+         */
+        AssaySampleImport: {
+            /** Sample */
+            sample: string;
+            /** Label */
+            label?: string | null;
         };
         /**
          * AssaySampleLink
@@ -745,6 +790,43 @@ export interface components {
             };
         };
         /**
+         * DataFileImport
+         * @description A data file to import. It's matched by external ID, or by location (uri) if it has none,
+         *     as file names often repeat.
+         *
+         *     Its assay and samples are given by name, and the files it was made from by location: of
+         *     records in the same request, or already in the study.
+         */
+        DataFileImport: {
+            /** Name */
+            name: string;
+            /** External Id */
+            external_id?: string | null;
+            /** Uri */
+            uri: string;
+            /**
+             * Level
+             * @enum {string}
+             */
+            level: "raw" | "processed" | "analysis";
+            /** Format */
+            format: string;
+            /** Assay */
+            assay?: string | null;
+            /** Size Bytes */
+            size_bytes?: number | null;
+            /** Sha256 */
+            sha256?: string | null;
+            /** Summary */
+            summary?: {
+                [key: string]: unknown;
+            };
+            /** Samples */
+            samples?: components["schemas"]["DataFileSampleImport"][];
+            /** Inputs */
+            inputs?: string[];
+        };
+        /**
          * DataFileRead
          * @description A data file as returned by the API, with where it belongs and how many samples it holds.
          */
@@ -799,6 +881,16 @@ export interface components {
             assay_name: string | null;
             /** Sample Count */
             sample_count: number;
+        };
+        /**
+         * DataFileSampleImport
+         * @description A sample whose data is in a file, by name, with where it is (e.g. a matrix column).
+         */
+        DataFileSampleImport: {
+            /** Sample */
+            sample: string;
+            /** Label */
+            label?: string | null;
         };
         /**
          * DataFileSampleLink
@@ -888,14 +980,14 @@ export interface components {
         };
         /**
          * Difference
-         * @description An existing record that differs from the import. It was left unchanged.
+         * @description An existing record or link that differs from the import. It was left unchanged.
          */
         Difference: {
             /**
              * Kind
              * @enum {string}
              */
-            kind: "subject" | "sample";
+            kind: "subject" | "sample" | "assay" | "assay sample" | "data file" | "data file sample";
             /** Name */
             name: string;
             /**
@@ -928,6 +1020,10 @@ export interface components {
             subjects?: components["schemas"]["SubjectImport"][];
             /** Samples */
             samples?: components["schemas"]["SampleImport"][];
+            /** Assays */
+            assays?: components["schemas"]["AssayImport"][];
+            /** Data Files */
+            data_files?: components["schemas"]["DataFileImport"][];
         };
         /**
          * ImportResult
@@ -940,6 +1036,11 @@ export interface components {
             saved: boolean;
             subjects: components["schemas"]["KindSummary"];
             samples: components["schemas"]["KindSummary"];
+            assays: components["schemas"]["KindSummary"];
+            assay_samples: components["schemas"]["KindSummary"];
+            data_files: components["schemas"]["KindSummary"];
+            data_file_samples: components["schemas"]["KindSummary"];
+            data_file_inputs: components["schemas"]["KindSummary"];
             /** Differences */
             differences: components["schemas"]["Difference"][];
         };

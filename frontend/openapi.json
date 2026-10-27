@@ -2412,7 +2412,7 @@
           "import"
         ],
         "summary": "Import Records",
-        "description": "Import subjects and samples into a study, safely and repeatably.\n\n- **Matching:** each record is matched to one already in the study by its external ID (its\n  ID in the source) if it has one, otherwise by its name. An ambiguous match is refused:\n  for example, an external ID that belongs to one record while the name belongs to another.\n- **Existing records are never changed.** A matched record that differs from the import is\n  left as it is, and the reply lists the differences for you to review. Only the fields the\n  import sends are compared.\n- **New records are created.** A sample's `subject` and `parent` are names, of a record in\n  the same request or one already in the study, in any order.\n- **All or nothing:** if anything is wrong, nothing is saved, and the reply (422) lists every\n  problem found.\n- **Dry run:** `dry_run` must be given. With `true`, everything is checked and the reply says\n  what would happen, but nothing is saved. Do a dry run first.\n- **Limits:** at most 5,000 records per request; send bigger studies in batches. An import\n  never creates projects or studies.\n- **Audit trail:** each new record is recorded as created by `import: <source>`.",
+        "description": "Import subjects, samples, assays and data files into a study, safely and repeatably.\n\n- **Matching:** each record is matched to one already in the study by its external ID (its\n  ID in the source) if it has one, otherwise by its name (a data file's location, `uri`, as\n  file names often repeat). An ambiguous match is refused: for example, an external ID\n  that belongs to one record while the name belongs to another.\n- **Existing records are never changed.** A matched record that differs from the import is\n  left as it is, and the reply lists the differences for you to review. Only the fields the\n  import sends are compared.\n- **New records are created.** A sample's `subject` and `parent` are names, of a record in\n  the same request or one already in the study, in any order.\n- **Assays and their samples:** an assay lists the samples it measured by name, each with\n  an optional label. A missing link is added, even to an existing assay. An existing link\n  with a different label is reported, not changed. Links the import doesn't mention are\n  left alone.\n- **Data files:** a file gives its `assay` and `samples` by name, and the files it was made\n  from (`inputs`) by location. Links follow the same rules as an assay's. A file can't be\n  derived from itself, directly or through other files.\n- **All or nothing:** if anything is wrong, nothing is saved, and the reply (422) lists every\n  problem found.\n- **Dry run:** `dry_run` must be given. With `true`, everything is checked and the reply says\n  what would happen, but nothing is saved. Do a dry run first.\n- **Limits:** at most 5,000 records and links per request; send bigger studies in batches.\n  An import never creates projects or studies.\n- **Audit trail:** each new record and link is recorded as made by `import: <source>`.",
         "operationId": "import_records_api_v1_projects__project_code__studies__study_code__import_post",
         "parameters": [
           {
@@ -2597,6 +2597,87 @@
         "title": "AssayCreate",
         "description": "Data needed to create an assay."
       },
+      "AssayImport": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "pattern": "^[^/\\s](?:[^/]*[^/\\s])?$",
+            "title": "Name"
+          },
+          "external_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "External Id"
+          },
+          "measurement_type": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Measurement Type"
+          },
+          "technology_type": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Technology Type"
+          },
+          "platform": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Platform"
+          },
+          "performed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Performed At"
+          },
+          "parameters": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Parameters"
+          },
+          "samples": {
+            "items": {
+              "$ref": "#/components/schemas/AssaySampleImport"
+            },
+            "type": "array",
+            "title": "Samples"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name",
+          "measurement_type",
+          "technology_type"
+        ],
+        "title": "AssayImport",
+        "description": "An assay to import. It's matched by external ID, or by name if it has none.\n\nIts samples are given by name: of a sample in the same request, or of one already in\nthe study."
+      },
       "AssayRead": {
         "properties": {
           "id": {
@@ -2714,6 +2795,37 @@
         ],
         "title": "AssayRead",
         "description": "An assay as returned by the API, with where it belongs and how many samples it measured."
+      },
+      "AssaySampleImport": {
+        "properties": {
+          "sample": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "pattern": "^[^/\\s](?:[^/]*[^/\\s])?$",
+            "title": "Sample"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "sample"
+        ],
+        "title": "AssaySampleImport",
+        "description": "A sample an assay measured, by name, with its label in the assay (e.g. a TMT channel)."
       },
       "AssaySampleLink": {
         "properties": {
@@ -2984,6 +3096,122 @@
         "title": "DataFileCreate",
         "description": "Data needed to record a data file."
       },
+      "DataFileImport": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "pattern": "^[^/\\s](?:[^/]*[^/\\s])?$",
+            "title": "Name"
+          },
+          "external_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "External Id"
+          },
+          "uri": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 1,
+            "pattern": "^\\S+$",
+            "title": "Uri"
+          },
+          "level": {
+            "type": "string",
+            "enum": [
+              "raw",
+              "processed",
+              "analysis"
+            ],
+            "title": "Level"
+          },
+          "format": {
+            "type": "string",
+            "maxLength": 50,
+            "minLength": 1,
+            "title": "Format"
+          },
+          "assay": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200,
+                "minLength": 1,
+                "pattern": "^[^/\\s](?:[^/]*[^/\\s])?$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assay"
+          },
+          "size_bytes": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Size Bytes"
+          },
+          "sha256": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sha256"
+          },
+          "summary": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Summary"
+          },
+          "samples": {
+            "items": {
+              "$ref": "#/components/schemas/DataFileSampleImport"
+            },
+            "type": "array",
+            "title": "Samples"
+          },
+          "inputs": {
+            "items": {
+              "type": "string",
+              "maxLength": 2000,
+              "minLength": 1,
+              "pattern": "^\\S+$"
+            },
+            "type": "array",
+            "title": "Inputs"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name",
+          "uri",
+          "level",
+          "format"
+        ],
+        "title": "DataFileImport",
+        "description": "A data file to import. It's matched by external ID, or by location (uri) if it has none,\nas file names often repeat.\n\nIts assay and samples are given by name, and the files it was made from by location: of\nrecords in the same request, or already in the study."
+      },
       "DataFileRead": {
         "properties": {
           "id": {
@@ -3130,6 +3358,37 @@
         ],
         "title": "DataFileRead",
         "description": "A data file as returned by the API, with where it belongs and how many samples it holds."
+      },
+      "DataFileSampleImport": {
+        "properties": {
+          "sample": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "pattern": "^[^/\\s](?:[^/]*[^/\\s])?$",
+            "title": "Sample"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "sample"
+        ],
+        "title": "DataFileSampleImport",
+        "description": "A sample whose data is in a file, by name, with where it is (e.g. a matrix column)."
       },
       "DataFileSampleLink": {
         "properties": {
@@ -3401,7 +3660,11 @@
             "type": "string",
             "enum": [
               "subject",
-              "sample"
+              "sample",
+              "assay",
+              "assay sample",
+              "data file",
+              "data file sample"
             ],
             "title": "Kind"
           },
@@ -3431,7 +3694,7 @@
           "fields"
         ],
         "title": "Difference",
-        "description": "An existing record that differs from the import. It was left unchanged."
+        "description": "An existing record or link that differs from the import. It was left unchanged."
       },
       "HTTPValidationError": {
         "properties": {
@@ -3471,6 +3734,20 @@
             },
             "type": "array",
             "title": "Samples"
+          },
+          "assays": {
+            "items": {
+              "$ref": "#/components/schemas/AssayImport"
+            },
+            "type": "array",
+            "title": "Assays"
+          },
+          "data_files": {
+            "items": {
+              "$ref": "#/components/schemas/DataFileImport"
+            },
+            "type": "array",
+            "title": "Data Files"
           }
         },
         "additionalProperties": false,
@@ -3498,6 +3775,21 @@
           "samples": {
             "$ref": "#/components/schemas/KindSummary"
           },
+          "assays": {
+            "$ref": "#/components/schemas/KindSummary"
+          },
+          "assay_samples": {
+            "$ref": "#/components/schemas/KindSummary"
+          },
+          "data_files": {
+            "$ref": "#/components/schemas/KindSummary"
+          },
+          "data_file_samples": {
+            "$ref": "#/components/schemas/KindSummary"
+          },
+          "data_file_inputs": {
+            "$ref": "#/components/schemas/KindSummary"
+          },
           "differences": {
             "items": {
               "$ref": "#/components/schemas/Difference"
@@ -3512,6 +3804,11 @@
           "saved",
           "subjects",
           "samples",
+          "assays",
+          "assay_samples",
+          "data_files",
+          "data_file_samples",
+          "data_file_inputs",
           "differences"
         ],
         "title": "ImportResult",
