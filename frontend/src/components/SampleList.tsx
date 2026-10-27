@@ -73,7 +73,13 @@ export function SampleList({
       ) : (
         <>
           <SampleTable samples={items} label="Samples" sort={sort} onSort={changeSort} />
-          <Pagination offset={offset} limit={PAGE_SIZE} total={total} onChange={setOffset} />
+          <Pagination
+            offset={offset}
+            limit={PAGE_SIZE}
+            total={total}
+            filtered={q !== ''}
+            onChange={setOffset}
+          />
         </>
       )}
     </>

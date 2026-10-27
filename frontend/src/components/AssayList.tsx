@@ -55,7 +55,13 @@ export function AssayList({ projectCode, studyCode }: { projectCode: string; stu
       ) : (
         <>
           <AssayTable assays={items} sort={sort} onSort={changeSort} />
-          <Pagination offset={offset} limit={PAGE_SIZE} total={total} onChange={setOffset} />
+          <Pagination
+            offset={offset}
+            limit={PAGE_SIZE}
+            total={total}
+            filtered={q !== ''}
+            onChange={setOffset}
+          />
         </>
       )}
     </>

@@ -4,20 +4,34 @@ function formatCount(count: number) {
   return count.toLocaleString('en-GB')
 }
 
-// Previous and Next buttons for a list shown a page at a time. Hidden when it all fits on one page.
+// What a one-page list shows: how many records, or with a search, how many match.
+function onePageCount(total: number, filtered: boolean) {
+  if (filtered) {
+    return total === 1 ? '1 match' : `${formatCount(total)} matches`
+  }
+  return total === 1 ? 'Showing 1' : `Showing all ${formatCount(total)}`
+}
+
+// How many records a list shows, with Previous and Next buttons when it doesn't fit on one
+// page. With filtered, the counts are of the records that match a search.
 export function Pagination({
   offset,
   limit,
   total,
+  filtered = false,
   onChange,
 }: {
   offset: number
   limit: number
   total: number
+  filtered?: boolean
   onChange: (offset: number) => void
 }) {
-  if (total <= limit) {
+  if (total === 0) {
     return null
+  }
+  if (total <= limit) {
+    return <p className="mt-4 text-sm text-muted">{onePageCount(total, filtered)}</p>
   }
   const last = Math.min(offset + limit, total)
 
@@ -28,6 +42,7 @@ export function Pagination({
     >
       <p className="text-sm text-muted">
         {formatCount(offset + 1)}–{formatCount(last)} of {formatCount(total)}
+        {filtered && ' matches'}
       </p>
       <div className="flex gap-2">
         <button
