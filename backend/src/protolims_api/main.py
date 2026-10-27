@@ -10,7 +10,15 @@ from starlette.middleware.base import RequestResponseEndpoint
 
 from protolims_api.config import get_settings
 from protolims_api.db import SessionDep
-from protolims_api.routers import assays, data_files, projects, samples, studies, subjects
+from protolims_api.routers import (
+    assays,
+    data_files,
+    importing,
+    projects,
+    samples,
+    studies,
+    subjects,
+)
 
 PROXY_KEY_HEADER = "X-ProtoLIMS-Proxy-Key"
 
@@ -31,6 +39,7 @@ app.include_router(subjects.router, prefix="/api/v1")
 app.include_router(samples.router, prefix="/api/v1")
 app.include_router(assays.router, prefix="/api/v1")
 app.include_router(data_files.router, prefix="/api/v1")
+app.include_router(importing.router, prefix="/api/v1")
 
 
 @app.middleware("http")
