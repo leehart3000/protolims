@@ -9,7 +9,7 @@ import { Breadcrumbs } from '../components/Breadcrumbs'
 import { DetailList } from '../components/DetailList'
 import { NewButton } from '../components/NewButton'
 import { PageTitle } from '../components/PageTitle'
-import { Pagination } from '../components/Pagination'
+import { PagedTable } from '../components/PagedTable'
 import { SampleList } from '../components/SampleList'
 import { SearchBox } from '../components/SearchBox'
 import { SectionHeading } from '../components/SectionHeading'
@@ -17,20 +17,27 @@ import { SubjectTable } from '../components/SubjectTable'
 import { DetailsCard } from '../components/DetailsCard'
 import { formatDate } from '../format'
 import { errorBox } from '../styles'
-import { PAGE_SIZE, useListControls } from '../useListControls'
+import { useListControls } from '../useListControls'
 
 type Study = components['schemas']['StudyRead']
 
 function SubjectList({ projectCode, studyCode }: { projectCode: string; studyCode: string }) {
-  const { search, q, sort, offset, setOffset, changeSearch, changeSort } =
-    useListControls<SubjectSort>('name')
+  const controls = useListControls<SubjectSort>('name')
+  const { search, q, sort, offset, limit, changeSearch, changeSort } = controls
   const query = useQuery({
-    queryKey: ['projects', projectCode, 'studies', studyCode, 'subjects', { q, sort, offset }],
+    queryKey: [
+      'projects',
+      projectCode,
+      'studies',
+      studyCode,
+      'subjects',
+      { q, sort, offset, limit },
+    ],
     queryFn: () =>
       fetchSubjectPage(projectCode, studyCode, {
         q: q || undefined,
         sort,
-        limit: PAGE_SIZE,
+        limit,
         offset,
       }),
     placeholderData: keepPreviousData,
@@ -66,16 +73,9 @@ function SubjectList({ projectCode, studyCode }: { projectCode: string; studyCod
           {q ? `No subjects match “${q}”.` : 'No subjects in this study yet.'}
         </p>
       ) : (
-        <>
+        <PagedTable total={total} controls={controls}>
           <SubjectTable subjects={items} sort={sort} onSort={changeSort} />
-          <Pagination
-            offset={offset}
-            limit={PAGE_SIZE}
-            total={total}
-            filtered={q !== ''}
-            onChange={setOffset}
-          />
-        </>
+        </PagedTable>
       )}
     </>
   )

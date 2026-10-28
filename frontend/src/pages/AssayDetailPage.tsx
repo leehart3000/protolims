@@ -11,22 +11,21 @@ import { DetailsCard } from '../components/DetailsCard'
 import { KeyValueList } from '../components/KeyValueList'
 import { NewButton } from '../components/NewButton'
 import { PageTitle } from '../components/PageTitle'
-import { Pagination } from '../components/Pagination'
+import { PagedTable } from '../components/PagedTable'
 import { SearchBox } from '../components/SearchBox'
 import { SectionHeading } from '../components/SectionHeading'
 import { formatDate } from '../format'
 import { errorBox } from '../styles'
-import { PAGE_SIZE, useListControls } from '../useListControls'
+import { useListControls } from '../useListControls'
 
 type Assay = components['schemas']['AssayRead']
 
 function AssaySampleList({ assayId }: { assayId: string }) {
-  const { search, q, sort, offset, setOffset, changeSearch, changeSort } =
-    useListControls<AssaySampleSort>('name')
+  const controls = useListControls<AssaySampleSort>('name')
+  const { search, q, sort, offset, limit, changeSearch, changeSort } = controls
   const query = useQuery({
-    queryKey: ['assays', assayId, 'samples', { q, sort, offset }],
-    queryFn: () =>
-      fetchAssaySamplePage(assayId, { q: q || undefined, sort, limit: PAGE_SIZE, offset }),
+    queryKey: ['assays', assayId, 'samples', { q, sort, offset, limit }],
+    queryFn: () => fetchAssaySamplePage(assayId, { q: q || undefined, sort, limit, offset }),
     placeholderData: keepPreviousData,
   })
 
@@ -60,16 +59,9 @@ function AssaySampleList({ assayId }: { assayId: string }) {
           {q ? `No samples match “${q}”.` : 'No samples linked to this assay yet.'}
         </p>
       ) : (
-        <>
+        <PagedTable total={total} controls={controls}>
           <LinkedSampleTable samples={items} sort={sort} onSort={changeSort} />
-          <Pagination
-            offset={offset}
-            limit={PAGE_SIZE}
-            total={total}
-            filtered={q !== ''}
-            onChange={setOffset}
-          />
-        </>
+        </PagedTable>
       )}
     </>
   )

@@ -2,22 +2,22 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query'
 
 import { type AssaySort, fetchAssayPage } from '../api/queries'
 import { errorBox } from '../styles'
-import { PAGE_SIZE, useListControls } from '../useListControls'
+import { useListControls } from '../useListControls'
 import { AssayTable } from './AssayTable'
-import { Pagination } from './Pagination'
+import { PagedTable } from './PagedTable'
 import { SearchBox } from './SearchBox'
 
 // A study's assays, a page at a time, with sorting and search.
 export function AssayList({ projectCode, studyCode }: { projectCode: string; studyCode: string }) {
-  const { search, q, sort, offset, setOffset, changeSearch, changeSort } =
-    useListControls<AssaySort>('name')
+  const controls = useListControls<AssaySort>('name')
+  const { search, q, sort, offset, limit, changeSearch, changeSort } = controls
   const query = useQuery({
-    queryKey: ['projects', projectCode, 'studies', studyCode, 'assays', { q, sort, offset }],
+    queryKey: ['projects', projectCode, 'studies', studyCode, 'assays', { q, sort, offset, limit }],
     queryFn: () =>
       fetchAssayPage(projectCode, studyCode, {
         q: q || undefined,
         sort,
-        limit: PAGE_SIZE,
+        limit,
         offset,
       }),
     placeholderData: keepPreviousData,
@@ -53,16 +53,9 @@ export function AssayList({ projectCode, studyCode }: { projectCode: string; stu
           {q ? `No assays match “${q}”.` : 'No assays in this study yet.'}
         </p>
       ) : (
-        <>
+        <PagedTable total={total} controls={controls}>
           <AssayTable assays={items} sort={sort} onSort={changeSort} />
-          <Pagination
-            offset={offset}
-            limit={PAGE_SIZE}
-            total={total}
-            filtered={q !== ''}
-            onChange={setOffset}
-          />
-        </>
+        </PagedTable>
       )}
     </>
   )

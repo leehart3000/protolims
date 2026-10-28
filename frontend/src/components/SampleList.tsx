@@ -2,8 +2,8 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query'
 
 import { fetchSamplePage, type SampleSort } from '../api/queries'
 import { errorBox } from '../styles'
-import { PAGE_SIZE, useListControls } from '../useListControls'
-import { Pagination } from './Pagination'
+import { useListControls } from '../useListControls'
+import { PagedTable } from './PagedTable'
 import { SampleTable } from './SampleTable'
 import { SearchBox } from './SearchBox'
 
@@ -20,8 +20,8 @@ export function SampleList({
   subjectId?: string
   emptyText: string
 }) {
-  const { search, q, sort, offset, setOffset, changeSearch, changeSort } =
-    useListControls<SampleSort>('name')
+  const controls = useListControls<SampleSort>('name')
+  const { search, q, sort, offset, limit, changeSearch, changeSort } = controls
   const query = useQuery({
     queryKey: [
       'projects',
@@ -29,14 +29,14 @@ export function SampleList({
       'studies',
       studyCode,
       'samples',
-      { subject: subjectId, q, sort, offset },
+      { subject: subjectId, q, sort, offset, limit },
     ],
     queryFn: () =>
       fetchSamplePage(projectCode, studyCode, {
         subject: subjectId,
         q: q || undefined,
         sort,
-        limit: PAGE_SIZE,
+        limit,
         offset,
       }),
     // Keep showing the current page while the next one loads, so the table doesn't flicker.
@@ -71,16 +71,9 @@ export function SampleList({
       {total === 0 ? (
         <p className="mt-4 text-muted">{q ? `No samples match “${q}”.` : emptyText}</p>
       ) : (
-        <>
+        <PagedTable total={total} controls={controls}>
           <SampleTable samples={items} label="Samples" sort={sort} onSort={changeSort} />
-          <Pagination
-            offset={offset}
-            limit={PAGE_SIZE}
-            total={total}
-            filtered={q !== ''}
-            onChange={setOffset}
-          />
-        </>
+        </PagedTable>
       )}
     </>
   )

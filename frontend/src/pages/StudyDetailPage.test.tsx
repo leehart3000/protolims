@@ -428,7 +428,7 @@ describe('StudyDetailPage', () => {
     expect(sampleQueries.map((query) => query.get('q'))).toEqual([null, 'zzz'])
   })
 
-  it('pages through a long list of samples', async () => {
+  it('pages through a long list of samples, from above or below the table', async () => {
     const { sampleQueries } = stubStudyApi({
       samples: () => ({ items: [tumour], total: 120 }),
       assays: () => noItems,
@@ -436,21 +436,39 @@ describe('StudyDetailPage', () => {
     const user = userEvent.setup()
     renderPage()
 
-    expect(await screen.findByText('1–50 of 120')).toBeInTheDocument()
-    const previous = screen.getByRole('button', { name: 'Previous' })
-    const next = screen.getByRole('button', { name: 'Next' })
-    expect(previous).toBeDisabled()
+    const top = within(await screen.findByRole('navigation', { name: 'Pages' }))
+    const bottom = within(screen.getByRole('navigation', { name: 'Pages, end of list' }))
+    expect(screen.getAllByText('1–50 of 120')).toHaveLength(2)
+    expect(top.getByRole('button', { name: 'Previous' })).toBeDisabled()
 
-    await user.click(next)
-    expect(await screen.findByText('51–100 of 120')).toBeInTheDocument()
+    await user.click(top.getByRole('button', { name: 'Next' }))
+    expect(await screen.findAllByText('51–100 of 120')).toHaveLength(2)
     expect(sampleQueries.at(-1)?.get('offset')).toBe('50')
 
-    await user.click(next)
-    expect(await screen.findByText('101–120 of 120')).toBeInTheDocument()
-    expect(next).toBeDisabled()
+    await user.click(bottom.getByRole('button', { name: 'Last' }))
+    expect(await screen.findAllByText('101–120 of 120')).toHaveLength(2)
+    expect(top.getByRole('button', { name: 'Next' })).toBeDisabled()
 
-    await user.click(previous)
-    expect(await screen.findByText('51–100 of 120')).toBeInTheDocument()
+    await user.click(bottom.getByRole('button', { name: 'First' }))
+    expect(await screen.findAllByText('1–50 of 120')).toHaveLength(2)
+  })
+
+  it('changes how many samples a page shows, starting again from the first page', async () => {
+    const { sampleQueries } = stubStudyApi({
+      samples: () => ({ items: [tumour], total: 120 }),
+      assays: () => noItems,
+    })
+    const user = userEvent.setup()
+    renderPage()
+
+    const top = within(await screen.findByRole('navigation', { name: 'Pages' }))
+    await user.click(top.getByRole('button', { name: 'Next' }))
+    expect(await screen.findAllByText('51–100 of 120')).toHaveLength(2)
+
+    await user.selectOptions(top.getByRole('combobox', { name: 'Per page' }), '100')
+    expect(await screen.findAllByText('1–100 of 120')).toHaveLength(2)
+    expect(sampleQueries.at(-1)?.get('limit')).toBe('100')
+    expect(sampleQueries.at(-1)?.get('offset') ?? '0').toBe('0')
   })
 
   it('sorts subjects by a column heading', async () => {

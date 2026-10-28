@@ -2,9 +2,9 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query'
 
 import { type DataFileSort, fetchDataFilePage } from '../api/queries'
 import { errorBox } from '../styles'
-import { PAGE_SIZE, useListControls } from '../useListControls'
+import { useListControls } from '../useListControls'
 import { DataFileTable } from './DataFileTable'
-import { Pagination } from './Pagination'
+import { PagedTable } from './PagedTable'
 import { SearchBox } from './SearchBox'
 
 // A study's data files, or with assayId just that assay's, a page at a time, with sorting
@@ -20,8 +20,8 @@ export function DataFileList({
   assayId?: string
   emptyText: string
 }) {
-  const { search, q, sort, offset, setOffset, changeSearch, changeSort } =
-    useListControls<DataFileSort>('name')
+  const controls = useListControls<DataFileSort>('name')
+  const { search, q, sort, offset, limit, changeSearch, changeSort } = controls
   const query = useQuery({
     queryKey: [
       'projects',
@@ -29,14 +29,14 @@ export function DataFileList({
       'studies',
       studyCode,
       'data-files',
-      { assay: assayId, q, sort, offset },
+      { assay: assayId, q, sort, offset, limit },
     ],
     queryFn: () =>
       fetchDataFilePage(projectCode, studyCode, {
         assay: assayId,
         q: q || undefined,
         sort,
-        limit: PAGE_SIZE,
+        limit,
         offset,
       }),
     placeholderData: keepPreviousData,
@@ -70,16 +70,9 @@ export function DataFileList({
       {total === 0 ? (
         <p className="mt-4 text-muted">{q ? `No data files match “${q}”.` : emptyText}</p>
       ) : (
-        <>
+        <PagedTable total={total} controls={controls}>
           <DataFileTable files={items} sort={sort} onSort={changeSort} />
-          <Pagination
-            offset={offset}
-            limit={PAGE_SIZE}
-            total={total}
-            filtered={q !== ''}
-            onChange={setOffset}
-          />
-        </>
+        </PagedTable>
       )}
     </>
   )

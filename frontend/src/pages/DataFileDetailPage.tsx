@@ -16,13 +16,13 @@ import { DetailsCard } from '../components/DetailsCard'
 import { FileSummaryTable } from '../components/FileSummaryTable'
 import { KeyValueList } from '../components/KeyValueList'
 import { PageTitle } from '../components/PageTitle'
-import { Pagination } from '../components/Pagination'
+import { PagedTable } from '../components/PagedTable'
 import { SearchBox } from '../components/SearchBox'
 import { formatFileSize } from '../fileSize'
 import { formatDate } from '../format'
 import { dataFileLevelLabel } from '../labels'
 import { errorBox, textLink } from '../styles'
-import { PAGE_SIZE, useListControls } from '../useListControls'
+import { useListControls } from '../useListControls'
 
 type DataFile = components['schemas']['DataFileRead']
 
@@ -44,12 +44,11 @@ function Location({ uri }: { uri: string }) {
 }
 
 function DataFileSampleList({ dataFileId }: { dataFileId: string }) {
-  const { search, q, sort, offset, setOffset, changeSearch, changeSort } =
-    useListControls<AssaySampleSort>('name')
+  const controls = useListControls<AssaySampleSort>('name')
+  const { search, q, sort, offset, limit, changeSearch, changeSort } = controls
   const query = useQuery({
-    queryKey: ['data-files', dataFileId, 'samples', { q, sort, offset }],
-    queryFn: () =>
-      fetchDataFileSamplePage(dataFileId, { q: q || undefined, sort, limit: PAGE_SIZE, offset }),
+    queryKey: ['data-files', dataFileId, 'samples', { q, sort, offset, limit }],
+    queryFn: () => fetchDataFileSamplePage(dataFileId, { q: q || undefined, sort, limit, offset }),
     placeholderData: keepPreviousData,
   })
 
@@ -83,16 +82,9 @@ function DataFileSampleList({ dataFileId }: { dataFileId: string }) {
           {q ? `No samples match “${q}”.` : 'No samples linked to this file yet.'}
         </p>
       ) : (
-        <>
+        <PagedTable total={total} controls={controls}>
           <LinkedSampleTable samples={items} sort={sort} onSort={changeSort} />
-          <Pagination
-            offset={offset}
-            limit={PAGE_SIZE}
-            total={total}
-            filtered={q !== ''}
-            onChange={setOffset}
-          />
-        </>
+        </PagedTable>
       )}
     </>
   )
