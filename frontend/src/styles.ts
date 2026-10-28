@@ -27,7 +27,9 @@ export const tableRow = 'relative hover:bg-line/30'
 export const rowLink =
   'font-medium focus-visible:outline-hidden after:absolute after:inset-0 focus-visible:after:outline-2 focus-visible:after:-outline-offset-2 focus-visible:after:outline-link'
 
-export const rowIcon = 'text-base font-bold text-primary'
-
 export const secondaryButton =
   'rounded-md border border-line bg-panel px-3 py-1.5 text-sm font-medium text-fg hover:bg-line/30 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-50'
+
+// Looks like a button, but only shows where to click: the whole row is the link.
+export const rowButton =
+  'inline-flex items-center gap-1.5 whitespace-nowrap rounded-md border border-line bg-panel px-2.5 py-1 text-sm font-medium text-fg'
