@@ -27,7 +27,46 @@ POST /api/v1/projects/{project_code}/studies/{study_code}/import
 ```
 
 For a one-off import, use **Try it out** on the API docs page while signed in.
-Import scripts are planned; they'll do a dry run unless given `--apply`.
+For a real dataset, use an import script (below).
+
+## Importing from the GDC (TCGA-BRCA)
+
+`backend/scripts/import_gdc.py` imports open-access TCGA-BRCA cases with their
+RNA-seq gene counts files. It works in two halves, so you can read exactly what
+will be imported before anything is sent.
+
+**1. Fetch** from the GDC's public API (no account needed) and save the import
+request to a file:
+
+```sh
+uv run --directory backend python scripts/import_gdc.py fetch
+```
+
+- `--cases 200` fetches more cases (the default is 10): the first ones by TCGA
+  code that have open-access gene counts.
+- `--out FILE` saves somewhere else. Paths are relative to `backend`.
+- By default the file goes in `protolims_resources/imports/`, a folder **beside**
+  the repository, never in it, so no data can be committed by accident.
+- Each patient keeps only sex at birth, age at diagnosis in whole years, and the
+  primary diagnosis. GDC's portion and analyte levels are skipped: each tumour
+  sample has one RNA aliquot as its child.
+
+**2. Send** the file to ProtoLIMS. The study must already exist.
+
+```sh
+uv run --directory backend python scripts/import_gdc.py send --study RNASEQ
+uv run --directory backend python scripts/import_gdc.py send --study RNASEQ --apply
+```
+
+- Without `--apply`, it's a dry run: nothing is saved.
+- `--file FILE` sends a file other than the default.
+- `--target local` (the default) sends to `http://127.0.0.1:8000`.
+- `--target staging` sends to `https://staging.protolims.org`, through Cloudflare
+  Access. The script reads the "ProtoLIMS imports" service token from Secret
+  Manager (`import-cf-access-client-id` and `import-cf-access-client-secret`)
+  using your own `gcloud` login, so the token is never written to a file. The
+  token only works on staging.
+- Production isn't a target yet.
 
 ## What a request looks like
 
