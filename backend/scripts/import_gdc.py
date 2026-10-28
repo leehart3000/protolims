@@ -10,11 +10,16 @@ sent:
 "fetch" reads the GDC's public API (no account needed) and saves an import request to a JSON
 file. "send" sends that file to ProtoLIMS: as a dry run, unless given --apply.
 
+"send" goes to your local ProtoLIMS unless given --target staging. Staging is behind
+Cloudflare Access, so the script reads the import service token from Secret Manager, using
+your own gcloud login. Production isn't a target: the token doesn't work there.
+
 Only open-access data is used, and only the patient details the demo needs.
 """
 
 import argparse
 import json
+import subprocess
 import sys
 import urllib.error
 import urllib.request
@@ -31,22 +36,42 @@ ASSAY = "RNA-Seq gene counts"
 # Kept beside the repository, never in it, so no data is committed by accident.
 IMPORTS = Path(__file__).resolve().parents[3] / "protolims_resources" / "imports"
 DEFAULT_FILE = IMPORTS / "gdc-tcga-brca.json"
-DEFAULT_API = "http://127.0.0.1:8000/api/v1"
+# Where "send" can send to, and whether it needs the Cloudflare Access service token.
+TARGETS = {
+    "local": ("http://127.0.0.1:8000/api/v1", False),
+    "staging": ("https://staging.protolims.org/api/v1", True),
+}
+GCP_PROJECT = "protolims"
 DAYS_PER_YEAR = 365.25
 
 Record = dict[str, Any]
 
 
-def post_json(url: str, body: Record) -> tuple[int, Any]:
+class NoRedirects(urllib.request.HTTPRedirectHandler):
+    """Treat a redirect as an error. Cloudflare Access redirects to its sign-in page when the
+    token is wrong, and following it would hide that."""
+
+    def redirect_request(self, *args: Any, **kwargs: Any) -> None:
+        return None
+
+
+OPENER = urllib.request.build_opener(NoRedirects)
+
+
+def post_json(url: str, body: Record, headers: dict[str, str] | None = None) -> tuple[int, Any]:
     """Send a JSON request; return the status and the reply (JSON if possible, else text)."""
     request = urllib.request.Request(
         url,
         data=json.dumps(body).encode(),
-        headers={"Content-Type": "application/json"},
+        headers={
+            "Content-Type": "application/json",
+            "User-Agent": "protolims-import-gdc",
+            **(headers or {}),
+        },
         method="POST",
     )
     try:
-        with urllib.request.urlopen(request, timeout=120) as response:
+        with OPENER.open(request, timeout=120) as response:
             return response.status, json.load(response)
     except urllib.error.HTTPError as error:
         text = error.read().decode(errors="replace")
@@ -226,12 +251,47 @@ def fetch(count: int, out: Path) -> None:
     )
 
 
-def send(path: Path, api: str, project: str, study: str, *, apply: bool) -> None:
+def secret(name: str) -> str:
+    """Read a secret from Secret Manager, using your own gcloud login."""
+    result = subprocess.run(
+        [
+            "gcloud",
+            "secrets",
+            "versions",
+            "access",
+            "latest",
+            f"--secret={name}",
+            f"--project={GCP_PROJECT}",
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        sys.exit(f"Could not read the secret {name}: {result.stderr.strip()}")
+    return result.stdout.strip()
+
+
+def access_headers() -> dict[str, str]:
+    """The Cloudflare Access service token for imports, as request headers."""
+    return {
+        "CF-Access-Client-Id": secret("import-cf-access-client-id"),
+        "CF-Access-Client-Secret": secret("import-cf-access-client-secret"),
+    }
+
+
+def send(path: Path, target: str, project: str, study: str, *, apply: bool) -> None:
     """Send a saved import request to ProtoLIMS: a dry run unless apply is true."""
     request = json.loads(path.read_text())
     request["dry_run"] = not apply
     ImportRequest.model_validate(request)
-    status, reply = post_json(f"{api}/projects/{project}/studies/{study}/import", request)
+    api, needs_token = TARGETS[target]
+    print(f"Sending {path.name} to {target} ({api}), {'to save' if apply else 'as a dry run'}.")
+    headers = access_headers() if needs_token else None
+    url = f"{api}/projects/{project}/studies/{study}/import"
+    status, reply = post_json(url, request, headers)
+    if status in (301, 302, 303, 307, 308):
+        sys.exit("Cloudflare Access turned the request away. Is the service token right?")
     print(json.dumps(reply, indent=2))
     if status != 200:
         sys.exit(f"Nothing was imported (ProtoLIMS replied {status}).")
@@ -249,7 +309,7 @@ def main() -> None:
     fetch_command.add_argument("--out", type=Path, default=DEFAULT_FILE)
     send_command = commands.add_parser("send", help="send a saved file to ProtoLIMS")
     send_command.add_argument("--file", type=Path, default=DEFAULT_FILE)
-    send_command.add_argument("--api", default=DEFAULT_API)
+    send_command.add_argument("--target", choices=TARGETS, default="local")
     send_command.add_argument("--project", default=PROJECT)
     send_command.add_argument("--study", required=True)
     send_command.add_argument("--apply", action="store_true", help="save (default: dry run)")
@@ -257,7 +317,7 @@ def main() -> None:
     if args.command == "fetch":
         fetch(args.cases, args.out)
     else:
-        send(args.file, args.api, args.project, args.study, apply=args.apply)
+        send(args.file, args.target, args.project, args.study, apply=args.apply)
 
 
 if __name__ == "__main__":
