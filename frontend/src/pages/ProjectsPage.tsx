@@ -1,8 +1,13 @@
-import { useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router'
 
-import { api } from '../api/client'
+import { fetchProjectPage, type ProjectSort } from '../api/queries'
+import { NewButton } from '../components/NewButton'
+import { PagedTable } from '../components/PagedTable'
 import { PageTitle } from '../components/PageTitle'
+import { RowArrow } from '../components/RowArrow'
+import { SearchBox } from '../components/SearchBox'
+import { SortHeader } from '../components/SortHeader'
 import {
   errorBox,
   rowLink,
@@ -13,19 +18,18 @@ import {
   tableRow,
   tableWrapper,
 } from '../styles'
-import { RowArrow } from '../components/RowArrow'
-import { NewButton } from '../components/NewButton'
+import { useListControls } from '../useListControls'
 
-async function fetchProjects() {
-  const { data } = await api.GET('/api/v1/projects')
-  if (!data) {
-    throw new Error('Could not load projects')
-  }
-  return data
-}
+type ProjectColumn = Exclude<ProjectSort, `-${string}`>
 
 function ProjectList() {
-  const query = useQuery({ queryKey: ['projects'], queryFn: fetchProjects })
+  const controls = useListControls<ProjectSort>('code')
+  const { search, q, sort, offset, limit, changeSearch, changeSort } = controls
+  const query = useQuery({
+    queryKey: ['projects', { q, sort, offset, limit }],
+    queryFn: () => fetchProjectPage({ q: q || undefined, sort, limit, offset }),
+    placeholderData: keepPreviousData,
+  })
 
   if (query.isPending) {
     return <p className="mt-6 text-muted">Loading projects…</p>
@@ -39,53 +43,79 @@ function ProjectList() {
     )
   }
 
-  const projects = query.data
-  if (projects.length === 0) {
-    return <p className="mt-6 text-muted">No projects yet.</p>
+  const { items, total } = query.data
+
+  function heading(label: string, column: ProjectColumn, className: string) {
+    return (
+      <SortHeader<ProjectSort>
+        label={label}
+        ascending={column}
+        descending={`-${column}` as const}
+        sort={sort}
+        onSort={changeSort}
+        className={className}
+      />
+    )
   }
 
   return (
-    <div className={`mt-6 ${tableWrapper}`}>
-      <table className={table}>
-        <thead className={tableHead}>
-          <tr>
-            <th scope="col" className={`${tableHeader} w-px`}>
-              Code
-            </th>
-            <th scope="col" className={tableHeader}>
-              Name
-            </th>
-            <th scope="col" className={`${tableHeader} hidden sm:table-cell`}>
-              Description
-            </th>
-            <th scope="col" className={`${tableHeader} w-px`}>
-              <span className="sr-only">Open</span>
-            </th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-line">
-          {projects.map((project) => (
-            <tr key={project.id} className={tableRow}>
-              <td className={`${tableCell} font-mono whitespace-nowrap`}>{project.code}</td>
-              <td className={tableCell}>
-                <Link to={`/projects/${encodeURIComponent(project.code)}`} className={rowLink}>
-                  {project.name}
-                </Link>
-                {project.description && (
-                  <p className="mt-1 max-w-56 truncate text-muted sm:hidden">
-                    {project.description}
-                  </p>
-                )}
-              </td>
-              <td className={`${tableCell} hidden text-muted sm:table-cell`}>
-                {project.description}
-              </td>
-              <RowArrow />
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <>
+      {(total > 0 || q !== '') && (
+        <SearchBox
+          id="project-search"
+          label="Search projects"
+          placeholder="Search by code or name"
+          value={search}
+          onChange={changeSearch}
+        />
+      )}
+      {total === 0 ? (
+        <p className="mt-6 text-muted">{q ? `No projects match “${q}”.` : 'No projects yet.'}</p>
+      ) : (
+        <PagedTable total={total} controls={controls}>
+          <div className={`mt-4 ${tableWrapper}`}>
+            <table className={table} aria-label="Projects">
+              <thead className={tableHead}>
+                <tr>
+                  {heading('Code', 'code', `${tableHeader} w-px`)}
+                  {heading('Name', 'name', tableHeader)}
+                  <th scope="col" className={`${tableHeader} hidden sm:table-cell`}>
+                    Description
+                  </th>
+                  <th scope="col" className={`${tableHeader} w-px`}>
+                    <span className="sr-only">Open</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-line">
+                {items.map((project) => (
+                  <tr key={project.id} className={tableRow}>
+                    <td className={`${tableCell} font-mono whitespace-nowrap`}>{project.code}</td>
+                    <td className={tableCell}>
+                      <Link
+                        to={`/projects/${encodeURIComponent(project.code)}`}
+                        className={rowLink}
+                      >
+                        {project.name}
+                      </Link>
+                      {project.description && (
+                        <p className="mt-1 max-w-56 truncate text-muted sm:hidden">
+                          {project.description}
+                        </p>
+                      )}
+                    </td>
+                    <td className={`${tableCell} hidden text-muted sm:table-cell`}>
+                      {project.description}
+                    </td>
+                    <RowArrow />
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </PagedTable>
+      )}
+    </>
   )
 }
 

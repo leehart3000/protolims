@@ -1,4 +1,5 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 
 import type { components } from '../api/schema'
@@ -35,6 +36,20 @@ function respondWith(response: Response) {
   )
 }
 
+// Answers each projects request with a fresh page from `respond`, and records its query.
+function stubProjects(respond: (query: URLSearchParams) => { items: Project[]; total: number }) {
+  const queries: URLSearchParams[] = []
+  vi.stubGlobal(
+    'fetch',
+    vi.fn((request: Request) => {
+      const url = new URL(request.url)
+      queries.push(url.searchParams)
+      return Promise.resolve(Response.json(respond(url.searchParams)))
+    }),
+  )
+  return queries
+}
+
 function renderPage() {
   render(
     <TestProviders route="/projects">
@@ -45,7 +60,7 @@ function renderPage() {
 
 describe('ProjectsPage', () => {
   it('shows a loading message, then the projects with links to them', async () => {
-    respondWith(Response.json([tcga, demo]))
+    respondWith(Response.json({ items: [tcga, demo], total: 2 }))
     renderPage()
 
     expect(screen.getByText('Loading projects…')).toBeInTheDocument()
@@ -58,10 +73,11 @@ describe('ProjectsPage', () => {
       'href',
       '/projects/DEMO',
     )
+    expect(screen.getByText('Showing all 2')).toBeInTheDocument()
   })
 
   it('says when there are no projects', async () => {
-    respondWith(Response.json([]))
+    respondWith(Response.json({ items: [], total: 0 }))
     renderPage()
 
     expect(await screen.findByText('No projects yet.')).toBeInTheDocument()
@@ -75,7 +91,7 @@ describe('ProjectsPage', () => {
   })
 
   it('links to the new project form', () => {
-    respondWith(Response.json([]))
+    respondWith(Response.json({ items: [], total: 0 }))
     renderPage()
 
     const links = screen.getAllByRole('link', { name: 'New project' })
@@ -83,5 +99,24 @@ describe('ProjectsPage', () => {
     for (const link of links) {
       expect(link).toHaveAttribute('href', '/projects/new')
     }
+  })
+
+  it('sorts and searches projects', async () => {
+    const queries = stubProjects((query) =>
+      query.get('q') === 'zzz' ? { items: [], total: 0 } : { items: [tcga, demo], total: 2 },
+    )
+    const user = userEvent.setup()
+    renderPage()
+
+    const projects = within(await screen.findByRole('table', { name: 'Projects' }))
+    expect(queries.at(-1)?.get('sort')).toBe('code')
+    await user.click(projects.getByRole('button', { name: 'Name' }))
+    await waitFor(() => {
+      expect(queries.at(-1)?.get('sort')).toBe('name')
+    })
+
+    await user.type(screen.getByRole('searchbox', { name: 'Search projects' }), 'zzz')
+    expect(await screen.findByText('No projects match “zzz”.')).toBeInTheDocument()
+    expect(queries.at(-1)?.get('q')).toBe('zzz')
   })
 })

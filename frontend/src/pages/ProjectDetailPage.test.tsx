@@ -1,4 +1,5 @@
-import { render, screen, within } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { Route, Routes } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 
@@ -49,6 +50,24 @@ function respondByPath(responses: Record<string, Response>) {
   )
 }
 
+// Answers the project request with TCGA-BRCA, and each studies request with a fresh page from
+// `respond`. Returns each studies request's query.
+function stubStudies(respond: (query: URLSearchParams) => { items: Study[]; total: number }) {
+  const queries: URLSearchParams[] = []
+  vi.stubGlobal(
+    'fetch',
+    vi.fn((request: Request) => {
+      const url = new URL(request.url)
+      if (url.pathname !== studiesPath) {
+        return Promise.resolve(Response.json(tcga))
+      }
+      queries.push(url.searchParams)
+      return Promise.resolve(Response.json(respond(url.searchParams)))
+    }),
+  )
+  return queries
+}
+
 function renderPage(code = 'TCGA-BRCA') {
   render(
     <TestProviders route={`/projects/${code}`}>
@@ -61,7 +80,10 @@ function renderPage(code = 'TCGA-BRCA') {
 
 describe('ProjectDetailPage', () => {
   it('shows the project and its studies', async () => {
-    respondByPath({ [projectPath]: Response.json(tcga), [studiesPath]: Response.json([rnaseq]) })
+    respondByPath({
+      [projectPath]: Response.json(tcga),
+      [studiesPath]: Response.json({ items: [rnaseq], total: 1 }),
+    })
     renderPage()
 
     expect(screen.getByText('Loading project…')).toBeInTheDocument()
@@ -97,7 +119,7 @@ describe('ProjectDetailPage', () => {
   it('says when the project has no studies', async () => {
     respondByPath({
       [projectPath]: Response.json({ ...tcga, description: null }),
-      [studiesPath]: Response.json([]),
+      [studiesPath]: Response.json({ items: [], total: 0 }),
     })
     renderPage()
 
@@ -126,5 +148,24 @@ describe('ProjectDetailPage', () => {
     renderPage()
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Could not load studies')
+  })
+
+  it("sorts and searches the project's studies", async () => {
+    const queries = stubStudies((query) =>
+      query.get('q') === 'zzz' ? { items: [], total: 0 } : { items: [rnaseq], total: 1 },
+    )
+    const user = userEvent.setup()
+    renderPage()
+
+    const studies = within(await screen.findByRole('table', { name: 'Studies' }))
+    expect(queries.at(-1)?.get('sort')).toBe('code')
+    await user.click(studies.getByRole('button', { name: 'Title' }))
+    await waitFor(() => {
+      expect(queries.at(-1)?.get('sort')).toBe('title')
+    })
+
+    await user.type(screen.getByRole('searchbox', { name: 'Search studies' }), 'zzz')
+    expect(await screen.findByText('No studies match “zzz”.')).toBeInTheDocument()
+    expect(queries.at(-1)?.get('q')).toBe('zzz')
   })
 })

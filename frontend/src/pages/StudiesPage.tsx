@@ -1,13 +1,15 @@
-import { useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { Link, useSearchParams } from 'react-router'
 
-import { api } from '../api/client'
-import { fetchProject } from '../api/queries'
+import { type AllStudySort, fetchAllStudyPage, fetchProject } from '../api/queries'
 import { Breadcrumbs } from '../components/Breadcrumbs'
 import { DetailList } from '../components/DetailList'
 import { NewStudyButton } from '../components/NewStudyButton'
+import { PagedTable } from '../components/PagedTable'
 import { PageTitle } from '../components/PageTitle'
 import { RowArrow } from '../components/RowArrow'
+import { SearchBox } from '../components/SearchBox'
+import { SortHeader } from '../components/SortHeader'
 import {
   errorBox,
   rowLink,
@@ -19,16 +21,9 @@ import {
   tableWrapper,
   textLink,
 } from '../styles'
+import { useListControls } from '../useListControls'
 
-async function fetchStudies(projectCode: string | null) {
-  const { data } = await api.GET('/api/v1/studies', {
-    params: { query: { project: projectCode ?? undefined } },
-  })
-  if (!data) {
-    throw new Error('Could not load studies')
-  }
-  return data
-}
+type StudyColumn = Exclude<AllStudySort, `-${string}`>
 
 function AllStudiesLink() {
   return (
@@ -54,10 +49,28 @@ function ProjectSummary({ projectCode }: { projectCode: string }) {
   )
 }
 
+// What to say when there's nothing to show.
+function emptyText(q: string, projectCode: string | null) {
+  if (q) {
+    return `No studies match “${q}”.`
+  }
+  return projectCode ? 'No studies in this project yet.' : 'No studies yet.'
+}
+
 function StudyList({ projectCode }: { projectCode: string | null }) {
+  const controls = useListControls<AllStudySort>('project')
+  const { search, q, sort, offset, limit, changeSearch, changeSort } = controls
   const query = useQuery({
-    queryKey: ['studies', { project: projectCode }],
-    queryFn: () => fetchStudies(projectCode),
+    queryKey: ['studies', { project: projectCode, q, sort, offset, limit }],
+    queryFn: () =>
+      fetchAllStudyPage({
+        project: projectCode ?? undefined,
+        q: q || undefined,
+        sort,
+        limit,
+        offset,
+      }),
+    placeholderData: keepPreviousData,
   })
 
   if (query.isPending) {
@@ -72,62 +85,79 @@ function StudyList({ projectCode }: { projectCode: string | null }) {
     )
   }
 
-  const studies = query.data
-  if (studies.length === 0) {
+  const { items, total } = query.data
+
+  function heading(label: string, column: StudyColumn, className: string) {
     return (
-      <p className="mt-6 text-muted">
-        {projectCode ? 'No studies in this project yet.' : 'No studies yet.'}
-      </p>
+      <SortHeader<AllStudySort>
+        label={label}
+        ascending={column}
+        descending={`-${column}` as const}
+        sort={sort}
+        onSort={changeSort}
+        className={className}
+      />
     )
   }
 
   return (
-    <div className={`mt-6 ${tableWrapper}`}>
-      <table className={table}>
-        <thead className={tableHead}>
-          <tr>
-            <th scope="col" className={tableHeader}>
-              Study title
-            </th>
-            <th scope="col" className={`${tableHeader} hidden w-px sm:table-cell`}>
-              Study code
-            </th>
-            <th scope="col" className={`${tableHeader} hidden w-px sm:table-cell`}>
-              Project code
-            </th>
-            <th scope="col" className={`${tableHeader} w-px`}>
-              <span className="sr-only">Open</span>
-            </th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-line">
-          {studies.map((study) => (
-            <tr key={study.id} className={tableRow}>
-              <td className={tableCell}>
-                <Link
-                  to={`/projects/${encodeURIComponent(study.project_code)}/studies/${encodeURIComponent(study.code)}`}
-                  className={rowLink}
-                >
-                  {study.title}
-                </Link>
-                <p className="mt-1 font-mono text-xs text-muted sm:hidden">
-                  {study.code} · {study.project_code}
-                </p>
-              </td>
-              <td className={`${tableCell} hidden font-mono whitespace-nowrap sm:table-cell`}>
-                {study.code}
-              </td>
-              <td
-                className={`${tableCell} hidden font-mono whitespace-nowrap text-muted sm:table-cell`}
-              >
-                {study.project_code}
-              </td>
-              <RowArrow />
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <>
+      {(total > 0 || q !== '') && (
+        <SearchBox
+          id="study-search"
+          label="Search studies"
+          placeholder="Search by title, study code or project code"
+          value={search}
+          onChange={changeSearch}
+        />
+      )}
+      {total === 0 ? (
+        <p className="mt-6 text-muted">{emptyText(q, projectCode)}</p>
+      ) : (
+        <PagedTable total={total} controls={controls}>
+          <div className={`mt-4 ${tableWrapper}`}>
+            <table className={table} aria-label="Studies">
+              <thead className={tableHead}>
+                <tr>
+                  {heading('Study title', 'title', tableHeader)}
+                  {heading('Study code', 'code', `${tableHeader} hidden w-px sm:table-cell`)}
+                  {heading('Project code', 'project', `${tableHeader} hidden w-px sm:table-cell`)}
+                  <th scope="col" className={`${tableHeader} w-px`}>
+                    <span className="sr-only">Open</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-line">
+                {items.map((study) => (
+                  <tr key={study.id} className={tableRow}>
+                    <td className={tableCell}>
+                      <Link
+                        to={`/projects/${encodeURIComponent(study.project_code)}/studies/${encodeURIComponent(study.code)}`}
+                        className={rowLink}
+                      >
+                        {study.title}
+                      </Link>
+                      <p className="mt-1 font-mono text-xs text-muted sm:hidden">
+                        {study.code} · {study.project_code}
+                      </p>
+                    </td>
+                    <td className={`${tableCell} hidden font-mono whitespace-nowrap sm:table-cell`}>
+                      {study.code}
+                    </td>
+                    <td
+                      className={`${tableCell} hidden font-mono whitespace-nowrap text-muted sm:table-cell`}
+                    >
+                      {study.project_code}
+                    </td>
+                    <RowArrow />
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </PagedTable>
+      )}
+    </>
   )
 }
 
@@ -156,7 +186,7 @@ export default function StudiesPage() {
         )}
       </div>
       {projectCode && <ProjectSummary projectCode={projectCode} />}
-      <StudyList projectCode={projectCode} />
+      <StudyList key={projectCode ?? ''} projectCode={projectCode} />
       {projectCode && (
         <div className="mt-4 flex items-center gap-4">
           <NewStudyButton projectCode={projectCode} />

@@ -13,7 +13,7 @@ export interface paths {
         };
         /**
          * List Projects
-         * @description List projects, ordered by code.
+         * @description List projects a page at a time, with the total number that match.
          */
         get: operations["list_projects_api_v1_projects_get"];
         put?: never;
@@ -61,7 +61,7 @@ export interface paths {
         };
         /**
          * List Studies
-         * @description List a project's studies, ordered by code.
+         * @description List a project's studies a page at a time, with the total number that match.
          */
         get: operations["list_studies_api_v1_projects__project_code__studies_get"];
         put?: never;
@@ -109,7 +109,7 @@ export interface paths {
         };
         /**
          * List All Studies
-         * @description List studies across all projects, ordered by project code and then study code.
+         * @description List studies across all projects a page at a time, with the total number that match.
          */
         get: operations["list_all_studies_api_v1_studies_get"];
         put?: never;
@@ -1093,10 +1093,31 @@ export interface components {
             /** Total */
             total: number;
         };
+        /** Page[ProjectRead] */
+        Page_ProjectRead_: {
+            /** Items */
+            items: components["schemas"]["ProjectRead"][];
+            /** Total */
+            total: number;
+        };
         /** Page[SampleRead] */
         Page_SampleRead_: {
             /** Items */
             items: components["schemas"]["SampleRead"][];
+            /** Total */
+            total: number;
+        };
+        /** Page[StudyRead] */
+        Page_StudyRead_: {
+            /** Items */
+            items: components["schemas"]["StudyRead"][];
+            /** Total */
+            total: number;
+        };
+        /** Page[StudyWithProjectRead] */
+        Page_StudyWithProjectRead_: {
+            /** Items */
+            items: components["schemas"]["StudyWithProjectRead"][];
             /** Total */
             total: number;
         };
@@ -1611,6 +1632,10 @@ export interface operations {
     list_projects_api_v1_projects_get: {
         parameters: {
             query?: {
+                /** @description Search project codes and names, ignoring case */
+                q?: string | null;
+                /** @description The column to sort by; a leading - reverses the order */
+                sort?: "code" | "-code" | "name" | "-name" | "created_at" | "-created_at";
                 limit?: number;
                 offset?: number;
             };
@@ -1626,7 +1651,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProjectRead"][];
+                    "application/json": components["schemas"]["Page_ProjectRead_"];
                 };
             };
             /** @description Validation Error */
@@ -1742,6 +1767,10 @@ export interface operations {
     list_studies_api_v1_projects__project_code__studies_get: {
         parameters: {
             query?: {
+                /** @description Search study codes and titles, ignoring case */
+                q?: string | null;
+                /** @description The column to sort by; a leading - reverses the order */
+                sort?: "code" | "-code" | "title" | "-title" | "created_at" | "-created_at";
                 limit?: number;
                 offset?: number;
             };
@@ -1759,7 +1788,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["StudyRead"][];
+                    "application/json": components["schemas"]["Page_StudyRead_"];
                 };
             };
             /** @description Validation Error */
@@ -1881,6 +1910,10 @@ export interface operations {
             query?: {
                 /** @description Only list studies in the project with this code */
                 project?: string | null;
+                /** @description Search study codes and titles, and project codes, ignoring case */
+                q?: string | null;
+                /** @description The column to sort by; a leading - reverses the order */
+                sort?: "project" | "-project" | "code" | "-code" | "title" | "-title" | "created_at" | "-created_at";
                 limit?: number;
                 offset?: number;
             };
@@ -1896,7 +1929,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["StudyWithProjectRead"][];
+                    "application/json": components["schemas"]["Page_StudyWithProjectRead_"];
                 };
             };
             /** @description Validation Error */

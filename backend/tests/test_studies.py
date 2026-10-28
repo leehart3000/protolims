@@ -72,7 +72,7 @@ def test_list_studies_only_returns_that_projects_studies(client: TestClient) -> 
     client.post(f"{API}/projects/P2/studies", json={"code": "A", "title": "Other"})
     response = client.get(f"{API}/projects/P1/studies")
     assert response.status_code == 200
-    assert [s["title"] for s in response.json()] == ["A", "B"]
+    assert [s["title"] for s in response.json()["items"]] == ["A", "B"]
 
 
 def test_invalid_design_factor_is_rejected(client: TestClient) -> None:
@@ -100,7 +100,7 @@ def test_list_all_studies_across_projects(client: TestClient) -> None:
     client.post(f"{API}/projects/P1/studies", json={"code": "A", "title": "P1 study A"})
     response = client.get(f"{API}/studies")
     assert response.status_code == 200
-    body = response.json()
+    body = response.json()["items"]
     assert [(s["project_code"], s["code"]) for s in body] == [("P1", "A"), ("P1", "B"), ("P2", "A")]
     assert body[0]["project_name"] == "Project P1"
     assert body[0]["title"] == "P1 study A"
@@ -113,13 +113,15 @@ def test_list_all_studies_can_filter_by_project(client: TestClient) -> None:
     client.post(f"{API}/projects/P2/studies", json={"code": "A", "title": "P2 study A"})
     response = client.get(f"{API}/studies", params={"project": "P2"})
     assert response.status_code == 200
-    assert [(s["project_code"], s["title"]) for s in response.json()] == [("P2", "P2 study A")]
+    assert [(s["project_code"], s["title"]) for s in response.json()["items"]] == [
+        ("P2", "P2 study A")
+    ]
 
 
 def test_list_all_studies_for_unknown_project_is_empty(client: TestClient) -> None:
     response = client.get(f"{API}/studies", params={"project": "NOPE"})
     assert response.status_code == 200
-    assert response.json() == []
+    assert response.json() == {"items": [], "total": 0}
 
 
 def create_study(client: TestClient, **fields: object) -> str:

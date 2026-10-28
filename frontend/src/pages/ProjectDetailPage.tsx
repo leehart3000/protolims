@@ -1,14 +1,16 @@
-import { useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router'
 
-import { api } from '../api/client'
-import { fetchProject } from '../api/queries'
+import { fetchProject, fetchStudyPage, type StudySort } from '../api/queries'
 import type { components } from '../api/schema'
 import { DetailList } from '../components/DetailList'
-import { PageTitle } from '../components/PageTitle'
-import { NewStudyButton } from '../components/NewStudyButton'
-import { RowArrow } from '../components/RowArrow'
 import { DetailsCard } from '../components/DetailsCard'
+import { NewStudyButton } from '../components/NewStudyButton'
+import { PagedTable } from '../components/PagedTable'
+import { PageTitle } from '../components/PageTitle'
+import { RowArrow } from '../components/RowArrow'
+import { SearchBox } from '../components/SearchBox'
+import { SortHeader } from '../components/SortHeader'
 import { formatDate } from '../format'
 import {
   errorBox,
@@ -20,23 +22,18 @@ import {
   tableRow,
   tableWrapper,
 } from '../styles'
+import { useListControls } from '../useListControls'
 
 type Project = components['schemas']['ProjectRead']
-
-async function fetchStudies(projectCode: string) {
-  const { data } = await api.GET('/api/v1/projects/{project_code}/studies', {
-    params: { path: { project_code: projectCode } },
-  })
-  if (!data) {
-    throw new Error('Could not load studies')
-  }
-  return data
-}
+type StudyColumn = Exclude<StudySort, `-${string}`>
 
 function StudyList({ projectCode }: { projectCode: string }) {
+  const controls = useListControls<StudySort>('code')
+  const { search, q, sort, offset, limit, changeSearch, changeSort } = controls
   const query = useQuery({
-    queryKey: ['projects', projectCode, 'studies'],
-    queryFn: () => fetchStudies(projectCode),
+    queryKey: ['projects', projectCode, 'studies', { q, sort, offset, limit }],
+    queryFn: () => fetchStudyPage(projectCode, { q: q || undefined, sort, limit, offset }),
+    placeholderData: keepPreviousData,
   })
 
   if (query.isPending) {
@@ -51,45 +48,70 @@ function StudyList({ projectCode }: { projectCode: string }) {
     )
   }
 
-  const studies = query.data
-  if (studies.length === 0) {
-    return <p className="mt-4 text-muted">No studies in this project yet.</p>
+  const { items, total } = query.data
+
+  function heading(label: string, column: StudyColumn, className: string) {
+    return (
+      <SortHeader<StudySort>
+        label={label}
+        ascending={column}
+        descending={`-${column}` as const}
+        sort={sort}
+        onSort={changeSort}
+        className={className}
+      />
+    )
   }
 
   return (
-    <div className={`mt-4 ${tableWrapper}`}>
-      <table className={table}>
-        <thead className={tableHead}>
-          <tr>
-            <th scope="col" className={`${tableHeader} w-px`}>
-              Code
-            </th>
-            <th scope="col" className={tableHeader}>
-              Title
-            </th>
-            <th scope="col" className={`${tableHeader} w-px`}>
-              <span className="sr-only">Open</span>
-            </th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-line">
-          {studies.map((study) => (
-            <tr key={study.id} className={tableRow}>
-              <td className={`${tableCell} font-mono whitespace-nowrap`}>{study.code}</td>
-              <td className={tableCell}>
-                <Link
-                  to={`/projects/${encodeURIComponent(projectCode)}/studies/${encodeURIComponent(study.code)}`}
-                  className={rowLink}
-                >
-                  {study.title}
-                </Link>
-              </td>
-              <RowArrow />
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <>
+      {(total > 0 || q !== '') && (
+        <SearchBox
+          id="project-study-search"
+          label="Search studies"
+          placeholder="Search by code or title"
+          value={search}
+          onChange={changeSearch}
+        />
+      )}
+      {total === 0 ? (
+        <p className="mt-4 text-muted">
+          {q ? `No studies match “${q}”.` : 'No studies in this project yet.'}
+        </p>
+      ) : (
+        <PagedTable total={total} controls={controls}>
+          <div className={`mt-4 ${tableWrapper}`}>
+            <table className={table} aria-label="Studies">
+              <thead className={tableHead}>
+                <tr>
+                  {heading('Code', 'code', `${tableHeader} w-px`)}
+                  {heading('Title', 'title', tableHeader)}
+                  <th scope="col" className={`${tableHeader} w-px`}>
+                    <span className="sr-only">Open</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-line">
+                {items.map((study) => (
+                  <tr key={study.id} className={tableRow}>
+                    <td className={`${tableCell} font-mono whitespace-nowrap`}>{study.code}</td>
+                    <td className={tableCell}>
+                      <Link
+                        to={`/projects/${encodeURIComponent(projectCode)}/studies/${encodeURIComponent(study.code)}`}
+                        className={rowLink}
+                      >
+                        {study.title}
+                      </Link>
+                    </td>
+                    <RowArrow />
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </PagedTable>
+      )}
+    </>
   )
 }
 

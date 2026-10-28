@@ -1,17 +1,19 @@
 """Study endpoints."""
 
 from datetime import UTC, datetime
-from typing import Annotated
+from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, HTTPException, Query, status
-from sqlalchemy import select
+from sqlalchemy import ColumnElement, UnaryExpression, func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import InstrumentedAttribute
 
 from protolims_api.audit import record_event
 from protolims_api.db import SessionDep
 from protolims_api.models import Project, Study
 from protolims_api.routers.projects import get_project_or_404
+from protolims_api.schemas.common import Page
 from protolims_api.schemas.study import (
     StudyCreate,
     StudyRead,
@@ -20,6 +22,30 @@ from protolims_api.schemas.study import (
 )
 
 router = APIRouter(tags=["studies"])
+
+StudySort = Literal["code", "-code", "title", "-title", "created_at", "-created_at"]
+AllStudySort = Literal[
+    "project", "-project", "code", "-code", "title", "-title", "created_at", "-created_at"
+]
+
+# What each sort key orders by. A leading "-" reverses the order.
+STUDY_SORT_COLUMNS: dict[str, InstrumentedAttribute[Any]] = {
+    "project": Project.code,
+    "code": Study.code,
+    "title": Study.title,
+    "created_at": Study.created_at,
+}
+
+
+def study_search(q: str) -> ColumnElement[bool]:
+    """Match studies whose code or title contains q, ignoring case."""
+    return or_(Study.code.icontains(q, autoescape=True), Study.title.icontains(q, autoescape=True))
+
+
+def study_order(sort: str) -> UnaryExpression[Any]:
+    """The ORDER BY for a sort key; a leading "-" reverses it."""
+    column = STUDY_SORT_COLUMNS[sort.removeprefix("-")]
+    return column.desc() if sort.startswith("-") else column.asc()
 
 
 @router.post("/projects/{project_code}/studies", status_code=status.HTTP_201_CREATED)
@@ -52,19 +78,32 @@ async def create_study(project_code: str, payload: StudyCreate, session: Session
 async def list_studies(
     project_code: str,
     session: SessionDep,
+    q: Annotated[
+        str | None,
+        Query(max_length=200, description="Search study codes and titles, ignoring case"),
+    ] = None,
+    sort: Annotated[
+        StudySort, Query(description="The column to sort by; a leading - reverses the order")
+    ] = "code",
     limit: Annotated[int, Query(ge=1, le=500)] = 50,
     offset: Annotated[int, Query(ge=0)] = 0,
-) -> list[StudyRead]:
-    """List a project's studies, ordered by code."""
+) -> Page[StudyRead]:
+    """List a project's studies a page at a time, with the total number that match."""
     project = await get_project_or_404(session, project_code)
+    conditions: list[ColumnElement[bool]] = [Study.project_id == project.id]
+    if q:
+        conditions.append(study_search(q))
+    count_query = select(func.count()).select_from(Study).where(*conditions)
+    total = (await session.execute(count_query)).scalar_one()
+
     result = await session.scalars(
         select(Study)
-        .where(Study.project_id == project.id)
-        .order_by(Study.code)
+        .where(*conditions)
+        .order_by(study_order(sort), Study.code)
         .limit(limit)
         .offset(offset)
     )
-    return [StudyRead.model_validate(study) for study in result]
+    return Page[StudyRead](items=[StudyRead.model_validate(study) for study in result], total=total)
 
 
 async def get_study_or_404(session: AsyncSession, project_code: str, study_code: str) -> Study:
@@ -123,25 +162,49 @@ async def list_all_studies(
     project: Annotated[
         str | None, Query(description="Only list studies in the project with this code")
     ] = None,
+    q: Annotated[
+        str | None,
+        Query(
+            max_length=200,
+            description="Search study codes and titles, and project codes, ignoring case",
+        ),
+    ] = None,
+    sort: Annotated[
+        AllStudySort, Query(description="The column to sort by; a leading - reverses the order")
+    ] = "project",
     limit: Annotated[int, Query(ge=1, le=500)] = 50,
     offset: Annotated[int, Query(ge=0)] = 0,
-) -> list[StudyWithProjectRead]:
-    """List studies across all projects, ordered by project code and then study code."""
-    query = (
+) -> Page[StudyWithProjectRead]:
+    """List studies across all projects a page at a time, with the total number that match."""
+    conditions: list[ColumnElement[bool]] = []
+    if project is not None:
+        conditions.append(Project.code == project)
+    if q:
+        conditions.append(or_(study_search(q), Project.code.icontains(q, autoescape=True)))
+    count_query = (
+        select(func.count())
+        .select_from(Study)
+        .join(Project, Study.project_id == Project.id)
+        .where(*conditions)
+    )
+    total = (await session.execute(count_query)).scalar_one()
+
+    result = await session.execute(
         select(Study, Project.code, Project.name)
         .join(Project, Study.project_id == Project.id)
-        .order_by(Project.code, Study.code)
+        .where(*conditions)
+        .order_by(study_order(sort), Project.code, Study.code)
         .limit(limit)
         .offset(offset)
     )
-    if project is not None:
-        query = query.where(Project.code == project)
-    result = await session.execute(query)
-    return [
-        StudyWithProjectRead(
-            **StudyRead.model_validate(study).model_dump(),
-            project_code=project_code,
-            project_name=project_name,
-        )
-        for study, project_code, project_name in result
-    ]
+    return Page[StudyWithProjectRead](
+        items=[
+            StudyWithProjectRead(
+                **StudyRead.model_validate(study).model_dump(),
+                project_code=project_code,
+                project_name=project_name,
+            )
+            for study, project_code, project_name in result
+        ],
+        total=total,
+    )

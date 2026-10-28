@@ -52,9 +52,48 @@
           "projects"
         ],
         "summary": "List Projects",
-        "description": "List projects, ordered by code.",
+        "description": "List projects a page at a time, with the total number that match.",
         "operationId": "list_projects_api_v1_projects_get",
         "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 200
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Search project codes and names, ignoring case",
+              "title": "Q"
+            },
+            "description": "Search project codes and names, ignoring case"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "code",
+                "-code",
+                "name",
+                "-name",
+                "created_at",
+                "-created_at"
+              ],
+              "type": "string",
+              "description": "The column to sort by; a leading - reverses the order",
+              "default": "code",
+              "title": "Sort"
+            },
+            "description": "The column to sort by; a leading - reverses the order"
+          },
           {
             "name": "limit",
             "in": "query",
@@ -85,11 +124,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ProjectRead"
-                  },
-                  "title": "Response List Projects Api V1 Projects Get"
+                  "$ref": "#/components/schemas/Page_ProjectRead_"
                 }
               }
             }
@@ -258,7 +293,7 @@
           "studies"
         ],
         "summary": "List Studies",
-        "description": "List a project's studies, ordered by code.",
+        "description": "List a project's studies a page at a time, with the total number that match.",
         "operationId": "list_studies_api_v1_projects__project_code__studies_get",
         "parameters": [
           {
@@ -269,6 +304,45 @@
               "type": "string",
               "title": "Project Code"
             }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 200
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Search study codes and titles, ignoring case",
+              "title": "Q"
+            },
+            "description": "Search study codes and titles, ignoring case"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "code",
+                "-code",
+                "title",
+                "-title",
+                "created_at",
+                "-created_at"
+              ],
+              "type": "string",
+              "description": "The column to sort by; a leading - reverses the order",
+              "default": "code",
+              "title": "Sort"
+            },
+            "description": "The column to sort by; a leading - reverses the order"
           },
           {
             "name": "limit",
@@ -300,11 +374,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/StudyRead"
-                  },
-                  "title": "Response List Studies Api V1 Projects  Project Code  Studies Get"
+                  "$ref": "#/components/schemas/Page_StudyRead_"
                 }
               }
             }
@@ -440,7 +510,7 @@
           "studies"
         ],
         "summary": "List All Studies",
-        "description": "List studies across all projects, ordered by project code and then study code.",
+        "description": "List studies across all projects a page at a time, with the total number that match.",
         "operationId": "list_all_studies_api_v1_studies_get",
         "parameters": [
           {
@@ -460,6 +530,47 @@
               "title": "Project"
             },
             "description": "Only list studies in the project with this code"
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 200
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Search study codes and titles, and project codes, ignoring case",
+              "title": "Q"
+            },
+            "description": "Search study codes and titles, and project codes, ignoring case"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "project",
+                "-project",
+                "code",
+                "-code",
+                "title",
+                "-title",
+                "created_at",
+                "-created_at"
+              ],
+              "type": "string",
+              "description": "The column to sort by; a leading - reverses the order",
+              "default": "project",
+              "title": "Sort"
+            },
+            "description": "The column to sort by; a leading - reverses the order"
           },
           {
             "name": "limit",
@@ -491,11 +602,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/StudyWithProjectRead"
-                  },
-                  "title": "Response List All Studies Api V1 Studies Get"
+                  "$ref": "#/components/schemas/Page_StudyWithProjectRead_"
                 }
               }
             }
@@ -3920,6 +4027,27 @@
         ],
         "title": "Page[DataFileSampleRead]"
       },
+      "Page_ProjectRead_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ProjectRead"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total"
+        ],
+        "title": "Page[ProjectRead]"
+      },
       "Page_SampleRead_": {
         "properties": {
           "items": {
@@ -3940,6 +4068,48 @@
           "total"
         ],
         "title": "Page[SampleRead]"
+      },
+      "Page_StudyRead_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/StudyRead"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total"
+        ],
+        "title": "Page[StudyRead]"
+      },
+      "Page_StudyWithProjectRead_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/StudyWithProjectRead"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total"
+        ],
+        "title": "Page[StudyWithProjectRead]"
       },
       "Page_SubjectRead_": {
         "properties": {

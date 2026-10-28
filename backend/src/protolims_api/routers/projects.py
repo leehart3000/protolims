@@ -1,19 +1,30 @@
 """Project endpoints."""
 
 from datetime import UTC, datetime
-from typing import Annotated
+from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, HTTPException, Query, status
-from sqlalchemy import select
+from sqlalchemy import ColumnElement, func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import InstrumentedAttribute
 
 from protolims_api.audit import record_event
 from protolims_api.db import SessionDep
 from protolims_api.models import Project
+from protolims_api.schemas.common import Page
 from protolims_api.schemas.project import ProjectCreate, ProjectRead, ProjectUpdate
 
 router = APIRouter(prefix="/projects", tags=["projects"])
+
+ProjectSort = Literal["code", "-code", "name", "-name", "created_at", "-created_at"]
+
+# What each sort key orders by. A leading "-" reverses the order.
+PROJECT_SORT_COLUMNS: dict[str, InstrumentedAttribute[Any]] = {
+    "code": Project.code,
+    "name": Project.name,
+    "created_at": Project.created_at,
+}
 
 
 async def get_project_or_404(session: AsyncSession, code: str) -> Project:
@@ -55,14 +66,36 @@ async def create_project(payload: ProjectCreate, session: SessionDep) -> Project
 @router.get("")
 async def list_projects(
     session: SessionDep,
+    q: Annotated[
+        str | None,
+        Query(max_length=200, description="Search project codes and names, ignoring case"),
+    ] = None,
+    sort: Annotated[
+        ProjectSort, Query(description="The column to sort by; a leading - reverses the order")
+    ] = "code",
     limit: Annotated[int, Query(ge=1, le=500)] = 50,
     offset: Annotated[int, Query(ge=0)] = 0,
-) -> list[ProjectRead]:
-    """List projects, ordered by code."""
+) -> Page[ProjectRead]:
+    """List projects a page at a time, with the total number that match."""
+    conditions: list[ColumnElement[bool]] = []
+    if q:
+        conditions.append(
+            or_(
+                Project.code.icontains(q, autoescape=True),
+                Project.name.icontains(q, autoescape=True),
+            )
+        )
+    count_query = select(func.count()).select_from(Project).where(*conditions)
+    total = (await session.execute(count_query)).scalar_one()
+
+    column = PROJECT_SORT_COLUMNS[sort.removeprefix("-")]
+    order = column.desc() if sort.startswith("-") else column.asc()
     result = await session.scalars(
-        select(Project).order_by(Project.code).limit(limit).offset(offset)
+        select(Project).where(*conditions).order_by(order, Project.code).limit(limit).offset(offset)
     )
-    return [ProjectRead.model_validate(project) for project in result]
+    return Page[ProjectRead](
+        items=[ProjectRead.model_validate(project) for project in result], total=total
+    )
 
 
 @router.get("/{code}")

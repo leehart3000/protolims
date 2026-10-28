@@ -1,4 +1,5 @@
-import { render, screen, within } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { Route, Routes } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 
@@ -61,6 +62,26 @@ function respondWith(studiesResponse: Response) {
   return requested
 }
 
+// Answers each studies request with a fresh page from `respond`, and any project request with
+// TCGA-BRCA. Returns each studies request's query.
+function stubStudies(
+  respond: (query: URLSearchParams) => { items: StudyWithProject[]; total: number },
+) {
+  const queries: URLSearchParams[] = []
+  vi.stubGlobal(
+    'fetch',
+    vi.fn((request: Request) => {
+      const url = new URL(request.url)
+      if (url.pathname !== '/api/v1/studies') {
+        return Promise.resolve(Response.json(tcga))
+      }
+      queries.push(url.searchParams)
+      return Promise.resolve(Response.json(respond(url.searchParams)))
+    }),
+  )
+  return queries
+}
+
 function renderPage(route = '/studies') {
   render(
     <TestProviders route={route}>
@@ -73,7 +94,7 @@ function renderPage(route = '/studies') {
 
 describe('StudiesPage', () => {
   it('lists studies from every project', async () => {
-    respondWith(Response.json([cptacPilot, tcgaRnaseq]))
+    respondWith(Response.json({ items: [cptacPilot, tcgaRnaseq], total: 2 }))
     renderPage()
 
     expect(screen.getByText('Loading studies…')).toBeInTheDocument()
@@ -89,7 +110,7 @@ describe('StudiesPage', () => {
   })
 
   it("can show just one project's studies", async () => {
-    const requested = respondWith(Response.json([tcgaRnaseq]))
+    const requested = respondWith(Response.json({ items: [tcgaRnaseq], total: 1 }))
     renderPage('/studies?project=TCGA-BRCA')
 
     expect(
@@ -117,14 +138,14 @@ describe('StudiesPage', () => {
   })
 
   it('says when there are no studies', async () => {
-    respondWith(Response.json([]))
+    respondWith(Response.json({ items: [], total: 0 }))
     renderPage()
 
     expect(await screen.findByText('No studies yet.')).toBeInTheDocument()
   })
 
   it('says when a project has no studies', async () => {
-    respondWith(Response.json([]))
+    respondWith(Response.json({ items: [], total: 0 }))
     renderPage('/studies?project=TCGA-BRCA')
 
     expect(await screen.findByText('No studies in this project yet.')).toBeInTheDocument()
@@ -135,5 +156,26 @@ describe('StudiesPage', () => {
     renderPage()
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Could not load studies')
+  })
+
+  it('sorts and searches studies', async () => {
+    const queries = stubStudies((query) =>
+      query.get('q') === 'zzz'
+        ? { items: [], total: 0 }
+        : { items: [cptacPilot, tcgaRnaseq], total: 2 },
+    )
+    const user = userEvent.setup()
+    renderPage()
+
+    const studies = within(await screen.findByRole('table', { name: 'Studies' }))
+    expect(queries.at(-1)?.get('sort')).toBe('project')
+    await user.click(studies.getByRole('button', { name: 'Study title' }))
+    await waitFor(() => {
+      expect(queries.at(-1)?.get('sort')).toBe('title')
+    })
+
+    await user.type(screen.getByRole('searchbox', { name: 'Search studies' }), 'zzz')
+    expect(await screen.findByText('No studies match “zzz”.')).toBeInTheDocument()
+    expect(queries.at(-1)?.get('q')).toBe('zzz')
   })
 })

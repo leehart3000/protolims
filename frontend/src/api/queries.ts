@@ -29,6 +29,49 @@ export async function fetchStudy(projectCode: string, studyCode: string) {
   return data
 }
 
+type ProjectListQuery = NonNullable<paths['/api/v1/projects']['get']['parameters']['query']>
+
+export type ProjectSort = NonNullable<ProjectListQuery['sort']>
+
+// One page of projects, with the total number that match.
+export async function fetchProjectPage(query: ProjectListQuery) {
+  const { data } = await api.GET('/api/v1/projects', { params: { query } })
+  if (!data) {
+    throw new Error('Could not load projects')
+  }
+  return data
+}
+
+type StudyListQuery = NonNullable<
+  paths['/api/v1/projects/{project_code}/studies']['get']['parameters']['query']
+>
+
+export type StudySort = NonNullable<StudyListQuery['sort']>
+
+// One page of a project's studies, with the total number that match.
+export async function fetchStudyPage(projectCode: string, query: StudyListQuery) {
+  const { data } = await api.GET('/api/v1/projects/{project_code}/studies', {
+    params: { path: { project_code: projectCode }, query },
+  })
+  if (!data) {
+    throw new Error('Could not load studies')
+  }
+  return data
+}
+
+type AllStudyListQuery = NonNullable<paths['/api/v1/studies']['get']['parameters']['query']>
+
+export type AllStudySort = NonNullable<AllStudyListQuery['sort']>
+
+// One page of studies across all projects (or one, with project), with the total that match.
+export async function fetchAllStudyPage(query: AllStudyListQuery) {
+  const { data } = await api.GET('/api/v1/studies', { params: { query } })
+  if (!data) {
+    throw new Error('Could not load studies')
+  }
+  return data
+}
+
 type SampleListQuery = NonNullable<
   paths['/api/v1/projects/{project_code}/studies/{study_code}/samples']['get']['parameters']['query']
 >

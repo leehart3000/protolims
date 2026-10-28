@@ -33,7 +33,7 @@ describe('App', () => {
   it('goes to the projects page from the main navigation', async () => {
     vi.stubGlobal(
       'fetch',
-      vi.fn(() => Promise.resolve(Response.json([]))),
+      vi.fn(() => Promise.resolve(Response.json({ items: [], total: 0 }))),
     )
     const user = userEvent.setup()
     renderApp()
@@ -46,7 +46,7 @@ describe('App', () => {
   it('goes to the studies page from the main navigation', async () => {
     vi.stubGlobal(
       'fetch',
-      vi.fn(() => Promise.resolve(Response.json([]))),
+      vi.fn(() => Promise.resolve(Response.json({ items: [], total: 0 }))),
     )
     const user = userEvent.setup()
     renderApp()

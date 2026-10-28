@@ -44,7 +44,7 @@ def test_list_projects_is_ordered_by_code(client: TestClient) -> None:
     client.post(PROJECTS, json={"code": "A", "name": "First"})
     response = client.get(PROJECTS)
     assert response.status_code == 200
-    assert [p["code"] for p in response.json()] == ["A", "B"]
+    assert [p["code"] for p in response.json()["items"]] == ["A", "B"]
 
 
 def test_unknown_project_returns_404(client: TestClient) -> None:
