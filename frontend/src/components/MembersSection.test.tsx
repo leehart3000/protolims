@@ -95,12 +95,20 @@ describe('MembersSection', () => {
     expect(changes).toEqual([])
     expect(save).toHaveAccessibleDescription('Unsaved change')
     await user.click(save)
-    // Buttons are disabled while a change is being saved.
+    expect(await screen.findByRole('status')).toHaveTextContent('Alice now has the Admin role.')
+
+    // Removing a role has to be confirmed, and can be cancelled. Buttons are disabled while a
+    // change is being saved.
     const remove = screen.getByRole('button', { name: 'Remove 0000-0001-1111-1118' })
     await vi.waitFor(() => {
       expect(remove).toBeEnabled()
     })
     await user.click(remove)
+    expect(screen.getByText('Remove 0000-0001-1111-1118’s role?')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Cancel' })).toHaveFocus()
+    await user.click(screen.getByRole('button', { name: 'Cancel' }))
+    await user.click(screen.getByRole('button', { name: 'Remove 0000-0001-1111-1118' }))
+    await user.click(screen.getByRole('button', { name: 'Yes, remove' }))
 
     await vi.waitFor(() => {
       expect(changes).toEqual([
@@ -108,6 +116,9 @@ describe('MembersSection', () => {
         `DELETE ${projectMembers}/0000-0001-1111-1118`,
       ])
     })
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      '0000-0001-1111-1118’s role was removed.',
+    )
   })
 
   it('adds someone to a study by their ORCID iD', async () => {
@@ -147,6 +158,7 @@ describe('MembersSection', () => {
     renderSection('S1')
 
     await user.click(await screen.findByRole('button', { name: 'Remove Alice' }))
+    await user.click(screen.getByRole('button', { name: 'Yes, remove' }))
 
     expect(await screen.findByRole('alert')).toHaveTextContent("you don't have permission")
     expect(changes).toEqual([`DELETE ${studyMembers}/0000-0001-2345-6789`])

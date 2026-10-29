@@ -41,7 +41,17 @@ export function MembersSection(place: Place) {
 const unsavedButton =
   'rounded-md border border-gold bg-gold px-3 py-1.5 text-sm font-medium text-ink hover:bg-gold/85 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-60'
 
-// One person's row: a new role is chosen, then saved; or they're removed (role null).
+// For a button that takes something away, such as someone's role.
+const dangerButton =
+  'rounded-md border border-danger-line bg-danger-bg px-3 py-1.5 text-sm font-medium text-danger hover:opacity-85 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-60'
+
+// The name of a role, as shown: "Editor", for example.
+function roleLabel(role: Role) {
+  return ROLE_OPTIONS.find((option) => option.value === role)?.label ?? role
+}
+
+// One person's row: a new role is chosen, then saved; or they're removed (role null), once
+// that's confirmed.
 function MemberRow({
   member,
   busy,
@@ -56,6 +66,7 @@ function MemberRow({
   const unsaved = chosen !== role
   const who = user.name ?? user.subject
   const unsavedId = useId()
+  const [confirming, setConfirming] = useState(false)
 
   return (
     <tr>
@@ -102,19 +113,48 @@ function MemberRow({
         </div>
       </td>
       <td className={tableCell}>
-        <button
-          type="button"
-          aria-label={`Remove ${who}`}
-          disabled={busy}
-          onClick={() => {
-            onChange(null)
-          }}
-          className={`${secondaryButton} inline-flex items-center gap-2`}
-        >
-          <UserRoundMinus aria-hidden="true" className="size-4 shrink-0" />
-          {/* Just the icon on narrow screens; the button's label still names who. */}
-          <span className="hidden sm:inline">Remove</span>
-        </button>
+        {confirming ? (
+          <div className="flex flex-col items-start gap-2">
+            <p className="text-sm font-medium">Remove {who}&rsquo;s role?</p>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => {
+                  onChange(null)
+                }}
+                className={dangerButton}
+              >
+                Yes, remove
+              </button>
+              {/* Focus starts on Cancel, the safe choice. */}
+              <button
+                type="button"
+                autoFocus
+                onClick={() => {
+                  setConfirming(false)
+                }}
+                className={secondaryButton}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            type="button"
+            aria-label={`Remove ${who}`}
+            disabled={busy}
+            onClick={() => {
+              setConfirming(true)
+            }}
+            className={`${secondaryButton} inline-flex items-center gap-2`}
+          >
+            <UserRoundMinus aria-hidden="true" className="size-4 shrink-0" />
+            {/* Just the icon on narrow screens; the button's label still names who. */}
+            <span className="hidden sm:inline">Remove</span>
+          </button>
+        )}
       </td>
     </tr>
   )
@@ -125,15 +165,26 @@ function Members({ place }: { place: Place }) {
   const queryKey = ['members', projectCode, studyCode ?? null]
   const queryClient = useQueryClient()
   const members = useQuery({ queryKey, queryFn: () => fetchMembers(projectCode, studyCode) })
+  // What the last change did, so there's evidence of it.
+  const [notice, setNotice] = useState('')
   const change = useMutation({
-    mutationFn: ({ orcidId, role }: { orcidId: string; role: Role | null }) =>
+    mutationFn: ({ orcidId, role }: { orcidId: string; role: Role | null; who: string }) =>
       changeRole(place, orcidId, role),
-    // Someone's own roles may have changed too.
-    onSuccess: () =>
-      Promise.all([
+    onMutate: () => {
+      setNotice('')
+    },
+    onSuccess: (_, { role, who }) => {
+      setNotice(
+        role === null
+          ? `${who}’s role was removed.`
+          : `${who} now has the ${roleLabel(role)} role.`,
+      )
+      // Someone's own roles may have changed too.
+      return Promise.all([
         queryClient.invalidateQueries({ queryKey }),
         queryClient.invalidateQueries({ queryKey: ['me'] }),
-      ]),
+      ])
+    },
   })
   const orcidId = useId()
   const roleId = useId()
@@ -147,6 +198,10 @@ function Members({ place }: { place: Place }) {
           : "People with a role on this study itself. Roles on the project apply here too, and are listed on the project's page."}
       </p>
 
+      {/* Always present, so screen readers announce each new notice. */}
+      <p role="status" className="mt-4 text-sm font-medium empty:hidden">
+        {notice}
+      </p>
       {change.isError && (
         <p role="alert" className={`mt-4 ${errorBox}`}>
           {change.error.message}
@@ -184,7 +239,11 @@ function Members({ place }: { place: Place }) {
                   member={member}
                   busy={change.isPending}
                   onChange={(role) => {
-                    change.mutate({ orcidId: member.user.subject, role })
+                    change.mutate({
+                      orcidId: member.user.subject,
+                      role,
+                      who: member.user.name ?? member.user.subject,
+                    })
                   }}
                 />
               ))}
@@ -200,8 +259,9 @@ function Members({ place }: { place: Place }) {
           event.preventDefault()
           const form = event.currentTarget
           const values = new FormData(form)
+          const added = text(values, 'orcid_id')
           change.mutate(
-            { orcidId: text(values, 'orcid_id'), role: text(values, 'role') as Role },
+            { orcidId: added, role: text(values, 'role') as Role, who: added },
             {
               onSuccess: () => {
                 form.reset()

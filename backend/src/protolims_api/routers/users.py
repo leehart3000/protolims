@@ -89,10 +89,12 @@ async def list_users(
 
 @router.delete("/users/{orcid_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def remove_user(orcid_id: OrcidPath, session: SessionDep, actor: ActorDep) -> None:
-    """Remove someone from the list of users. Only site administrators can, and only for someone
-    with no roles who isn't a site administrator, so nobody loses access this way: remove their
-    roles first. Any sessions they have end. Records that name them keep their ORCID iD, and if
-    they sign in again, they're added back with no roles.
+    """Remove someone who was added by their ORCID iD but has never signed in, and has no
+    roles: someone added by mistake, for example. Only site administrators can.
+
+    People who have signed in are kept, so their names stay with what they've done; taking away
+    their roles is enough to take away their access. Site administrators, set in the server's
+    settings, can't be removed, and nobody loses access this way: their roles go first.
     """
     require_site_admin(actor)
     user = await find_user(session, orcid_id)
@@ -102,6 +104,12 @@ async def remove_user(orcid_id: OrcidPath, session: SessionDep, actor: ActorDep)
         raise HTTPException(
             status.HTTP_409_CONFLICT,
             "Site administrators can't be removed: they're set in the server's settings.",
+        )
+    if user.last_signed_in_at is not None:
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            "This person has signed in, so they're kept: their name stays with what they've"
+            " done. Remove their roles to take away their access.",
         )
     if (await roles_of_users(session, [user.id]))[user.id]:
         raise HTTPException(

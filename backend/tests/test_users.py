@@ -79,11 +79,11 @@ def test_only_site_administrators_can_see_everyone(
     assert client.get(USERS, headers=sign_in_as(ALICE)).status_code == 403
 
 
-def test_site_administrators_can_remove_people_without_roles(
+def test_site_administrators_can_remove_people_who_never_signed_in_and_have_no_roles(
     client: TestClient, anonymous: TestClient, sign_in_as: SignIn, database: Engine
 ) -> None:
     make_records(client)
-    bob = sign_in_as(BOB, "Bob")
+    sign_in_as(BOB, "Bob")
     client.put(f"{STUDY}/members/{ALICE}", json={"role": "viewer"})
     # Carol was added by her ORCID iD, then her role was taken away again.
     client.put(f"{STUDY}/members/{CAROL}", json={"role": "viewer"})
@@ -100,11 +100,13 @@ def test_site_administrators_can_remove_people_without_roles(
     assert client.delete(f"{USERS}/0000-0002-2222-2224").status_code == 404
     assert client.delete(f"{USERS}/0000-0002-2222-2225").status_code == 422
 
+    # Bob has signed in, so he's kept, even with no roles.
+    refused = client.delete(f"{USERS}/{BOB}")
+    assert refused.status_code == 409
+    assert refused.json()["detail"].startswith("This person has signed in")
+
     assert client.delete(f"{USERS}/{CAROL}").status_code == 204
-    # Removing Bob also signs him out.
-    assert client.delete(f"{USERS}/{BOB}").status_code == 204
-    assert client.get(f"{API}/auth/me", headers=bob).json()["user"] is None
-    assert [subject for subject, _ in people(client.get(USERS))] == [ALICE, SITE_ADMIN]
+    assert [subject for subject, _ in people(client.get(USERS))] == [BOB, ALICE, SITE_ADMIN]
 
     with database.connect() as conn:
         removed = conn.execute(
@@ -115,5 +117,4 @@ def test_site_administrators_can_remove_people_without_roles(
         ).all()
     assert [tuple(row) for row in removed] == [
         (f"orcid:{SITE_ADMIN}", {"before": {"orcid": CAROL, "name": None}}),
-        (f"orcid:{SITE_ADMIN}", {"before": {"orcid": BOB, "name": "Bob"}}),
     ]

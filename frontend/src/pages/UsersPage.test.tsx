@@ -43,6 +43,15 @@ const carol: UserSummary = {
   roles: [],
 }
 
+// Signed in, but now with no roles.
+const ben: UserSummary = {
+  ...alice,
+  id: '0192a5b0-0000-7000-8000-0000000000c4',
+  subject: '0000-0002-1825-0097',
+  name: 'Ben',
+  roles: [],
+}
+
 // Answers each users request with `respond`. Returns the queries asked for.
 function stubUsers(respond: (query: URLSearchParams) => Response) {
   const queries: URLSearchParams[] = []
@@ -132,7 +141,7 @@ describe('UsersPage', () => {
           removed.push(new URL(request.url).pathname)
           return Promise.resolve(new Response(null, { status: 204 }))
         }
-        return Promise.resolve(Response.json({ items: [lee, alice, carol], total: 3 }))
+        return Promise.resolve(Response.json({ items: [lee, alice, ben, carol], total: 4 }))
       }),
     )
     const user = userEvent.setup()
@@ -140,9 +149,11 @@ describe('UsersPage', () => {
 
     await user.click(await screen.findByRole('button', { name: 'Remove 0000-0001-1111-1118' }))
 
-    // Only Carol has no roles: Lee is a site administrator, and Alice has roles.
+    // Only Carol has never signed in and has no roles: Lee is a site administrator, Alice has
+    // roles, and Ben has signed in.
     expect(screen.queryByRole('button', { name: 'Remove Lee Hart' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Remove Alice' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Remove Ben' })).not.toBeInTheDocument()
     await vi.waitFor(() => {
       expect(removed).toEqual(['/api/v1/users/0000-0001-1111-1118'])
     })

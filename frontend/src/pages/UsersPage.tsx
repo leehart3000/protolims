@@ -140,21 +140,23 @@ function UserList() {
                       {user.last_signed_in_at ? formatDate(user.last_signed_in_at) : 'Never'}
                     </td>
                     <td className={tableCell}>
-                      {/* Only people with no roles can be removed, so nobody loses access. */}
-                      {!user.site_admin && user.roles.length === 0 && (
-                        <button
-                          type="button"
-                          aria-label={`Remove ${user.name ?? user.subject}`}
-                          disabled={removal.isPending}
-                          onClick={() => {
-                            removal.mutate(user.subject)
-                          }}
-                          className={`${secondaryButton} inline-flex items-center gap-2`}
-                        >
-                          <UserRoundMinus aria-hidden="true" className="size-4 shrink-0" />
-                          <span className="hidden sm:inline">Remove</span>
-                        </button>
-                      )}
+                      {/* Only people who never signed in and have no roles can be removed. */}
+                      {!user.site_admin &&
+                        user.roles.length === 0 &&
+                        user.last_signed_in_at === null && (
+                          <button
+                            type="button"
+                            aria-label={`Remove ${user.name ?? user.subject}`}
+                            disabled={removal.isPending}
+                            onClick={() => {
+                              removal.mutate(user.subject)
+                            }}
+                            className={`${secondaryButton} inline-flex items-center gap-2`}
+                          >
+                            <UserRoundMinus aria-hidden="true" className="size-4 shrink-0" />
+                            <span className="hidden sm:inline">Remove</span>
+                          </button>
+                        )}
                     </td>
                   </tr>
                 ))}
@@ -178,8 +180,12 @@ export default function UsersPage() {
         <>
           <p className="mt-2 max-w-3xl text-muted">
             Everyone who has signed in, or been given a role by their ORCID iD, and their roles.
-            Roles are given on each project's or study's page. People with no roles can be removed;
-            if they sign in again, they're added back.
+            Roles are given on each project's or study's page.
+          </p>
+          <p className="mt-2 max-w-3xl text-muted">
+            People who have never signed in and have no roles can be removed: someone added by
+            mistake, for example. People who have signed in are kept, so their names stay with what
+            they've done; to take away their access, remove their roles.
           </p>
           <UserList />
         </>
