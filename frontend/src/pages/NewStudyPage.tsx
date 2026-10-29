@@ -9,7 +9,7 @@ import { Breadcrumbs } from '../components/Breadcrumbs'
 import { DetailList } from '../components/DetailList'
 import { PageTitle } from '../components/PageTitle'
 import { StudyForm } from '../components/StudyForm'
-import { DuplicateCodeError } from '../forms'
+import { DuplicateCodeError, refusal } from '../forms'
 
 type StudyCreate = components['schemas']['StudyCreate']
 
@@ -32,7 +32,7 @@ async function createStudy(projectCode: string, body: StudyCreate) {
   if (response.status === 422) {
     throw new Error('Some of the details are not valid. Please check them and try again.')
   }
-  throw new Error('Could not create the study. Please try again later.')
+  throw refusal(response.status, 'Could not create the study. Please try again later.')
 }
 
 export default function NewStudyPage() {

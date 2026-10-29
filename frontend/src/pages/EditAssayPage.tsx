@@ -9,7 +9,12 @@ import { type AssayFormValues, performedAt } from '../assays'
 import { AssayForm } from '../components/AssayForm'
 import { Breadcrumbs } from '../components/Breadcrumbs'
 import { PageTitle } from '../components/PageTitle'
-import { DuplicateNameError, DuplicateExternalIdError, isExternalIdConflict } from '../forms'
+import {
+  DuplicateNameError,
+  DuplicateExternalIdError,
+  isExternalIdConflict,
+  refusal,
+} from '../forms'
 import { errorBox } from '../styles'
 
 type Assay = components['schemas']['AssayRead']
@@ -32,7 +37,7 @@ async function updateAssay(assayId: string, body: AssayUpdate, name: string) {
   if (response.status === 422) {
     throw new Error('Some of the details are not valid. Please check them and try again.')
   }
-  throw new Error('Could not save the changes. Please try again later.')
+  throw refusal(response.status, 'Could not save the changes. Please try again later.')
 }
 
 function formValues(assay: Assay): AssayFormValues {

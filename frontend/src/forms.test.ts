@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { codePattern, isExternalIdConflict } from './forms'
+import { codePattern, isExternalIdConflict, refusal } from './forms'
 
 // Browsers test a field's pattern against the whole value, with the v flag.
 function matches(value: string) {
@@ -32,5 +32,16 @@ describe('isExternalIdConflict', () => {
     expect(isExternalIdConflict({ detail: [] })).toBe(false)
     expect(isExternalIdConflict({})).toBe(false)
     expect(isExternalIdConflict(undefined)).toBe(false)
+  })
+})
+
+describe('refusal', () => {
+  it('asks people to sign in, or explains they are not allowed', () => {
+    expect(refusal(401, 'Could not save.').message).toContain("you're not signed in")
+    expect(refusal(403, 'Could not save.').message).toContain("you don't have permission")
+  })
+
+  it('otherwise gives the message it was given', () => {
+    expect(refusal(500, 'Could not save.').message).toBe('Could not save.')
   })
 })

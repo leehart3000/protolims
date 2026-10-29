@@ -38,3 +38,19 @@ export function externalIdError(error: Error | null) {
     ? 'This external ID is already used in this study.'
     : undefined
 }
+
+// The error to show when the API refuses a change for a reason the form can't fix: nobody is
+// signed in (401), they don't have permission (403), or something unexpected (`otherwise`).
+export function refusal(status: number, otherwise: string) {
+  if (status === 401) {
+    return new Error(
+      "Nothing was saved, because you're not signed in. Sign in (top right), then try again.",
+    )
+  }
+  if (status === 403) {
+    return new Error(
+      "Nothing was saved, because you don't have permission to do this. If you think you should, ask an administrator.",
+    )
+  }
+  return new Error(otherwise)
+}

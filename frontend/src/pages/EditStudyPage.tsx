@@ -9,6 +9,7 @@ import { Breadcrumbs } from '../components/Breadcrumbs'
 import { PageTitle } from '../components/PageTitle'
 import { StudyForm } from '../components/StudyForm'
 import type { StudyDetails } from '../studies'
+import { refusal } from '../forms'
 import { errorBox } from '../styles'
 
 type Study = components['schemas']['StudyRead']
@@ -25,7 +26,7 @@ async function updateStudy(projectCode: string, studyCode: string, body: StudyUp
   if (response.status === 422) {
     throw new Error('Some of the details are not valid. Please check them and try again.')
   }
-  throw new Error('Could not save the changes. Please try again later.')
+  throw refusal(response.status, 'Could not save the changes. Please try again later.')
 }
 
 // Only the fields that were changed are sent.

@@ -9,7 +9,12 @@ import { Breadcrumbs } from '../components/Breadcrumbs'
 import { DetailList } from '../components/DetailList'
 import { PageTitle } from '../components/PageTitle'
 import { SubjectForm } from '../components/SubjectForm'
-import { DuplicateNameError, DuplicateExternalIdError, isExternalIdConflict } from '../forms'
+import {
+  DuplicateNameError,
+  DuplicateExternalIdError,
+  isExternalIdConflict,
+  refusal,
+} from '../forms'
 
 type SubjectCreate = components['schemas']['SubjectCreate']
 
@@ -35,7 +40,7 @@ async function createSubject(projectCode: string, studyCode: string, body: Subje
   if (response.status === 422) {
     throw new Error('Some of the details are not valid. Please check them and try again.')
   }
-  throw new Error('Could not create the subject. Please try again later.')
+  throw refusal(response.status, 'Could not create the subject. Please try again later.')
 }
 
 export default function NewSubjectPage() {

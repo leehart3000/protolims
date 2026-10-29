@@ -11,7 +11,7 @@ import { DetailList } from '../components/DetailList'
 import { PageTitle } from '../components/PageTitle'
 import { DuplicateLocationError, invalidDetailsMessage } from '../dataFiles'
 import { errorBox } from '../styles'
-import { DuplicateExternalIdError, isExternalIdConflict } from '../forms'
+import { DuplicateExternalIdError, isExternalIdConflict, refusal } from '../forms'
 
 type Assay = components['schemas']['AssayRead']
 type DataFileCreate = components['schemas']['DataFileCreate']
@@ -38,7 +38,7 @@ async function createDataFile(projectCode: string, studyCode: string, body: Data
   if (response.status === 422) {
     throw new Error(invalidDetailsMessage(error))
   }
-  throw new Error('Could not record the data file. Please try again later.')
+  throw refusal(response.status, 'Could not record the data file. Please try again later.')
 }
 
 function NewDataFileForm({

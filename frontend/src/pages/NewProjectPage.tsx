@@ -7,7 +7,7 @@ import type { components } from '../api/schema'
 import { Breadcrumbs } from '../components/Breadcrumbs'
 import { PageTitle } from '../components/PageTitle'
 import { ProjectForm } from '../components/ProjectForm'
-import { DuplicateCodeError } from '../forms'
+import { DuplicateCodeError, refusal } from '../forms'
 
 type ProjectCreate = components['schemas']['ProjectCreate']
 
@@ -22,7 +22,7 @@ async function createProject(body: ProjectCreate) {
   if (response.status === 422) {
     throw new Error('Some of the details are not valid. Please check them and try again.')
   }
-  throw new Error('Could not create the project. Please try again later.')
+  throw refusal(response.status, 'Could not create the project. Please try again later.')
 }
 
 export default function NewProjectPage() {

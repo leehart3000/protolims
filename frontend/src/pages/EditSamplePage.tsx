@@ -9,7 +9,12 @@ import { Breadcrumbs } from '../components/Breadcrumbs'
 import { PageTitle } from '../components/PageTitle'
 import { SampleForm } from '../components/SampleForm'
 import type { SampleStatus } from '../labels'
-import { DuplicateNameError, DuplicateExternalIdError, isExternalIdConflict } from '../forms'
+import {
+  DuplicateNameError,
+  DuplicateExternalIdError,
+  isExternalIdConflict,
+  refusal,
+} from '../forms'
 import { collectedAt, type SampleFormValues } from '../samples'
 import { errorBox } from '../styles'
 
@@ -40,7 +45,7 @@ async function updateSample(sampleId: string, body: SampleUpdate, name: string) 
         : 'Some of the details are not valid. Please check them and try again.',
     )
   }
-  throw new Error('Could not save the changes. Please try again later.')
+  throw refusal(response.status, 'Could not save the changes. Please try again later.')
 }
 
 function formValues(sample: Sample): SampleFormValues {

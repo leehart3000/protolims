@@ -133,6 +133,30 @@ describe('EditProjectPage', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('Could not save the changes.')
   })
 
+  it('asks people to sign in when they are not signed in', async () => {
+    stubApi({ update: () => Response.json({ detail: 'Sign in' }, { status: 401 }) })
+    const user = userEvent.setup()
+    renderPage()
+
+    await save(user)
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      "Nothing was saved, because you're not signed in.",
+    )
+  })
+
+  it('says when someone does not have permission', async () => {
+    stubApi({ update: () => Response.json({ detail: 'Forbidden' }, { status: 403 }) })
+    const user = userEvent.setup()
+    renderPage()
+
+    await save(user)
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      "Nothing was saved, because you don't have permission to do this.",
+    )
+  })
+
   it('says when there is no such project', async () => {
     stubApi({ load: () => Response.json({ detail: 'Not Found' }, { status: 404 }) })
     renderPage()

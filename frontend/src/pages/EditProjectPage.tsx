@@ -9,6 +9,7 @@ import { Breadcrumbs } from '../components/Breadcrumbs'
 import { PageTitle } from '../components/PageTitle'
 import { ProjectForm } from '../components/ProjectForm'
 import type { ProjectDetails } from '../projects'
+import { refusal } from '../forms'
 import { errorBox } from '../styles'
 
 type Project = components['schemas']['ProjectRead']
@@ -25,7 +26,7 @@ async function updateProject(code: string, body: ProjectUpdate) {
   if (response.status === 422) {
     throw new Error('Some of the details are not valid. Please check them and try again.')
   }
-  throw new Error('Could not save the changes. Please try again later.')
+  throw refusal(response.status, 'Could not save the changes. Please try again later.')
 }
 
 // Only the fields that were changed are sent. The code never changes.

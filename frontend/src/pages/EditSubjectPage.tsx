@@ -8,7 +8,12 @@ import type { components } from '../api/schema'
 import { Breadcrumbs } from '../components/Breadcrumbs'
 import { PageTitle } from '../components/PageTitle'
 import { SubjectForm } from '../components/SubjectForm'
-import { DuplicateNameError, DuplicateExternalIdError, isExternalIdConflict } from '../forms'
+import {
+  DuplicateNameError,
+  DuplicateExternalIdError,
+  isExternalIdConflict,
+  refusal,
+} from '../forms'
 import type { SubjectType } from '../labels'
 import { errorBox } from '../styles'
 import type { SubjectDetails } from '../subjects'
@@ -35,7 +40,7 @@ async function updateSubject(subjectId: string, body: SubjectUpdate, name: strin
   if (response.status === 422) {
     throw new Error('Some of the details are not valid. Please check them and try again.')
   }
-  throw new Error('Could not save the changes. Please try again later.')
+  throw refusal(response.status, 'Could not save the changes. Please try again later.')
 }
 
 // Only the fields that were changed are sent.

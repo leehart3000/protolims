@@ -9,7 +9,12 @@ import { Breadcrumbs } from '../components/Breadcrumbs'
 import { DetailList } from '../components/DetailList'
 import { PageTitle } from '../components/PageTitle'
 import { SampleForm } from '../components/SampleForm'
-import { DuplicateNameError, DuplicateExternalIdError, isExternalIdConflict } from '../forms'
+import {
+  DuplicateNameError,
+  DuplicateExternalIdError,
+  isExternalIdConflict,
+  refusal,
+} from '../forms'
 import { collectedAt } from '../samples'
 import { errorBox } from '../styles'
 
@@ -37,7 +42,7 @@ async function createSample(projectCode: string, studyCode: string, body: Sample
   if (response.status === 422) {
     throw new Error('Some of the details are not valid. Please check them and try again.')
   }
-  throw new Error('Could not create the sample. Please try again later.')
+  throw refusal(response.status, 'Could not create the sample. Please try again later.')
 }
 
 function NewSampleForm({

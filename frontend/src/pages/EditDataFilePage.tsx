@@ -15,7 +15,7 @@ import {
 } from '../dataFiles'
 import type { DataFileLevel } from '../labels'
 import { errorBox } from '../styles'
-import { DuplicateExternalIdError, isExternalIdConflict } from '../forms'
+import { DuplicateExternalIdError, isExternalIdConflict, refusal } from '../forms'
 
 type DataFile = components['schemas']['DataFileRead']
 type DataFileUpdate = components['schemas']['DataFileUpdate']
@@ -39,7 +39,7 @@ async function updateDataFile(dataFileId: string, body: DataFileUpdate) {
   if (response.status === 422) {
     throw new Error(invalidDetailsMessage(error))
   }
-  throw new Error('Could not save the changes. Please try again later.')
+  throw refusal(response.status, 'Could not save the changes. Please try again later.')
 }
 
 function formValues(file: DataFile): DataFileFormValues {
