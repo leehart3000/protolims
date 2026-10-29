@@ -104,7 +104,9 @@ def test_project_admins_manage_the_projects_roles(
     ]
 
 
-def test_only_admins_can_see_or_change_roles(client: TestClient, sign_in_as: SignIn) -> None:
+def test_only_admins_can_see_or_change_roles(
+    client: TestClient, anonymous: TestClient, sign_in_as: SignIn
+) -> None:
     make_study(client)
     admin = sign_in_as(SITE_ADMIN)
     client.put(f"{PROJECT}/members/{BOB}", json={"role": "editor"}, headers=admin)
@@ -112,9 +114,9 @@ def test_only_admins_can_see_or_change_roles(client: TestClient, sign_in_as: Sig
     viewer = {"role": "viewer"}
 
     for where in (PROJECT, STUDY):
-        assert client.get(f"{where}/members").status_code == 401
-        assert client.put(f"{where}/members/{CAROL}", json=viewer).status_code == 401
-        assert client.delete(f"{where}/members/{CAROL}").status_code == 401
+        assert anonymous.get(f"{where}/members").status_code == 401
+        assert anonymous.put(f"{where}/members/{CAROL}", json=viewer).status_code == 401
+        assert anonymous.delete(f"{where}/members/{CAROL}").status_code == 401
         assert client.get(f"{where}/members", headers=bob).status_code == 403
         assert client.put(f"{where}/members/{CAROL}", json=viewer, headers=bob).status_code == 403
         assert client.delete(f"{where}/members/{CAROL}", headers=bob).status_code == 403
@@ -175,9 +177,9 @@ def test_study_admins_manage_only_their_studys_roles(
 
 
 def test_me_says_whether_someone_is_a_site_administrator(
-    client: TestClient, sign_in_as: SignIn
+    client: TestClient, anonymous: TestClient, sign_in_as: SignIn
 ) -> None:
-    assert client.get(f"{API}/auth/me").json() == {
+    assert anonymous.get(f"{API}/auth/me").json() == {
         "user": None,
         "site_admin": False,
         "public_read": True,

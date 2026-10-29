@@ -24,6 +24,7 @@ from protolims_api.models import (
     Study,
     Subject,
 )
+from protolims_api.permissions import ActorDep, require_study_role
 from protolims_api.routers.studies import get_study_or_404
 from protolims_api.schemas.importing import (
     AssayImport,
@@ -713,7 +714,11 @@ async def create_file_links(
 
 @router.post("/projects/{project_code}/studies/{study_code}/import")
 async def import_records(
-    project_code: str, study_code: str, payload: ImportRequest, session: SessionDep
+    project_code: str,
+    study_code: str,
+    payload: ImportRequest,
+    session: SessionDep,
+    actor: ActorDep,
 ) -> ImportResult:
     """Import subjects, samples, assays and data files into a study, safely and repeatably.
 
@@ -739,9 +744,12 @@ async def import_records(
       what would happen, but nothing is saved. Do a dry run first.
     - **Limits:** at most 5,000 records and links per request; send bigger studies in batches.
       An import never creates projects or studies.
-    - **Audit trail:** each new record and link is recorded as made by `import: <source>`.
+    - **Who can import:** the study's editors and admins.
+    - **Audit trail:** each new record and link is recorded as made by whoever imported it,
+      and each new record's audit entry names the import's `source`.
     """
     study = await get_study_or_404(session, project_code, study_code)
+    await require_study_role(session, actor, study, "editor")
     problems: list[str] = []
     for kind, items in (
         ("subjects", payload.subjects),
@@ -839,21 +847,23 @@ async def import_records(
         )
         tally_inputs(result, file_item, data_file, file_targets, existing.inputs)
 
-    actor = f"import: {payload.source}"
-    where = {"project": project_code, "study": study_code}
-    new_subjects = await create_subjects(session, study, actor, where, subject_matches)
+    # Only signed-in people can be editors, so there's always someone to name.
+    by = actor.label
+    assert by is not None
+    where = {"project": project_code, "study": study_code, "import": payload.source}
+    new_subjects = await create_subjects(session, study, by, where, subject_matches)
     new_samples = await create_samples(
-        session, study, actor, where, sample_matches, subject_targets, sample_targets, new_subjects
+        session, study, by, where, sample_matches, subject_targets, sample_targets, new_subjects
     )
-    new_assays = await create_assays(session, study, actor, where, assay_matches)
+    new_assays = await create_assays(session, study, by, where, assay_matches)
     await create_assay_samples(
-        session, actor, assay_matches, new_assays, sample_targets, new_samples, existing.assay_links
+        session, by, assay_matches, new_assays, sample_targets, new_samples, existing.assay_links
     )
     new_files = await create_data_files(
-        session, study, actor, where, file_matches, assay_targets, new_assays
+        session, study, by, where, file_matches, assay_targets, new_assays
     )
     await create_file_links(
-        session, actor, file_matches, new_files, sample_targets, new_samples, file_targets, existing
+        session, by, file_matches, new_files, sample_targets, new_samples, file_targets, existing
     )
     if payload.dry_run:
         await session.rollback()

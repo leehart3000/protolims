@@ -12,6 +12,7 @@ from sqlalchemy.orm import InstrumentedAttribute
 from protolims_api.audit import record_event
 from protolims_api.db import SessionDep
 from protolims_api.models import Project
+from protolims_api.permissions import ActorDep, require_project_role, require_site_admin
 from protolims_api.schemas.common import Page
 from protolims_api.schemas.project import ProjectCreate, ProjectRead, ProjectUpdate
 
@@ -39,9 +40,12 @@ async def get_project_or_404(session: AsyncSession, code: str) -> Project:
 
 
 @router.post("", status_code=status.HTTP_201_CREATED)
-async def create_project(payload: ProjectCreate, session: SessionDep) -> ProjectRead:
-    """Create a project."""
-    project = Project(**payload.model_dump())
+async def create_project(
+    payload: ProjectCreate, session: SessionDep, actor: ActorDep
+) -> ProjectRead:
+    """Create a project. Only site administrators can."""
+    require_site_admin(actor)
+    project = Project(**payload.model_dump(), created_by=actor.label)
     session.add(project)
     try:
         await session.flush()
@@ -56,6 +60,7 @@ async def create_project(payload: ProjectCreate, session: SessionDep) -> Project
         action="create",
         entity_type="project",
         entity_id=project.id,
+        actor=actor.label,
         changes={"after": payload.model_dump(mode="json")},
     )
     await session.commit()
@@ -105,9 +110,15 @@ async def get_project(code: str, session: SessionDep) -> ProjectRead:
 
 
 @router.patch("/{code}")
-async def update_project(code: str, payload: ProjectUpdate, session: SessionDep) -> ProjectRead:
-    """Change some of a project's details. Only the fields sent are changed; null clears one."""
+async def update_project(
+    code: str, payload: ProjectUpdate, session: SessionDep, actor: ActorDep
+) -> ProjectRead:
+    """Change some of a project's details. Only the fields sent are changed; null clears one.
+
+    Only the project's admins (and site administrators) can.
+    """
     project = await get_project_or_404(session, code)
+    await require_project_role(session, actor, project.id, "admin")
 
     requested = payload.model_dump(exclude_unset=True)
     changed = {
@@ -123,6 +134,7 @@ async def update_project(code: str, payload: ProjectUpdate, session: SessionDep)
             action="update",
             entity_type="project",
             entity_id=project.id,
+            actor=actor.label,
             changes={
                 "before": {field: before[field] for field in changed},
                 "after": payload.model_dump(mode="json", include=set(changed)),

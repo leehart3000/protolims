@@ -73,9 +73,51 @@ def clean_tables(database: Engine) -> None:
         conn.execute(text(f"TRUNCATE {tables} CASCADE"))
 
 
+def add_session(database: Engine, orcid_id: str, name: str | None = None) -> dict[str, str]:
+    """Sign someone in, by ORCID iD, straight into the database (without going to ORCID).
+    Returns the request headers for their browser."""
+    token = secrets.token_urlsafe(16)
+    with database.begin() as conn:
+        user_id = conn.execute(
+            text(
+                "INSERT INTO app_user (provider, subject, name, last_signed_in_at)"
+                " VALUES ('orcid', :subject, :name, now())"
+                " ON CONFLICT (provider, subject) DO UPDATE SET name = EXCLUDED.name"
+                " RETURNING id"
+            ),
+            {"subject": orcid_id, "name": name},
+        ).scalar_one()
+        conn.execute(
+            text(
+                "INSERT INTO user_session (token_hash, user_id, expires_at)"
+                " VALUES (:token_hash, :user_id, now() + interval '1 day')"
+            ),
+            {"token_hash": hashlib.sha256(token.encode()).hexdigest(), "user_id": user_id},
+        )
+    return {"Cookie": f"protolims_session={token}"}
+
+
 @pytest.fixture(scope="session")
-def client() -> Iterator[TestClient]:
-    """One test client for the whole test run."""
+def shared_client() -> Iterator[TestClient]:
+    """One test client for the whole test run, used by the client fixture."""
+    from protolims_api.main import app
+
+    with TestClient(app) as test_client:
+        yield test_client
+
+
+@pytest.fixture
+def client(shared_client: TestClient, database: Engine, clean_tables: None) -> TestClient:
+    """A test client signed in as the site administrator, who may do anything, so that tests
+    can create and change records. Tests of who may do what use sign_in_as and anonymous."""
+    shared_client.cookies.clear()
+    shared_client.headers.update(add_session(database, SITE_ADMIN))
+    return shared_client
+
+
+@pytest.fixture(scope="session")
+def anonymous() -> Iterator[TestClient]:
+    """A test client that isn't signed in."""
     from protolims_api.main import app
 
     with TestClient(app) as test_client:
@@ -86,30 +128,11 @@ SignIn = Callable[..., dict[str, str]]
 
 
 @pytest.fixture
-def sign_in_as(client: TestClient, database: Engine) -> SignIn:
+def sign_in_as(database: Engine, clean_tables: None) -> SignIn:
     """Sign someone in, by ORCID iD, without going to ORCID. Returns the request headers for
     their browser: pass them as headers=... on each request made as them."""
-    client.cookies.clear()
 
     def sign_in(orcid_id: str, name: str | None = None) -> dict[str, str]:
-        token = secrets.token_urlsafe(16)
-        with database.begin() as conn:
-            user_id = conn.execute(
-                text(
-                    "INSERT INTO app_user (provider, subject, name, last_signed_in_at)"
-                    " VALUES ('orcid', :subject, :name, now())"
-                    " ON CONFLICT (provider, subject) DO UPDATE SET name = EXCLUDED.name"
-                    " RETURNING id"
-                ),
-                {"subject": orcid_id, "name": name},
-            ).scalar_one()
-            conn.execute(
-                text(
-                    "INSERT INTO user_session (token_hash, user_id, expires_at)"
-                    " VALUES (:token_hash, :user_id, now() + interval '1 day')"
-                ),
-                {"token_hash": hashlib.sha256(token.encode()).hexdigest(), "user_id": user_id},
-            )
-        return {"Cookie": f"protolims_session={token}"}
+        return add_session(database, orcid_id, name)
 
     return sign_in

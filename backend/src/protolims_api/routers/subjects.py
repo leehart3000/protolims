@@ -17,6 +17,7 @@ from protolims_api.audit import record_event
 from protolims_api.conflicts import external_id_conflict, is_external_id_conflict
 from protolims_api.db import SessionDep
 from protolims_api.models import Project, Study, Subject
+from protolims_api.permissions import ActorDep, require_editor_of, require_study_role
 from protolims_api.routers.studies import get_study_or_404
 from protolims_api.schemas.common import Page
 from protolims_api.schemas.subject import SubjectCreate, SubjectFields, SubjectRead, SubjectUpdate
@@ -63,11 +64,16 @@ def subject_read(subject: Subject, project_code: str, study_code: str) -> Subjec
     status_code=status.HTTP_201_CREATED,
 )
 async def create_subject(
-    project_code: str, study_code: str, payload: SubjectCreate, session: SessionDep
+    project_code: str,
+    study_code: str,
+    payload: SubjectCreate,
+    session: SessionDep,
+    actor: ActorDep,
 ) -> SubjectRead:
     """Create a subject within a study. Subject names are unique within their study."""
     study = await get_study_or_404(session, project_code, study_code)
-    subject = Subject(study_id=study.id, **payload.model_dump())
+    await require_study_role(session, actor, study, "editor")
+    subject = Subject(study_id=study.id, created_by=actor.label, **payload.model_dump())
     session.add(subject)
     try:
         await session.flush()
@@ -86,6 +92,7 @@ async def create_subject(
         action="create",
         entity_type="subject",
         entity_id=subject.id,
+        actor=actor.label,
         changes={
             "after": {
                 "project": project_code,
@@ -157,7 +164,7 @@ async def get_subject(subject_id: uuid.UUID, session: SessionDep) -> SubjectRead
 
 @router.patch("/subjects/{subject_id}")
 async def update_subject(
-    subject_id: uuid.UUID, payload: SubjectUpdate, session: SessionDep
+    subject_id: uuid.UUID, payload: SubjectUpdate, session: SessionDep, actor: ActorDep
 ) -> SubjectRead:
     """Change some of a subject's details. Only the fields sent are changed; null clears one."""
     subject = await session.get(Subject, subject_id)
@@ -166,6 +173,7 @@ async def update_subject(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Subject {subject_id} not found",
         )
+    await require_editor_of(session, actor, subject.study_id)
 
     requested = payload.model_dump(exclude_unset=True)
     changed = {
@@ -191,6 +199,7 @@ async def update_subject(
             action="update",
             entity_type="subject",
             entity_id=subject.id,
+            actor=actor.label,
             changes={
                 "before": {field: before[field] for field in changed},
                 "after": payload.model_dump(mode="json", include=set(changed)),

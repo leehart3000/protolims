@@ -137,7 +137,7 @@ jobs:
             --region="$REGION" \
             --service-account=protolims-api-staging@protolims.iam.gserviceaccount.com \
             --set-secrets=PROTOLIMS_DATABASE_URL=staging-database-url:latest,PROTOLIMS_PROXY_KEY=staging-proxy-key:latest,PROTOLIMS_ORCID_CLIENT_SECRET=orcid-client-secret:latest \
-            --set-env-vars=PROTOLIMS_PUBLIC_URL=https://staging.protolims.org,PROTOLIMS_ORCID_BASE_URL=https://orcid.org,PROTOLIMS_ORCID_CLIENT_ID=APP-NXYFXJL2RT3PVERJ \
+            --set-env-vars=PROTOLIMS_PUBLIC_URL=https://staging.protolims.org,PROTOLIMS_ORCID_BASE_URL=https://orcid.org,PROTOLIMS_ORCID_CLIENT_ID=APP-NXYFXJL2RT3PVERJ,PROTOLIMS_SITE_ADMINS=0000-0002-6473-0964,PROTOLIMS_PUBLIC_READ=true \
             --port=8080 \
             --cpu=1 \
             --memory=512Mi \

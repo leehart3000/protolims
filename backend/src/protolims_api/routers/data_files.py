@@ -28,6 +28,7 @@ from protolims_api.models import (
     Sample,
     Study,
 )
+from protolims_api.permissions import ActorDep, require_editor_of, require_study_role
 from protolims_api.routers.studies import get_study_or_404
 from protolims_api.schemas.common import Page
 from protolims_api.schemas.data_file import (
@@ -135,12 +136,17 @@ def not_found(data_file_id: uuid.UUID) -> HTTPException:
     status_code=status.HTTP_201_CREATED,
 )
 async def create_data_file(
-    project_code: str, study_code: str, payload: DataFileCreate, session: SessionDep
+    project_code: str,
+    study_code: str,
+    payload: DataFileCreate,
+    session: SessionDep,
+    actor: ActorDep,
 ) -> DataFileRead:
     """Record a data file in a study. A URI can be recorded only once in each study."""
     study = await get_study_or_404(session, project_code, study_code)
+    await require_study_role(session, actor, study, "editor")
     assay_name = await assay_name_in_study(session, study.id, payload.assay_id)
-    data_file = DataFile(study_id=study.id, **payload.model_dump())
+    data_file = DataFile(study_id=study.id, created_by=actor.label, **payload.model_dump())
     session.add(data_file)
     try:
         await session.flush()
@@ -159,6 +165,7 @@ async def create_data_file(
         action="create",
         entity_type="data_file",
         entity_id=data_file.id,
+        actor=actor.label,
         changes={
             "after": {
                 "project": project_code,
@@ -240,12 +247,13 @@ async def get_data_file(data_file_id: uuid.UUID, session: SessionDep) -> DataFil
 
 @router.patch("/data-files/{data_file_id}")
 async def update_data_file(
-    data_file_id: uuid.UUID, payload: DataFileUpdate, session: SessionDep
+    data_file_id: uuid.UUID, payload: DataFileUpdate, session: SessionDep, actor: ActorDep
 ) -> DataFileRead:
     """Change some of a data file's details. Only the fields sent are changed; null clears one."""
     data_file = await session.get(DataFile, data_file_id)
     if data_file is None:
         raise not_found(data_file_id)
+    await require_editor_of(session, actor, data_file.study_id)
 
     requested = payload.model_dump(exclude_unset=True)
     changed = {
@@ -274,6 +282,7 @@ async def update_data_file(
             action="update",
             entity_type="data_file",
             entity_id=data_file.id,
+            actor=actor.label,
             changes={
                 "before": {field: before[field] for field in changed},
                 "after": payload.model_dump(mode="json", include=set(changed)),
@@ -367,6 +376,7 @@ async def link_data_file_sample(
     sample_id: uuid.UUID,
     payload: DataFileSampleLink,
     session: SessionDep,
+    actor: ActorDep,
     response: Response,
 ) -> DataFileSampleRead:
     """Record that a file holds a sample's data, or change the sample's label in it.
@@ -374,6 +384,7 @@ async def link_data_file_sample(
     Returns 201 when the link is new and 200 when it already existed, so it's safe to repeat.
     """
     data_file = await get_data_file_or_404(session, data_file_id)
+    await require_editor_of(session, actor, data_file.study_id)
     sample = await session.get(Sample, sample_id)
     if sample is None or sample.study_id != data_file.study_id:
         raise HTTPException(
@@ -385,13 +396,19 @@ async def link_data_file_sample(
     link = await session.get(DataFileSample, (data_file_id, sample_id))
     if link is None:
         session.add(
-            DataFileSample(data_file_id=data_file_id, sample_id=sample_id, label=payload.label)
+            DataFileSample(
+                data_file_id=data_file_id,
+                sample_id=sample_id,
+                label=payload.label,
+                created_by=actor.label,
+            )
         )
         await record_event(
             session,
             action="add_sample",
             entity_type="data_file",
             entity_id=data_file_id,
+            actor=actor.label,
             changes={"after": {**which, "label": payload.label}},
         )
         response.status_code = status.HTTP_201_CREATED
@@ -401,6 +418,7 @@ async def link_data_file_sample(
             action="update_sample",
             entity_type="data_file",
             entity_id=data_file_id,
+            actor=actor.label,
             changes={
                 "before": {**which, "label": link.label},
                 "after": {**which, "label": payload.label},
@@ -418,9 +436,11 @@ async def link_data_file_sample(
     "/data-files/{data_file_id}/samples/{sample_id}", status_code=status.HTTP_204_NO_CONTENT
 )
 async def unlink_data_file_sample(
-    data_file_id: uuid.UUID, sample_id: uuid.UUID, session: SessionDep
+    data_file_id: uuid.UUID, sample_id: uuid.UUID, session: SessionDep, actor: ActorDep
 ) -> None:
     """Remove a sample from a data file."""
+    data_file = await get_data_file_or_404(session, data_file_id)
+    await require_editor_of(session, actor, data_file.study_id)
     link = await session.get(DataFileSample, (data_file_id, sample_id))
     if link is None:
         raise HTTPException(
@@ -433,6 +453,7 @@ async def unlink_data_file_sample(
         action="remove_sample",
         entity_type="data_file",
         entity_id=data_file_id,
+        actor=actor.label,
         changes={
             "before": {"sample_id": str(sample_id), "sample": sample_name, "label": link.label}
         },
@@ -515,13 +536,18 @@ async def list_outputs(data_file_id: uuid.UUID, session: SessionDep) -> list[Dat
 
 @router.put("/data-files/{data_file_id}/inputs/{input_id}")
 async def add_input(
-    data_file_id: uuid.UUID, input_id: uuid.UUID, session: SessionDep, response: Response
+    data_file_id: uuid.UUID,
+    input_id: uuid.UUID,
+    session: SessionDep,
+    actor: ActorDep,
+    response: Response,
 ) -> DataFileSummary:
     """Record that a file was derived from another file in the same study.
 
     Returns 201 when this is new and 200 when it was already recorded, so it's safe to repeat.
     """
     data_file = await get_data_file_or_404(session, data_file_id)
+    await require_editor_of(session, actor, data_file.study_id)
     source = await session.get(DataFile, input_id)
     if source is None or source.study_id != data_file.study_id:
         raise HTTPException(
@@ -535,12 +561,17 @@ async def add_input(
         )
 
     if await session.get(DataFileInput, (data_file_id, input_id)) is None:
-        session.add(DataFileInput(data_file_id=data_file_id, input_data_file_id=input_id))
+        session.add(
+            DataFileInput(
+                data_file_id=data_file_id, input_data_file_id=input_id, created_by=actor.label
+            )
+        )
         await record_event(
             session,
             action="add_input",
             entity_type="data_file",
             entity_id=data_file_id,
+            actor=actor.label,
             changes={"after": {"input_id": str(input_id), "input": source.name}},
         )
         response.status_code = status.HTTP_201_CREATED
@@ -553,8 +584,12 @@ async def add_input(
 @router.delete(
     "/data-files/{data_file_id}/inputs/{input_id}", status_code=status.HTTP_204_NO_CONTENT
 )
-async def remove_input(data_file_id: uuid.UUID, input_id: uuid.UUID, session: SessionDep) -> None:
+async def remove_input(
+    data_file_id: uuid.UUID, input_id: uuid.UUID, session: SessionDep, actor: ActorDep
+) -> None:
     """Remove the record that a file was derived from another."""
+    data_file = await get_data_file_or_404(session, data_file_id)
+    await require_editor_of(session, actor, data_file.study_id)
     link = await session.get(DataFileInput, (data_file_id, input_id))
     if link is None:
         raise HTTPException(
@@ -567,6 +602,7 @@ async def remove_input(data_file_id: uuid.UUID, input_id: uuid.UUID, session: Se
         action="remove_input",
         entity_type="data_file",
         entity_id=data_file_id,
+        actor=actor.label,
         changes={"before": {"input_id": str(input_id), "input": input_name}},
     )
     await session.delete(link)

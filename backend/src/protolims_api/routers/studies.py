@@ -12,6 +12,7 @@ from sqlalchemy.orm import InstrumentedAttribute
 from protolims_api.audit import record_event
 from protolims_api.db import SessionDep
 from protolims_api.models import Project, Study
+from protolims_api.permissions import ActorDep, require_project_role, require_study_role
 from protolims_api.routers.projects import get_project_or_404
 from protolims_api.schemas.common import Page
 from protolims_api.schemas.study import (
@@ -49,10 +50,16 @@ def study_order(sort: str) -> UnaryExpression[Any]:
 
 
 @router.post("/projects/{project_code}/studies", status_code=status.HTTP_201_CREATED)
-async def create_study(project_code: str, payload: StudyCreate, session: SessionDep) -> StudyRead:
-    """Create a study within a project. Study codes are unique within their project."""
+async def create_study(
+    project_code: str, payload: StudyCreate, session: SessionDep, actor: ActorDep
+) -> StudyRead:
+    """Create a study within a project. Study codes are unique within their project.
+
+    Only the project's admins (and site administrators) can.
+    """
     project = await get_project_or_404(session, project_code)
-    study = Study(project_id=project.id, **payload.model_dump())
+    await require_project_role(session, actor, project.id, "admin")
+    study = Study(project_id=project.id, created_by=actor.label, **payload.model_dump())
     session.add(study)
     try:
         await session.flush()
@@ -67,6 +74,7 @@ async def create_study(project_code: str, payload: StudyCreate, session: Session
         action="create",
         entity_type="study",
         entity_id=study.id,
+        actor=actor.label,
         changes={"after": {"project": project_code, **payload.model_dump(mode="json")}},
     )
     await session.commit()
@@ -128,10 +136,14 @@ async def get_study(project_code: str, study_code: str, session: SessionDep) -> 
 
 @router.patch("/projects/{project_code}/studies/{study_code}")
 async def update_study(
-    project_code: str, study_code: str, payload: StudyUpdate, session: SessionDep
+    project_code: str, study_code: str, payload: StudyUpdate, session: SessionDep, actor: ActorDep
 ) -> StudyRead:
-    """Change a study's title, description or design factors. Only the fields sent change."""
+    """Change a study's title, description or design factors. Only the fields sent change.
+
+    The study's editors and admins can.
+    """
     study = await get_study_or_404(session, project_code, study_code)
+    await require_study_role(session, actor, study, "editor")
 
     requested = payload.model_dump(exclude_unset=True)
     changed = {field: value for field, value in requested.items() if getattr(study, field) != value}
@@ -145,6 +157,7 @@ async def update_study(
             action="update",
             entity_type="study",
             entity_id=study.id,
+            actor=actor.label,
             changes={
                 "before": {field: before[field] for field in changed},
                 "after": payload.model_dump(mode="json", include=set(changed)),

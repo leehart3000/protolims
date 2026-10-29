@@ -31,6 +31,12 @@ JWKS = {
 }
 
 
+@pytest.fixture
+def client(anonymous: TestClient) -> TestClient:
+    """These tests sign in and out for themselves, so they start as nobody."""
+    return anonymous
+
+
 def id_token(nonce: str, kid: str = "test-key", **claims: Any) -> str:
     """An ID token like ORCID's, signed with the test key."""
     now = int(time.time())

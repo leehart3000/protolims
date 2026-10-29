@@ -18,7 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from protolims_api.config import get_settings
 from protolims_api.db import SessionDep
-from protolims_api.models import AppUser, ProjectMember, StudyMember, UserSession
+from protolims_api.models import AppUser, ProjectMember, Study, StudyMember, UserSession
 
 SESSION_COOKIE = "protolims_session"
 
@@ -116,3 +116,31 @@ def require(actor: Actor, role: str | None, needed: Role) -> None:
     """Stop the request unless role is at least the role needed."""
     if role is None or RANKS[role] < RANKS[needed]:
         raise refuse(actor)
+
+
+def require_site_admin(actor: Actor) -> None:
+    """Stop the request unless it's from a site administrator."""
+    if not actor.site_admin:
+        raise refuse(actor)
+
+
+async def require_project_role(
+    session: AsyncSession, actor: Actor, project_id: uuid.UUID, needed: Role
+) -> None:
+    """Stop the request unless the actor has at least this role on the project."""
+    require(actor, await project_role(session, actor, project_id), needed)
+
+
+async def require_study_role(
+    session: AsyncSession, actor: Actor, study: Study, needed: Role
+) -> None:
+    """Stop the request unless the actor has at least this role on the study."""
+    require(actor, await study_role(session, actor, study.project_id, study.id), needed)
+
+
+async def require_editor_of(session: AsyncSession, actor: Actor, study_id: uuid.UUID) -> None:
+    """For a record fetched by its own ID: stop the request unless the actor can edit the
+    study it belongs to."""
+    study = await session.get(Study, study_id)
+    assert study is not None  # Every record belongs to a study, and studies aren't deleted.
+    await require_study_role(session, actor, study, "editor")

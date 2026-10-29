@@ -19,6 +19,7 @@ from protolims_api.audit import record_event
 from protolims_api.conflicts import external_id_conflict, is_external_id_conflict
 from protolims_api.db import SessionDep
 from protolims_api.models import Assay, AssaySample, Project, Sample, Study
+from protolims_api.permissions import ActorDep, require_editor_of, require_study_role
 from protolims_api.routers.studies import get_study_or_404
 from protolims_api.schemas.assay import (
     AssayCreate,
@@ -117,11 +118,16 @@ async def get_assay_or_404(session: AsyncSession, assay_id: uuid.UUID) -> Assay:
     status_code=status.HTTP_201_CREATED,
 )
 async def create_assay(
-    project_code: str, study_code: str, payload: AssayCreate, session: SessionDep
+    project_code: str,
+    study_code: str,
+    payload: AssayCreate,
+    session: SessionDep,
+    actor: ActorDep,
 ) -> AssayRead:
     """Create an assay within a study. Assay names are unique within their study."""
     study = await get_study_or_404(session, project_code, study_code)
-    assay = Assay(study_id=study.id, **payload.model_dump())
+    await require_study_role(session, actor, study, "editor")
+    assay = Assay(study_id=study.id, created_by=actor.label, **payload.model_dump())
     session.add(assay)
     try:
         await session.flush()
@@ -140,6 +146,7 @@ async def create_assay(
         action="create",
         entity_type="assay",
         entity_id=assay.id,
+        actor=actor.label,
         changes={
             "after": {
                 "project": project_code,
@@ -212,9 +219,12 @@ async def get_assay(assay_id: uuid.UUID, session: SessionDep) -> AssayRead:
 
 
 @router.patch("/assays/{assay_id}")
-async def update_assay(assay_id: uuid.UUID, payload: AssayUpdate, session: SessionDep) -> AssayRead:
+async def update_assay(
+    assay_id: uuid.UUID, payload: AssayUpdate, session: SessionDep, actor: ActorDep
+) -> AssayRead:
     """Change some of an assay's details. Only the fields sent are changed; null clears one."""
     assay = await get_assay_or_404(session, assay_id)
+    await require_editor_of(session, actor, assay.study_id)
 
     requested = payload.model_dump(exclude_unset=True)
     changed = {field: value for field, value in requested.items() if getattr(assay, field) != value}
@@ -238,6 +248,7 @@ async def update_assay(assay_id: uuid.UUID, payload: AssayUpdate, session: Sessi
             action="update",
             entity_type="assay",
             entity_id=assay.id,
+            actor=actor.label,
             changes={
                 "before": {field: before[field] for field in changed},
                 "after": payload.model_dump(mode="json", include=set(changed)),
@@ -305,6 +316,7 @@ async def link_sample(
     sample_id: uuid.UUID,
     payload: AssaySampleLink,
     session: SessionDep,
+    actor: ActorDep,
     response: Response,
 ) -> AssaySampleRead:
     """Record that an assay measured a sample, or change the sample's label in it.
@@ -312,6 +324,7 @@ async def link_sample(
     Returns 201 when the link is new and 200 when it already existed, so it's safe to repeat.
     """
     assay = await get_assay_or_404(session, assay_id)
+    await require_editor_of(session, actor, assay.study_id)
     sample = await session.get(Sample, sample_id)
     if sample is None or sample.study_id != assay.study_id:
         raise HTTPException(
@@ -322,13 +335,16 @@ async def link_sample(
 
     link = await session.get(AssaySample, (assay_id, sample_id))
     if link is None:
-        link = AssaySample(assay_id=assay_id, sample_id=sample_id, label=payload.label)
+        link = AssaySample(
+            assay_id=assay_id, sample_id=sample_id, label=payload.label, created_by=actor.label
+        )
         session.add(link)
         await record_event(
             session,
             action="add_sample",
             entity_type="assay",
             entity_id=assay_id,
+            actor=actor.label,
             changes={"after": {**which, "label": payload.label}},
         )
         response.status_code = status.HTTP_201_CREATED
@@ -338,6 +354,7 @@ async def link_sample(
             action="update_sample",
             entity_type="assay",
             entity_id=assay_id,
+            actor=actor.label,
             changes={
                 "before": {**which, "label": link.label},
                 "after": {**which, "label": payload.label},
@@ -352,8 +369,12 @@ async def link_sample(
 
 
 @router.delete("/assays/{assay_id}/samples/{sample_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def unlink_sample(assay_id: uuid.UUID, sample_id: uuid.UUID, session: SessionDep) -> None:
+async def unlink_sample(
+    assay_id: uuid.UUID, sample_id: uuid.UUID, session: SessionDep, actor: ActorDep
+) -> None:
     """Remove a sample from an assay."""
+    assay = await get_assay_or_404(session, assay_id)
+    await require_editor_of(session, actor, assay.study_id)
     link = await session.get(AssaySample, (assay_id, sample_id))
     if link is None:
         raise HTTPException(
@@ -366,6 +387,7 @@ async def unlink_sample(assay_id: uuid.UUID, sample_id: uuid.UUID, session: Sess
         action="remove_sample",
         entity_type="assay",
         entity_id=assay_id,
+        actor=actor.label,
         changes={
             "before": {"sample_id": str(sample_id), "sample": sample_name, "label": link.label}
         },

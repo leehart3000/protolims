@@ -19,6 +19,7 @@ from protolims_api.audit import record_event
 from protolims_api.conflicts import external_id_conflict, is_external_id_conflict
 from protolims_api.db import SessionDep
 from protolims_api.models import Project, Sample, Study, Subject
+from protolims_api.permissions import ActorDep, require_editor_of, require_study_role
 from protolims_api.routers.studies import get_study_or_404
 from protolims_api.schemas.common import Page
 from protolims_api.schemas.sample import SampleCreate, SampleFields, SampleRead, SampleUpdate
@@ -120,14 +121,19 @@ async def makes_a_loop(
     status_code=status.HTTP_201_CREATED,
 )
 async def create_sample(
-    project_code: str, study_code: str, payload: SampleCreate, session: SessionDep
+    project_code: str,
+    study_code: str,
+    payload: SampleCreate,
+    session: SessionDep,
+    actor: ActorDep,
 ) -> SampleRead:
     """Create a sample within a study. Sample names are unique within their study."""
     study = await get_study_or_404(session, project_code, study_code)
+    await require_study_role(session, actor, study, "editor")
     subject_name, parent_name = await linked_names(
         session, study.id, payload.subject_id, payload.parent_sample_id
     )
-    sample = Sample(study_id=study.id, **payload.model_dump())
+    sample = Sample(study_id=study.id, created_by=actor.label, **payload.model_dump())
     session.add(sample)
     try:
         await session.flush()
@@ -146,6 +152,7 @@ async def create_sample(
         action="create",
         entity_type="sample",
         entity_id=sample.id,
+        actor=actor.label,
         changes={
             "after": {
                 "project": project_code,
@@ -229,7 +236,7 @@ async def get_sample(sample_id: uuid.UUID, session: SessionDep) -> SampleRead:
 
 @router.patch("/samples/{sample_id}")
 async def update_sample(
-    sample_id: uuid.UUID, payload: SampleUpdate, session: SessionDep
+    sample_id: uuid.UUID, payload: SampleUpdate, session: SessionDep, actor: ActorDep
 ) -> SampleRead:
     """Change some of a sample's details. Only the fields sent are changed; null clears one."""
     sample = await session.get(Sample, sample_id)
@@ -238,6 +245,7 @@ async def update_sample(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Sample {sample_id} not found",
         )
+    await require_editor_of(session, actor, sample.study_id)
 
     requested = payload.model_dump(exclude_unset=True)
     changed = {
@@ -273,6 +281,7 @@ async def update_sample(
             action="update",
             entity_type="sample",
             entity_id=sample.id,
+            actor=actor.label,
             changes={
                 "before": {field: before[field] for field in changed},
                 "after": payload.model_dump(mode="json", include=set(changed)),
