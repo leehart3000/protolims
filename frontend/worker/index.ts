@@ -30,7 +30,9 @@ export function proxyToApi(
   if (proxyKey) {
     proxied.headers.set(PROXY_KEY_HEADER, proxyKey)
   }
-  return fetch(proxied)
+  // Pass redirects (such as "sign in at ORCID") back to the browser, rather than following
+  // them here.
+  return fetch(proxied, { redirect: 'manual' })
 }
 
 export default {

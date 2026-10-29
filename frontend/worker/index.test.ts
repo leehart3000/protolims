@@ -38,7 +38,7 @@ describe('worker', () => {
   })
 
   it('passes API requests to the API, with forwarding headers', async () => {
-    const fetchMock = vi.fn<(request: Request) => Promise<Response>>(() =>
+    const fetchMock = vi.fn<(request: Request, init?: RequestInit) => Promise<Response>>(() =>
       Promise.resolve(new Response('api')),
     )
     vi.stubGlobal('fetch', fetchMock)
@@ -58,6 +58,7 @@ describe('worker', () => {
     expect(sent.headers.get('X-Forwarded-Host')).toBe('protolims.org')
     expect(sent.headers.get('X-Forwarded-Proto')).toBe('https')
     expect(sent.headers.get(PROXY_KEY_HEADER)).toBeNull()
+    expect(fetchMock.mock.calls[0][1]?.redirect).toBe('manual')
   })
 
   it('adds the proxy key to API requests when one is set', async () => {
