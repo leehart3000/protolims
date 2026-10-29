@@ -123,6 +123,7 @@ function ProjectDetails({ project }: { project: Project }) {
       <DetailsCard
         editTo={`/projects/${encodeURIComponent(project.code)}/edit`}
         editLabel="Edit project"
+        editNeed={{ role: 'admin', project: project.code }}
       >
         {project.description && <p className="mt-3 max-w-3xl text-muted">{project.description}</p>}
         <DetailList
@@ -142,7 +143,7 @@ function ProjectDetails({ project }: { project: Project }) {
       </div>
       <StudyList projectCode={project.code} />
       <p className="mt-4">
-        <NewStudyButton projectCode={project.code} />
+        <NewStudyButton align="start" projectCode={project.code} />
       </p>
     </>
   )

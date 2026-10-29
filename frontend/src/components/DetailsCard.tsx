@@ -1,5 +1,6 @@
 import { type ReactNode, useId } from 'react'
 
+import type { Need } from '../permissions'
 import { EditButton } from './EditButton'
 
 // The part of a page that its Edit form changes, in a box with the Edit button in its corner,
@@ -7,10 +8,12 @@ import { EditButton } from './EditButton'
 export function DetailsCard({
   editTo,
   editLabel,
+  editNeed,
   children,
 }: {
   editTo: string
   editLabel: string
+  editNeed?: Need
   children: ReactNode
 }) {
   const headingId = useId()
@@ -24,7 +27,9 @@ export function DetailsCard({
         <h2 id={headingId} className="text-xl font-semibold">
           Details
         </h2>
-        <EditButton to={editTo}>{editLabel}</EditButton>
+        <EditButton to={editTo} need={editNeed}>
+          {editLabel}
+        </EditButton>
       </div>
       {children}
     </section>

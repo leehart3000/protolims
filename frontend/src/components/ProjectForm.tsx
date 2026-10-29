@@ -61,7 +61,7 @@ export function ProjectForm({
         <TextField
           label="Code"
           name="code"
-          hint="A short, unique identifier such as TCGA-BRCA. It can contain letters, digits, dots, dashes or underscores, and must start with a letter or digit. It can't be ‘new’ or ‘edit’."
+          hint="A short, unique identifier such as TCGA-BRCA. It can contain letters, digits, dots, dashes or underscores, and must start with a letter or digit. It can't be ‘new’ or ‘edit’, and it can't be changed later, as it's part of the project's web address."
           error={codeError}
           defaultValue={initial.code}
           required

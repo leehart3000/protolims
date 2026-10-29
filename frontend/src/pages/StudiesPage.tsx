@@ -189,7 +189,7 @@ export default function StudiesPage() {
       <StudyList key={projectCode ?? ''} projectCode={projectCode} />
       {projectCode && (
         <div className="mt-4 flex items-center gap-4">
-          <NewStudyButton projectCode={projectCode} />
+          <NewStudyButton projectCode={projectCode} align="start" />
           <AllStudiesLink />
         </div>
       )}

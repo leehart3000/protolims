@@ -616,7 +616,8 @@ export interface paths {
         };
         /**
          * Who Am I
-         * @description Who is signed in on this browser, if anyone, and what this server allows.
+         * @description Who is signed in on this browser, if anyone, what they can do, and what this server
+         *     allows.
          */
         get: operations["who_am_i_api_v1_auth_me_get"];
         put?: never;
@@ -1256,6 +1257,8 @@ export interface components {
             site_admin: boolean;
             /** Public Read */
             public_read: boolean;
+            /** Roles */
+            roles: components["schemas"]["RoleRead"][];
         };
         /**
          * MemberRead
@@ -1413,6 +1416,21 @@ export interface components {
             licence?: string | null;
             /** Citation */
             citation?: string | null;
+        };
+        /**
+         * RoleRead
+         * @description One of someone's roles: on a whole project (study is null), or on one study in it.
+         */
+        RoleRead: {
+            /** Project */
+            project: string;
+            /** Study */
+            study: string | null;
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "viewer" | "editor" | "admin";
         };
         /**
          * SampleAssayRead

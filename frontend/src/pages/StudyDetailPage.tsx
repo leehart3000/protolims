@@ -16,6 +16,7 @@ import { SectionHeading } from '../components/SectionHeading'
 import { SubjectTable } from '../components/SubjectTable'
 import { DetailsCard } from '../components/DetailsCard'
 import { formatDate } from '../format'
+import { editorOf } from '../permissions'
 import { errorBox } from '../styles'
 import { useListControls } from '../useListControls'
 
@@ -87,12 +88,13 @@ function StudyDetails({ projectCode, study }: { projectCode: string; study: Stud
     queryFn: () => fetchProject(projectCode),
   })
   const studyPath = `/projects/${encodeURIComponent(projectCode)}/studies/${encodeURIComponent(study.code)}`
+  const editing = editorOf(projectCode, study.code)
 
   return (
     <>
       <PageTitle label="Study">{study.title}</PageTitle>
 
-      <DetailsCard editTo={`${studyPath}/edit`} editLabel="Edit study">
+      <DetailsCard editTo={`${studyPath}/edit`} editLabel="Edit study" editNeed={editing}>
         {study.description && <p className="mt-3 max-w-3xl text-muted">{study.description}</p>}
 
         <DetailList
@@ -121,16 +123,22 @@ function StudyDetails({ projectCode, study }: { projectCode: string; study: Stud
 
       <div className="mt-10 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
         <SectionHeading>Subjects</SectionHeading>
-        <NewButton to={`${studyPath}/subjects/new`}>New subject</NewButton>
+        <NewButton need={editing} to={`${studyPath}/subjects/new`}>
+          New subject
+        </NewButton>
       </div>
       <SubjectList projectCode={projectCode} studyCode={study.code} />
       <p className="mt-4">
-        <NewButton to={`${studyPath}/subjects/new`}>New subject</NewButton>
+        <NewButton need={editing} align="start" to={`${studyPath}/subjects/new`}>
+          New subject
+        </NewButton>
       </p>
 
       <div className="mt-10 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
         <SectionHeading>Samples</SectionHeading>
-        <NewButton to={`${studyPath}/samples/new`}>New sample</NewButton>
+        <NewButton need={editing} to={`${studyPath}/samples/new`}>
+          New sample
+        </NewButton>
       </div>
       <SampleList
         projectCode={projectCode}
@@ -138,20 +146,28 @@ function StudyDetails({ projectCode, study }: { projectCode: string; study: Stud
         emptyText="No samples in this study yet."
       />
       <p className="mt-4">
-        <NewButton to={`${studyPath}/samples/new`}>New sample</NewButton>
+        <NewButton need={editing} align="start" to={`${studyPath}/samples/new`}>
+          New sample
+        </NewButton>
       </p>
 
       <div className="mt-10 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
         <SectionHeading>Assays</SectionHeading>
-        <NewButton to={`${studyPath}/assays/new`}>New assay</NewButton>
+        <NewButton need={editing} to={`${studyPath}/assays/new`}>
+          New assay
+        </NewButton>
       </div>
       <AssayList projectCode={projectCode} studyCode={study.code} />
       <p className="mt-4">
-        <NewButton to={`${studyPath}/assays/new`}>New assay</NewButton>
+        <NewButton need={editing} align="start" to={`${studyPath}/assays/new`}>
+          New assay
+        </NewButton>
       </p>
       <div className="mt-10 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
         <SectionHeading>Data files</SectionHeading>
-        <NewButton to={`${studyPath}/data-files/new`}>New data file</NewButton>
+        <NewButton need={editing} to={`${studyPath}/data-files/new`}>
+          New data file
+        </NewButton>
       </div>
       <DataFileList
         projectCode={projectCode}
@@ -159,7 +175,9 @@ function StudyDetails({ projectCode, study }: { projectCode: string; study: Stud
         emptyText="No data files in this study yet."
       />
       <p className="mt-4">
-        <NewButton to={`${studyPath}/data-files/new`}>New data file</NewButton>
+        <NewButton need={editing} align="start" to={`${studyPath}/data-files/new`}>
+          New data file
+        </NewButton>
       </p>
     </>
   )

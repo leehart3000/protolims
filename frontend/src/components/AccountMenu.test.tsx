@@ -8,7 +8,7 @@ import AccountMenu from './AccountMenu'
 
 type Me = components['schemas']['Me']
 
-const nobody: Me = { user: null, site_admin: false, public_read: true }
+const nobody: Me = { user: null, site_admin: false, public_read: true, roles: [] }
 
 type User = components['schemas']['UserRead']
 
@@ -19,7 +19,7 @@ const joUser: User = {
   name: 'Jo Bloggs',
 }
 
-const jo: Me = { user: joUser, site_admin: false, public_read: true }
+const jo: Me = { user: joUser, site_admin: false, public_read: true, roles: [] }
 
 // Answers /auth/me with each of `answers` in turn (the last one from then on), and signing
 // out with `signOutStatus`. Returns the requests made, as "METHOD path".
@@ -44,7 +44,7 @@ function stubApi(answers: Me[], signOutStatus = 204) {
 
 function renderMenu(route = '/') {
   render(
-    <TestProviders route={route}>
+    <TestProviders route={route} me="fetch">
       <AccountMenu />
     </TestProviders>,
   )

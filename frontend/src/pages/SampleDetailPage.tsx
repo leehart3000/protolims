@@ -14,6 +14,7 @@ import { NewButton } from '../components/NewButton'
 import { SectionHeading } from '../components/SectionHeading'
 import { DetailsCard } from '../components/DetailsCard'
 import { formatDate } from '../format'
+import { editorOf } from '../permissions'
 import { sampleStatusLabel } from '../labels'
 import { errorBox, textLink } from '../styles'
 
@@ -105,6 +106,7 @@ function SampleDetails({ sample }: { sample: Sample }) {
   const projectPath = `/projects/${encodeURIComponent(sample.project_code)}`
   const studyPath = `${projectPath}/studies/${encodeURIComponent(sample.study_code)}`
   const derivedPath = `${studyPath}/samples/new?parent=${sample.id}`
+  const editing = editorOf(sample.project_code, sample.study_code)
 
   return (
     <>
@@ -119,7 +121,7 @@ function SampleDetails({ sample }: { sample: Sample }) {
       />
       <PageTitle label="Sample">{sample.name}</PageTitle>
 
-      <DetailsCard editTo={`/samples/${sample.id}/edit`} editLabel="Edit sample">
+      <DetailsCard editTo={`/samples/${sample.id}/edit`} editLabel="Edit sample" editNeed={editing}>
         <DetailList
           items={[
             ['Material', sample.material_type],
@@ -160,11 +162,15 @@ function SampleDetails({ sample }: { sample: Sample }) {
 
       <div className="mt-10 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
         <SectionHeading>Derived samples</SectionHeading>
-        <NewButton to={derivedPath}>New derived sample</NewButton>
+        <NewButton need={editing} to={derivedPath}>
+          New derived sample
+        </NewButton>
       </div>
       <DerivedSamples sample={sample} />
       <p className="mt-4">
-        <NewButton to={derivedPath}>New derived sample</NewButton>
+        <NewButton need={editing} align="start" to={derivedPath}>
+          New derived sample
+        </NewButton>
       </p>
       <h2 className="mt-10 text-xl font-semibold">Assays</h2>
       <SampleAssays sampleId={sample.id} />

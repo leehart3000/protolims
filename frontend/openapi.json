@@ -3327,7 +3327,7 @@
           "auth"
         ],
         "summary": "Who Am I",
-        "description": "Who is signed in on this browser, if anyone, and what this server allows.",
+        "description": "Who is signed in on this browser, if anyone, what they can do, and what this server\nallows.",
         "operationId": "who_am_i_api_v1_auth_me_get",
         "parameters": [
           {
@@ -5236,13 +5236,21 @@
           "public_read": {
             "type": "boolean",
             "title": "Public Read"
+          },
+          "roles": {
+            "items": {
+              "$ref": "#/components/schemas/RoleRead"
+            },
+            "type": "array",
+            "title": "Roles"
           }
         },
         "type": "object",
         "required": [
           "user",
           "site_admin",
-          "public_read"
+          "public_read",
+          "roles"
         ],
         "title": "Me",
         "description": "Who is signed in on this browser (null if nobody), and what this server allows."
@@ -5709,6 +5717,42 @@
         "type": "object",
         "title": "ProjectUpdate",
         "description": "Changes to a project. Only the fields sent are changed; sending null clears a field.\n\nThe code can't be changed, because it's part of the project's address and its studies'."
+      },
+      "RoleRead": {
+        "properties": {
+          "project": {
+            "type": "string",
+            "title": "Project"
+          },
+          "study": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Study"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "viewer",
+              "editor",
+              "admin"
+            ],
+            "title": "Role"
+          }
+        },
+        "type": "object",
+        "required": [
+          "project",
+          "study",
+          "role"
+        ],
+        "title": "RoleRead",
+        "description": "One of someone's roles: on a whole project (study is null), or on one study in it."
       },
       "SampleAssayRead": {
         "properties": {

@@ -11,7 +11,9 @@ function stubEmptyApi() {
     'fetch',
     vi.fn((request: Request) => {
       if (new URL(request.url).pathname === '/api/v1/auth/me') {
-        return Promise.resolve(Response.json({ user: null, site_admin: false, public_read: true }))
+        return Promise.resolve(
+          Response.json({ user: null, site_admin: false, public_read: true, roles: [] }),
+        )
       }
       return Promise.resolve(Response.json({ items: [], total: 0 }))
     }),
@@ -22,7 +24,7 @@ beforeEach(stubEmptyApi)
 
 function renderApp(route = '/') {
   render(
-    <TestProviders route={route}>
+    <TestProviders route={route} me="fetch">
       <App />
     </TestProviders>,
   )

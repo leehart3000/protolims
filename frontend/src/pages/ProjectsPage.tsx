@@ -124,11 +124,15 @@ export default function ProjectsPage() {
     <>
       <div className="flex items-center justify-between gap-4">
         <PageTitle>Projects</PageTitle>
-        <NewButton to="/projects/new">New project</NewButton>
+        <NewButton to="/projects/new" need={{ siteAdmin: true }}>
+          New project
+        </NewButton>
       </div>
       <ProjectList />
       <p className="mt-4">
-        <NewButton to="/projects/new">New project</NewButton>
+        <NewButton align="start" to="/projects/new" need={{ siteAdmin: true }}>
+          New project
+        </NewButton>
       </p>
     </>
   )

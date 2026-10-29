@@ -23,6 +23,7 @@ import { formatDate } from '../format'
 import { dataFileLevelLabel } from '../labels'
 import { errorBox, textLink } from '../styles'
 import { useListControls } from '../useListControls'
+import { editorOf } from '../permissions'
 
 type DataFile = components['schemas']['DataFileRead']
 
@@ -147,7 +148,11 @@ function DataFileDetails({ file }: { file: DataFile }) {
       />
       <PageTitle label="Data file">{file.name}</PageTitle>
 
-      <DetailsCard editTo={`/data-files/${file.id}/edit`} editLabel="Edit data file">
+      <DetailsCard
+        editTo={`/data-files/${file.id}/edit`}
+        editLabel="Edit data file"
+        editNeed={editorOf(file.project_code, file.study_code)}
+      >
         <DetailList
           items={[
             ['Location', <Location uri={file.uri} />],

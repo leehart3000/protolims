@@ -15,6 +15,7 @@ import { PagedTable } from '../components/PagedTable'
 import { SearchBox } from '../components/SearchBox'
 import { SectionHeading } from '../components/SectionHeading'
 import { formatDate } from '../format'
+import { editorOf } from '../permissions'
 import { errorBox } from '../styles'
 import { useListControls } from '../useListControls'
 
@@ -71,6 +72,7 @@ function AssayDetails({ assay }: { assay: Assay }) {
   const projectPath = `/projects/${encodeURIComponent(assay.project_code)}`
   const studyPath = `${projectPath}/studies/${encodeURIComponent(assay.study_code)}`
   const newFilePath = `${studyPath}/data-files/new?assay=${assay.id}`
+  const editing = editorOf(assay.project_code, assay.study_code)
 
   return (
     <>
@@ -85,7 +87,7 @@ function AssayDetails({ assay }: { assay: Assay }) {
       />
       <PageTitle label="Assay">{assay.name}</PageTitle>
 
-      <DetailsCard editTo={`/assays/${assay.id}/edit`} editLabel="Edit assay">
+      <DetailsCard editTo={`/assays/${assay.id}/edit`} editLabel="Edit assay" editNeed={editing}>
         <DetailList
           items={[
             ['Measurement type', assay.measurement_type],
@@ -111,7 +113,9 @@ function AssayDetails({ assay }: { assay: Assay }) {
 
       <div className="mt-10 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
         <SectionHeading>Data files</SectionHeading>
-        <NewButton to={newFilePath}>New data file</NewButton>
+        <NewButton need={editing} to={newFilePath}>
+          New data file
+        </NewButton>
       </div>
       <DataFileList
         projectCode={assay.project_code}
@@ -120,7 +124,9 @@ function AssayDetails({ assay }: { assay: Assay }) {
         emptyText="No data files from this assay yet."
       />
       <p className="mt-4">
-        <NewButton to={newFilePath}>New data file</NewButton>
+        <NewButton need={editing} align="start" to={newFilePath}>
+          New data file
+        </NewButton>
       </p>
     </>
   )

@@ -12,6 +12,7 @@ import { SampleList } from '../components/SampleList'
 import { formatDate } from '../format'
 import { subjectTypeLabel } from '../labels'
 import { errorBox } from '../styles'
+import { editorOf } from '../permissions'
 
 type Subject = components['schemas']['SubjectRead']
 
@@ -35,7 +36,11 @@ function SubjectDetails({ subject }: { subject: Subject }) {
       />
       <PageTitle label="Subject">{subject.name}</PageTitle>
 
-      <DetailsCard editTo={`/subjects/${subject.id}/edit`} editLabel="Edit subject">
+      <DetailsCard
+        editTo={`/subjects/${subject.id}/edit`}
+        editLabel="Edit subject"
+        editNeed={editorOf(subject.project_code, subject.study_code)}
+      >
         <DetailList
           items={[
             ['Type', subjectTypeLabel(subject.subject_type)],
