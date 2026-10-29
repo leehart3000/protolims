@@ -90,7 +90,10 @@ function ProjectList() {
               <tbody className="divide-y divide-line">
                 {items.map((project) => (
                   <tr key={project.id} className={tableRow}>
-                    <td className={`${tableCell} font-mono whitespace-nowrap`}>{project.code}</td>
+                    {/* On phones, a long code can break after a dash rather than widen the table. */}
+                    <td className={`${tableCell} font-mono sm:whitespace-nowrap`}>
+                      {project.code}
+                    </td>
                     <td className={tableCell}>
                       <Link
                         to={`/projects/${encodeURIComponent(project.code)}`}
@@ -99,7 +102,7 @@ function ProjectList() {
                         {project.name}
                       </Link>
                       {project.description && (
-                        <p className="mt-1 max-w-56 truncate text-muted sm:hidden">
+                        <p className="mt-1 line-clamp-2 text-muted sm:hidden">
                           {project.description}
                         </p>
                       )}

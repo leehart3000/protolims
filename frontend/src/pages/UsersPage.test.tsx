@@ -104,6 +104,9 @@ describe('UsersPage', () => {
     expect(within(carolRow).getByText('Not signed in yet')).toBeInTheDocument()
     expect(within(carolRow).getByText('None')).toBeInTheDocument()
     expect(within(carolRow).getByText('Never')).toBeInTheDocument()
+    // On narrow screens, when they last signed in goes under their name instead.
+    expect(within(carolRow).getByText('Never signed in')).toBeInTheDocument()
+    expect(within(leeRow).getByText('Last signed in 29 October 2026')).toBeInTheDocument()
   })
 
   it('sorts and searches', async () => {

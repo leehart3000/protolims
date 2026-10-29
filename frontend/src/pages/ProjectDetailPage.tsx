@@ -95,7 +95,8 @@ function StudyList({ projectCode }: { projectCode: string }) {
               <tbody className="divide-y divide-line">
                 {items.map((study) => (
                   <tr key={study.id} className={tableRow}>
-                    <td className={`${tableCell} font-mono whitespace-nowrap`}>{study.code}</td>
+                    {/* On phones, a long code can break after a dash rather than widen the table. */}
+                    <td className={`${tableCell} font-mono sm:whitespace-nowrap`}>{study.code}</td>
                     <td className={tableCell}>
                       <Link
                         to={`/projects/${encodeURIComponent(projectCode)}/studies/${encodeURIComponent(study.code)}`}

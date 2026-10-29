@@ -111,7 +111,11 @@ function UserList() {
                   <th scope="col" className={tableHeader}>
                     Roles
                   </th>
-                  {heading('Last signed in', 'last_signed_in_at', tableHeader)}
+                  {heading(
+                    'Last signed in',
+                    'last_signed_in_at',
+                    `${tableHeader} hidden sm:table-cell`,
+                  )}
                   <th scope="col" className={`${tableHeader} w-px`}>
                     <span className="sr-only">Remove</span>
                   </th>
@@ -122,6 +126,12 @@ function UserList() {
                   <tr key={user.id} className={tableRow}>
                     <td className={tableCell}>
                       <PersonCell user={user} />
+                      {/* On narrow screens, this replaces the Last signed in column. */}
+                      <p className="mt-1 text-xs text-muted sm:hidden">
+                        {user.last_signed_in_at
+                          ? `Last signed in ${formatDate(user.last_signed_in_at)}`
+                          : 'Never signed in'}
+                      </p>
                     </td>
                     <td className={tableCell}>
                       <ul className="space-y-1">
@@ -136,7 +146,9 @@ function UserList() {
                         )}
                       </ul>
                     </td>
-                    <td className={`${tableCell} whitespace-nowrap text-muted`}>
+                    <td
+                      className={`${tableCell} hidden whitespace-nowrap text-muted sm:table-cell`}
+                    >
                       {user.last_signed_in_at ? formatDate(user.last_signed_in_at) : 'Never'}
                     </td>
                     <td className={tableCell}>

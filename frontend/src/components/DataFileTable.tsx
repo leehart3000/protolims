@@ -78,7 +78,8 @@ export function DataFileTable({
         <tbody className="divide-y divide-line">
           {files.map((file) => (
             <tr key={file.id} className={tableRow}>
-              <td className={tableCell}>
+              {/* Long file names can break anywhere, rather than widen the table. */}
+              <td className={`${tableCell} wrap-anywhere`}>
                 <Link to={`/data-files/${file.id}`} className={rowLink}>
                   {file.name}
                 </Link>
