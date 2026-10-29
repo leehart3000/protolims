@@ -8,7 +8,7 @@ import { Breadcrumbs } from '../components/Breadcrumbs'
 import { DetailList } from '../components/DetailList'
 import { PageTitle } from '../components/PageTitle'
 import { SubjectForm } from '../components/SubjectForm'
-import { NewIcon } from '../icons'
+import { NewIcon, SubjectIcon } from '../icons'
 import {
   DuplicateNameError,
   DuplicateExternalIdError,
@@ -74,7 +74,7 @@ export default function NewSubjectPage() {
           { label: 'New subject' },
         ]}
       />
-      <PageTitle>New subject</PageTitle>
+      <PageTitle icon={SubjectIcon}>New subject</PageTitle>
       <DetailList
         items={[
           ['Study', study.data?.title ?? null],

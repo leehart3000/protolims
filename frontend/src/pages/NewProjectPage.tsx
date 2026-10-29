@@ -7,7 +7,7 @@ import { Breadcrumbs } from '../components/Breadcrumbs'
 import { PageTitle } from '../components/PageTitle'
 import { ProjectForm } from '../components/ProjectForm'
 import { DuplicateCodeError, refusal } from '../forms'
-import { NewIcon } from '../icons'
+import { NewIcon, ProjectIcon } from '../icons'
 
 type ProjectCreate = components['schemas']['ProjectCreate']
 
@@ -39,7 +39,7 @@ export default function NewProjectPage() {
   return (
     <>
       <Breadcrumbs items={[{ label: 'Projects', to: '/projects' }, { label: 'New project' }]} />
-      <PageTitle>New project</PageTitle>
+      <PageTitle icon={ProjectIcon}>New project</PageTitle>
 
       <ProjectForm
         initial={{

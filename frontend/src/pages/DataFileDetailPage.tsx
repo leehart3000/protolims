@@ -148,7 +148,9 @@ function DataFileDetails({ file }: { file: DataFile }) {
           { label: file.name },
         ]}
       />
-      <PageTitle label="Data file">{file.name}</PageTitle>
+      <PageTitle icon={DataFileIcon} label="Data file">
+        {file.name}
+      </PageTitle>
 
       <DetailsCard
         editTo={`/data-files/${file.id}/edit`}

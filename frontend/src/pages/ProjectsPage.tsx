@@ -19,6 +19,7 @@ import {
   tableWrapper,
 } from '../styles'
 import { useListControls } from '../useListControls'
+import { ProjectIcon } from '../icons'
 
 type ProjectColumn = Exclude<ProjectSort, `-${string}`>
 
@@ -126,7 +127,7 @@ export default function ProjectsPage() {
   return (
     <>
       <div className="flex items-center justify-between gap-4">
-        <PageTitle>Projects</PageTitle>
+        <PageTitle icon={ProjectIcon}>Projects</PageTitle>
         <NewButton to="/projects/new" need={{ siteAdmin: true }}>
           New project
         </NewButton>

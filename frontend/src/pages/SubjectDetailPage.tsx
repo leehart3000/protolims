@@ -14,7 +14,7 @@ import { subjectTypeLabel } from '../labels'
 import { errorBox } from '../styles'
 import { editorOf } from '../permissions'
 import { SectionHeading } from '../components/SectionHeading'
-import { SampleIcon } from '../icons'
+import { SampleIcon, SubjectIcon } from '../icons'
 
 type Subject = components['schemas']['SubjectRead']
 
@@ -36,7 +36,9 @@ function SubjectDetails({ subject }: { subject: Subject }) {
           { label: subject.name },
         ]}
       />
-      <PageTitle label="Subject">{subject.name}</PageTitle>
+      <PageTitle icon={SubjectIcon} label="Subject">
+        {subject.name}
+      </PageTitle>
 
       <DetailsCard
         editTo={`/subjects/${subject.id}/edit`}

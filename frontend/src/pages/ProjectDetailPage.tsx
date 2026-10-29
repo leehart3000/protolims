@@ -25,7 +25,7 @@ import {
 } from '../styles'
 import { useListControls } from '../useListControls'
 import { SectionHeading } from '../components/SectionHeading'
-import { StudyIcon } from '../icons'
+import { ProjectIcon, StudyIcon } from '../icons'
 
 type Project = components['schemas']['ProjectRead']
 type StudyColumn = Exclude<StudySort, `-${string}`>
@@ -122,7 +122,9 @@ function StudyList({ projectCode }: { projectCode: string }) {
 function ProjectDetails({ project }: { project: Project }) {
   return (
     <>
-      <PageTitle label="Project">{project.name}</PageTitle>
+      <PageTitle icon={ProjectIcon} label="Project">
+        {project.name}
+      </PageTitle>
 
       <DetailsCard
         editTo={`/projects/${encodeURIComponent(project.code)}/edit`}

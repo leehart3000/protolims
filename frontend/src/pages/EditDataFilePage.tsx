@@ -15,7 +15,7 @@ import {
 import type { DataFileLevel } from '../labels'
 import { errorBox } from '../styles'
 import { DuplicateExternalIdError, isExternalIdConflict, refusal } from '../forms'
-import { SaveIcon } from '../icons'
+import { DataFileIcon, SaveIcon } from '../icons'
 
 type DataFile = components['schemas']['DataFileRead']
 type DataFileUpdate = components['schemas']['DataFileUpdate']
@@ -102,7 +102,9 @@ function EditDataFile({ file }: { file: DataFile }) {
           { label: 'Edit' },
         ]}
       />
-      <PageTitle label="Edit data file">{file.name}</PageTitle>
+      <PageTitle icon={DataFileIcon} label="Edit data file">
+        {file.name}
+      </PageTitle>
 
       {assays.isError ? (
         <p role="alert" className={`mt-6 ${errorBox}`}>

@@ -120,7 +120,9 @@ function SampleDetails({ sample }: { sample: Sample }) {
           { label: sample.name },
         ]}
       />
-      <PageTitle label="Sample">{sample.name}</PageTitle>
+      <PageTitle icon={SampleIcon} label="Sample">
+        {sample.name}
+      </PageTitle>
 
       <DetailsCard editTo={`/samples/${sample.id}/edit`} editLabel="Edit sample" editNeed={editing}>
         <DetailList

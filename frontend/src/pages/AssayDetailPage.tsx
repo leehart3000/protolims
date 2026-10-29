@@ -18,7 +18,7 @@ import { formatDate } from '../format'
 import { editorOf } from '../permissions'
 import { errorBox } from '../styles'
 import { useListControls } from '../useListControls'
-import { DataFileIcon, SampleIcon } from '../icons'
+import { AssayIcon, DataFileIcon, SampleIcon } from '../icons'
 
 type Assay = components['schemas']['AssayRead']
 
@@ -86,7 +86,9 @@ function AssayDetails({ assay }: { assay: Assay }) {
           { label: assay.name },
         ]}
       />
-      <PageTitle label="Assay">{assay.name}</PageTitle>
+      <PageTitle icon={AssayIcon} label="Assay">
+        {assay.name}
+      </PageTitle>
 
       <DetailsCard editTo={`/assays/${assay.id}/edit`} editLabel="Edit assay" editNeed={editing}>
         <DetailList

@@ -16,7 +16,7 @@ import {
 } from '../forms'
 import { collectedAt, type SampleFormValues } from '../samples'
 import { errorBox } from '../styles'
-import { SaveIcon } from '../icons'
+import { SampleIcon, SaveIcon } from '../icons'
 
 type Sample = components['schemas']['SampleRead']
 type SampleUpdate = components['schemas']['SampleUpdate']
@@ -138,7 +138,9 @@ function EditSample({ sample }: { sample: Sample }) {
           { label: 'Edit' },
         ]}
       />
-      <PageTitle label="Edit sample">{sample.name}</PageTitle>
+      <PageTitle icon={SampleIcon} label="Edit sample">
+        {sample.name}
+      </PageTitle>
 
       {subjects.isError || samples.isError ? (
         <p role="alert" className={`mt-6 ${errorBox}`}>

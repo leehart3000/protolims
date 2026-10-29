@@ -20,7 +20,7 @@ import { formatDate } from '../format'
 import { editorOf } from '../permissions'
 import { errorBox } from '../styles'
 import { useListControls } from '../useListControls'
-import { AssayIcon, DataFileIcon, SampleIcon, SubjectIcon } from '../icons'
+import { AssayIcon, DataFileIcon, SampleIcon, StudyIcon, SubjectIcon } from '../icons'
 
 type Study = components['schemas']['StudyRead']
 
@@ -94,7 +94,9 @@ function StudyDetails({ projectCode, study }: { projectCode: string; study: Stud
 
   return (
     <>
-      <PageTitle label="Study">{study.title}</PageTitle>
+      <PageTitle icon={StudyIcon} label="Study">
+        {study.title}
+      </PageTitle>
 
       <DetailsCard editTo={`${studyPath}/edit`} editLabel="Edit study" editNeed={editing}>
         {study.description && <p className="mt-3 max-w-3xl text-muted">{study.description}</p>}

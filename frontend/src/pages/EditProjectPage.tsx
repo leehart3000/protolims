@@ -10,7 +10,7 @@ import { ProjectForm } from '../components/ProjectForm'
 import type { ProjectDetails } from '../projects'
 import { refusal } from '../forms'
 import { errorBox } from '../styles'
-import { SaveIcon } from '../icons'
+import { ProjectIcon, SaveIcon } from '../icons'
 
 type Project = components['schemas']['ProjectRead']
 type ProjectUpdate = components['schemas']['ProjectUpdate']
@@ -71,7 +71,9 @@ function EditProject({ project }: { project: Project }) {
           { label: 'Edit' },
         ]}
       />
-      <PageTitle label="Edit project">{project.name}</PageTitle>
+      <PageTitle icon={ProjectIcon} label="Edit project">
+        {project.name}
+      </PageTitle>
 
       <ProjectForm
         initial={initial}

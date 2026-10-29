@@ -16,7 +16,7 @@ import {
 } from '../forms'
 import { collectedAt } from '../samples'
 import { errorBox } from '../styles'
-import { NewIcon } from '../icons'
+import { NewIcon, SampleIcon } from '../icons'
 
 type SampleCreate = components['schemas']['SampleCreate']
 type Sample = components['schemas']['SampleRead']
@@ -128,7 +128,7 @@ export default function NewSamplePage() {
           { label: 'New sample' },
         ]}
       />
-      <PageTitle>New sample</PageTitle>
+      <PageTitle icon={SampleIcon}>New sample</PageTitle>
       <DetailList
         items={[
           ['Study', study.data?.title ?? null],

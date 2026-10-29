@@ -16,7 +16,7 @@ import {
 import type { SubjectType } from '../labels'
 import { errorBox } from '../styles'
 import type { SubjectDetails } from '../subjects'
-import { SaveIcon } from '../icons'
+import { SaveIcon, SubjectIcon } from '../icons'
 
 type Subject = components['schemas']['SubjectRead']
 type SubjectUpdate = components['schemas']['SubjectUpdate']
@@ -90,7 +90,9 @@ function EditSubject({ subject }: { subject: Subject }) {
           { label: 'Edit' },
         ]}
       />
-      <PageTitle label="Edit subject">{subject.name}</PageTitle>
+      <PageTitle icon={SubjectIcon} label="Edit subject">
+        {subject.name}
+      </PageTitle>
 
       <SubjectForm
         initial={initial}

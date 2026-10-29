@@ -15,7 +15,7 @@ import {
   refusal,
 } from '../forms'
 import { errorBox } from '../styles'
-import { SaveIcon } from '../icons'
+import { AssayIcon, SaveIcon } from '../icons'
 
 type Assay = components['schemas']['AssayRead']
 type AssayUpdate = components['schemas']['AssayUpdate']
@@ -100,7 +100,9 @@ function EditAssay({ assay }: { assay: Assay }) {
           { label: 'Edit' },
         ]}
       />
-      <PageTitle label="Edit assay">{assay.name}</PageTitle>
+      <PageTitle icon={AssayIcon} label="Edit assay">
+        {assay.name}
+      </PageTitle>
 
       <AssayForm
         initial={initial}

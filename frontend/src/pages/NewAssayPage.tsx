@@ -9,7 +9,7 @@ import { AssayForm } from '../components/AssayForm'
 import { Breadcrumbs } from '../components/Breadcrumbs'
 import { DetailList } from '../components/DetailList'
 import { PageTitle } from '../components/PageTitle'
-import { NewIcon } from '../icons'
+import { AssayIcon, NewIcon } from '../icons'
 import {
   DuplicateNameError,
   DuplicateExternalIdError,
@@ -73,7 +73,7 @@ export default function NewAssayPage() {
           { label: 'New assay' },
         ]}
       />
-      <PageTitle>New assay</PageTitle>
+      <PageTitle icon={AssayIcon}>New assay</PageTitle>
       <DetailList
         items={[
           ['Study', study.data?.title ?? null],

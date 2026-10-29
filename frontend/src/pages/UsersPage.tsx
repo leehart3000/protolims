@@ -10,7 +10,7 @@ import { SearchBox } from '../components/SearchBox'
 import { SiteAdminBadge } from '../components/SiteAdminBadge'
 import { SortHeader } from '../components/SortHeader'
 import { formatDate } from '../format'
-import { RemovePersonIcon } from '../icons'
+import { MembersIcon, RemovePersonIcon } from '../icons'
 import { removeUser } from '../members'
 import {
   errorBox,
@@ -192,7 +192,7 @@ export default function UsersPage() {
 
   return (
     <>
-      <PageTitle>Users</PageTitle>
+      <PageTitle icon={MembersIcon}>Users</PageTitle>
       {me?.site_admin ? (
         <>
           <p className="mt-2 max-w-3xl text-muted">

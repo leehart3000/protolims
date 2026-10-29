@@ -11,7 +11,7 @@ import { PageTitle } from '../components/PageTitle'
 import { DuplicateLocationError, invalidDetailsMessage } from '../dataFiles'
 import { errorBox } from '../styles'
 import { DuplicateExternalIdError, isExternalIdConflict, refusal } from '../forms'
-import { NewIcon } from '../icons'
+import { DataFileIcon, NewIcon } from '../icons'
 
 type Assay = components['schemas']['AssayRead']
 type DataFileCreate = components['schemas']['DataFileCreate']
@@ -117,7 +117,7 @@ export default function NewDataFilePage() {
           { label: 'New data file' },
         ]}
       />
-      <PageTitle>New data file</PageTitle>
+      <PageTitle icon={DataFileIcon}>New data file</PageTitle>
       <DetailList
         items={[
           ['Study', study.data?.title ?? null],

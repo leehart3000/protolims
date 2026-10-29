@@ -22,6 +22,7 @@ import {
   textLink,
 } from '../styles'
 import { useListControls } from '../useListControls'
+import { StudyIcon } from '../icons'
 
 type StudyColumn = Exclude<AllStudySort, `-${string}`>
 
@@ -177,7 +178,7 @@ export default function StudiesPage() {
         />
       )}
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-        <PageTitle>Studies</PageTitle>
+        <PageTitle icon={StudyIcon}>Studies</PageTitle>
         {projectCode && (
           <div className="flex items-center gap-4">
             <AllStudiesLink />

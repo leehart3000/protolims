@@ -9,7 +9,7 @@ import { DetailList } from '../components/DetailList'
 import { PageTitle } from '../components/PageTitle'
 import { StudyForm } from '../components/StudyForm'
 import { DuplicateCodeError, refusal } from '../forms'
-import { NewIcon } from '../icons'
+import { NewIcon, StudyIcon } from '../icons'
 
 type StudyCreate = components['schemas']['StudyCreate']
 
@@ -62,7 +62,7 @@ export default function NewStudyPage() {
           { label: 'New study' },
         ]}
       />
-      <PageTitle>New study</PageTitle>
+      <PageTitle icon={StudyIcon}>New study</PageTitle>
       <DetailList
         items={[
           ['Project', project.data?.name ?? null],

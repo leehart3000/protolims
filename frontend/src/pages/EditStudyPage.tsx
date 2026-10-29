@@ -10,7 +10,7 @@ import { StudyForm } from '../components/StudyForm'
 import type { StudyDetails } from '../studies'
 import { refusal } from '../forms'
 import { errorBox } from '../styles'
-import { SaveIcon } from '../icons'
+import { SaveIcon, StudyIcon } from '../icons'
 
 type Study = components['schemas']['StudyRead']
 type StudyUpdate = components['schemas']['StudyUpdate']
@@ -70,7 +70,9 @@ function EditStudy({ projectCode, study }: { projectCode: string; study: Study }
           { label: 'Edit' },
         ]}
       />
-      <PageTitle label="Edit study">{study.title}</PageTitle>
+      <PageTitle icon={StudyIcon} label="Edit study">
+        {study.title}
+      </PageTitle>
 
       <StudyForm
         initial={{
