@@ -86,10 +86,10 @@ describe('UsersPage', () => {
       '/projects/P1/studies/S1',
     )
     expect(aliceRow).toHaveTextContent('P1 / S1: Admin')
-    expect(within(aliceRow).getByRole('link', { name: alice.subject })).toHaveAttribute(
-      'href',
-      'https://orcid.org/0000-0001-2345-6789',
-    )
+    const orcidLink = within(aliceRow).getByRole('link', {
+      name: `${alice.subject} (opens in a new tab)`,
+    })
+    expect(orcidLink).toHaveAttribute('href', 'https://orcid.org/0000-0001-2345-6789')
 
     const carolRow = screen.getByRole('row', { name: /0000-0001-1111-1118/ })
     expect(within(carolRow).getByText('Not signed in yet')).toBeInTheDocument()
@@ -134,6 +134,8 @@ describe('UsersPage', () => {
     stubUsers(() => Response.json({ items: [], total: 0 }))
     renderPage(signedInWith([]))
 
-    expect(screen.getByText('Only site administrators can see this page.')).toBeInTheDocument()
+    expect(
+      screen.getByText('Only site administrators can see the list of users.'),
+    ).toBeInTheDocument()
   })
 })

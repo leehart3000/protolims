@@ -40,7 +40,9 @@ export default function App() {
   return (
     <div className="flex min-h-screen flex-col">
       <header className="border-b border-line bg-panel">
-        <div className="mx-auto flex h-16 max-w-6xl items-center gap-4 px-4 sm:gap-6">
+        {/* On narrow screens the links go on a second row, so the header never runs off the
+            side of the page. */}
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-4 px-4 py-2 sm:h-16 sm:flex-nowrap sm:gap-6 sm:py-0">
           <Link to="/" className="flex items-center gap-2.5">
             <img src="/brand/protolims-mark.svg" alt="" className="size-8 dark:hidden" />
             <img src="/brand/protolims-mark-dark.svg" alt="" className="hidden size-8 dark:block" />
@@ -49,7 +51,10 @@ export default function App() {
               Proto<span className="font-bold text-primary">LIMS</span>
             </span>
           </Link>
-          <nav aria-label="Main" className="flex flex-1 gap-1">
+          <nav
+            aria-label="Main"
+            className="order-last -mx-2 flex w-full gap-1 sm:order-none sm:mx-0 sm:w-auto sm:flex-1"
+          >
             {!mustSignIn && (
               <>
                 <NavLink to="/projects" className={navLinkClass}>
@@ -66,8 +71,10 @@ export default function App() {
               </>
             )}
           </nav>
-          <AccountMenu />
-          <ThemeToggle />
+          <div className="ml-auto flex items-center gap-1 sm:ml-0">
+            <AccountMenu />
+            <ThemeToggle />
+          </div>
         </div>
       </header>
 

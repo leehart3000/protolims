@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Save, UserMinus, UserPlus, Users } from 'lucide-react'
+import { Save, UserRoundMinus, UserRoundPlus, UsersRound } from 'lucide-react'
 import { useId, useState } from 'react'
 
 import { fetchMembers } from '../api/queries'
@@ -17,9 +17,9 @@ import {
   tableHead,
   tableHeader,
   tableWrapper,
-  textLink,
 } from '../styles'
 import { useMe } from '../useMe'
+import { PersonCell } from './PersonCell'
 import { SectionHeading } from './SectionHeading'
 
 type Member = components['schemas']['MemberRead']
@@ -36,6 +36,11 @@ export function MembersSection(place: Place) {
   return <Members place={place} />
 }
 
+// Gold, for a button with something waiting to be done, such as an unsaved change. Dark text
+// on gold reads well in both themes.
+const unsavedButton =
+  'rounded-md border border-gold bg-gold px-3 py-1.5 text-sm font-medium text-ink hover:bg-gold/85 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-60'
+
 // One person's row: a new role is chosen, then saved; or they're removed (role null).
 function MemberRow({
   member,
@@ -48,20 +53,18 @@ function MemberRow({
 }) {
   const { user, role } = member
   const [chosen, setChosen] = useState<Role>(role)
+  const unsaved = chosen !== role
   const who = user.name ?? user.subject
+  const unsavedId = useId()
 
   return (
     <tr>
       <td className={tableCell}>
-        {user.name ?? <span className="text-muted italic">Not signed in yet</span>}
-      </td>
-      <td className={`${tableCell} font-mono whitespace-nowrap`}>
-        <a className={textLink} href={`https://orcid.org/${user.subject}`}>
-          {user.subject}
-        </a>
+        <PersonCell user={user} />
       </td>
       <td className={tableCell}>
-        <div className="flex items-center gap-2">
+        {/* Save goes under the role on narrow screens. */}
+        <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center">
           <select
             aria-label={`Role for ${who}`}
             value={chosen}
@@ -77,18 +80,25 @@ function MemberRow({
               </option>
             ))}
           </select>
+          {/* Gold while there's a change to save, so it isn't missed. */}
           <button
             type="button"
             aria-label={`Save role for ${who}`}
-            disabled={busy || chosen === role}
+            aria-describedby={unsaved ? unsavedId : undefined}
+            disabled={busy || !unsaved}
             onClick={() => {
               onChange(chosen)
             }}
-            className={`${secondaryButton} inline-flex items-center gap-2`}
+            className={`${unsaved ? unsavedButton : secondaryButton} inline-flex items-center gap-2`}
           >
             <Save aria-hidden="true" className="size-4 shrink-0" />
             Save
           </button>
+          {unsaved && (
+            <span id={unsavedId} className="sr-only">
+              Unsaved change
+            </span>
+          )}
         </div>
       </td>
       <td className={tableCell}>
@@ -101,8 +111,9 @@ function MemberRow({
           }}
           className={`${secondaryButton} inline-flex items-center gap-2`}
         >
-          <UserMinus aria-hidden="true" className="size-4 shrink-0" />
-          Remove
+          <UserRoundMinus aria-hidden="true" className="size-4 shrink-0" />
+          {/* Just the icon on narrow screens; the button's label still names who. */}
+          <span className="hidden sm:inline">Remove</span>
         </button>
       </td>
     </tr>
@@ -129,7 +140,7 @@ function Members({ place }: { place: Place }) {
 
   return (
     <section className="mt-10">
-      <SectionHeading icon={Users}>Members</SectionHeading>
+      <SectionHeading icon={UsersRound}>Members</SectionHeading>
       <p className="mt-2 max-w-3xl text-muted">
         {studyCode === undefined
           ? 'People with a role on this project, which covers all its studies.'
@@ -155,10 +166,7 @@ function Members({ place }: { place: Place }) {
             <thead className={tableHead}>
               <tr>
                 <th scope="col" className={tableHeader}>
-                  Name
-                </th>
-                <th scope="col" className={tableHeader}>
-                  ORCID iD
+                  Name and ORCID iD
                 </th>
                 <th scope="col" className={tableHeader}>
                   Role
@@ -238,7 +246,7 @@ function Members({ place }: { place: Place }) {
           disabled={change.isPending}
           className={`${primaryButton} inline-flex items-center gap-2 text-sm`}
         >
-          <UserPlus aria-hidden="true" className="size-4 shrink-0" />
+          <UserRoundPlus aria-hidden="true" className="size-4 shrink-0" />
           Add
         </button>
       </form>

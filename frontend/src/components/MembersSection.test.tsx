@@ -73,10 +73,11 @@ describe('MembersSection', () => {
     renderSection()
 
     const aliceRow = await screen.findByRole('row', { name: /Alice/ })
-    expect(within(aliceRow).getByRole('link', { name: alice.user.subject })).toHaveAttribute(
-      'href',
-      'https://orcid.org/0000-0001-2345-6789',
-    )
+    const orcidLink = within(aliceRow).getByRole('link', {
+      name: `${alice.user.subject} (opens in a new tab)`,
+    })
+    expect(orcidLink).toHaveAttribute('href', 'https://orcid.org/0000-0001-2345-6789')
+    expect(orcidLink).toHaveAttribute('target', '_blank')
     const carolRow = screen.getByRole('row', { name: /0000-0001-1111-1118/ })
     expect(within(carolRow).getByText('Not signed in yet')).toBeInTheDocument()
     expect(screen.getByRole('combobox', { name: 'Role for Alice' })).toHaveValue('editor')
@@ -92,6 +93,7 @@ describe('MembersSection', () => {
     expect(save).toBeDisabled()
     await user.selectOptions(screen.getByRole('combobox', { name: 'Role for Alice' }), 'admin')
     expect(changes).toEqual([])
+    expect(save).toHaveAccessibleDescription('Unsaved change')
     await user.click(save)
     // Buttons are disabled while a change is being saved.
     const remove = screen.getByRole('button', { name: 'Remove 0000-0001-1111-1118' })

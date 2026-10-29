@@ -5,6 +5,7 @@ import { fetchUserPage, type UserSort } from '../api/queries'
 import type { components } from '../api/schema'
 import { PagedTable } from '../components/PagedTable'
 import { PageTitle } from '../components/PageTitle'
+import { PersonCell } from '../components/PersonCell'
 import { SearchBox } from '../components/SearchBox'
 import { SortHeader } from '../components/SortHeader'
 import { formatDate } from '../format'
@@ -93,10 +94,7 @@ function UserList() {
             <table className={table} aria-label="Users">
               <thead className={tableHead}>
                 <tr>
-                  {heading('Name', 'name', tableHeader)}
-                  <th scope="col" className={tableHeader}>
-                    ORCID iD
-                  </th>
+                  {heading('Name and ORCID iD', 'name', tableHeader)}
                   <th scope="col" className={tableHeader}>
                     Roles
                   </th>
@@ -107,12 +105,7 @@ function UserList() {
                 {items.map((user) => (
                   <tr key={user.id} className={tableRow}>
                     <td className={tableCell}>
-                      {user.name ?? <span className="text-muted italic">Not signed in yet</span>}
-                    </td>
-                    <td className={`${tableCell} font-mono whitespace-nowrap`}>
-                      <a className={textLink} href={`https://orcid.org/${user.subject}`}>
-                        {user.subject}
-                      </a>
+                      <PersonCell user={user} />
                     </td>
                     <td className={tableCell}>
                       <ul className="space-y-1">
@@ -157,7 +150,7 @@ export default function UsersPage() {
           <UserList />
         </>
       ) : (
-        <p className="mt-6 text-muted">Only site administrators can see this page.</p>
+        <p className="mt-6 text-muted">Only site administrators can see the list of users.</p>
       )}
     </>
   )
