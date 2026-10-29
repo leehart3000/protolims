@@ -3,6 +3,7 @@
 from typing import Any
 
 from fastapi.testclient import TestClient
+from helpers import BY_SITE_ADMIN
 from sqlalchemy import Engine, text
 
 API = "/api/v1"
@@ -118,8 +119,8 @@ def test_import_creates_subjects_and_samples(client: TestClient, database: Engin
     samples = by_name(client, study, "samples")
     assert samples["T-01"]["subject_name"] == "P-01"
     assert samples["T-01-RNA"]["parent_sample_name"] == "T-01"
-    assert samples["T-01"]["created_by"] == "orcid:0000-0001-5109-3700"
-    assert audit_actors(database) == ["orcid:0000-0001-5109-3700"] * 3
+    assert samples["T-01"]["created_by"] == BY_SITE_ADMIN
+    assert audit_actors(database) == [BY_SITE_ADMIN] * 3
 
 
 def test_import_can_refer_to_records_already_in_the_study(client: TestClient) -> None:
@@ -324,7 +325,7 @@ def test_import_creates_assays_and_links_them_to_samples(
     assay = client.get(f"{study}/assays").json()["items"][0]
     assert (assay["name"], assay["created_by"], assay["sample_count"]) == (
         "Run-1",
-        "orcid:0000-0001-5109-3700",
+        BY_SITE_ADMIN,
         1,
     )
     assert linked_samples(client, study) == [("T-01-RNA", "lane 1")]
@@ -336,8 +337,8 @@ def test_import_creates_assays_and_links_them_to_samples(
             )
         ).all()
     assert [tuple(row) for row in actions] == [
-        ("create", "orcid:0000-0001-5109-3700"),
-        ("add_sample", "orcid:0000-0001-5109-3700"),
+        ("create", BY_SITE_ADMIN),
+        ("add_sample", BY_SITE_ADMIN),
     ]
 
 
@@ -420,7 +421,7 @@ def test_import_creates_data_files_with_their_samples_and_inputs(
     assert files["reads.fastq"]["assay_name"] == "Run-1"
     assert (files["counts.tsv"]["sample_count"], files["counts.tsv"]["created_by"]) == (
         1,
-        "orcid:0000-0001-5109-3700",
+        BY_SITE_ADMIN,
     )
     inputs = client.get(f"{API}/data-files/{files['counts.tsv']['id']}/inputs").json()
     assert [f["name"] for f in inputs] == ["reads.fastq"]

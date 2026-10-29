@@ -28,7 +28,14 @@ from protolims_api.models import (
     Sample,
     Study,
 )
-from protolims_api.permissions import ActorDep, require_editor_of, require_study_role
+from protolims_api.permissions import (
+    Actor,
+    ActorDep,
+    can_see_study,
+    require_editor_of,
+    require_study_role,
+    visible_studies,
+)
 from protolims_api.routers.studies import get_study_or_404
 from protolims_api.schemas.common import Page
 from protolims_api.schemas.data_file import (
@@ -116,8 +123,12 @@ async def assay_name_in_study(
     return assay.name
 
 
-async def read_data_file(session: AsyncSession, data_file_id: uuid.UUID) -> DataFileRead | None:
-    row = (await session.execute(DATA_FILE_QUERY.where(DataFile.id == data_file_id))).one_or_none()
+async def read_data_file(
+    session: AsyncSession, data_file_id: uuid.UUID, actor: Actor
+) -> DataFileRead | None:
+    """A data file's details, or None if it doesn't exist or the actor can't see it."""
+    query = DATA_FILE_QUERY.where(DataFile.id == data_file_id, visible_studies(actor))
+    row = (await session.execute(query)).one_or_none()
     if row is None:
         return None
     data_file, project_code, study_code, assay_name, sample_count = row
@@ -143,7 +154,7 @@ async def create_data_file(
     actor: ActorDep,
 ) -> DataFileRead:
     """Record a data file in a study. A URI can be recorded only once in each study."""
-    study = await get_study_or_404(session, project_code, study_code)
+    study = await get_study_or_404(session, project_code, study_code, actor)
     await require_study_role(session, actor, study, "editor")
     assay_name = await assay_name_in_study(session, study.id, payload.assay_id)
     data_file = DataFile(study_id=study.id, created_by=actor.label, **payload.model_dump())
@@ -184,6 +195,7 @@ async def list_data_files(
     project_code: str,
     study_code: str,
     session: SessionDep,
+    actor: ActorDep,
     assay: Annotated[uuid.UUID | None, Query(description="Only list files from this assay")] = None,
     level: Annotated[DataFileLevel | None, Query(description="Only list files at this level")] = (
         None
@@ -202,7 +214,7 @@ async def list_data_files(
     offset: Annotated[int, Query(ge=0)] = 0,
 ) -> Page[DataFileRead]:
     """List a study's data files a page at a time, with the total number that match."""
-    study = await get_study_or_404(session, project_code, study_code)
+    study = await get_study_or_404(session, project_code, study_code, actor)
     conditions: list[ColumnElement[bool]] = [DataFile.study_id == study.id]
     if assay is not None:
         conditions.append(DataFile.assay_id == assay)
@@ -237,9 +249,11 @@ async def list_data_files(
 
 
 @router.get("/data-files/{data_file_id}")
-async def get_data_file(data_file_id: uuid.UUID, session: SessionDep) -> DataFileRead:
+async def get_data_file(
+    data_file_id: uuid.UUID, session: SessionDep, actor: ActorDep
+) -> DataFileRead:
     """Get one data file by its permanent ID."""
-    found = await read_data_file(session, data_file_id)
+    found = await read_data_file(session, data_file_id, actor)
     if found is None:
         raise not_found(data_file_id)
     return found
@@ -251,7 +265,7 @@ async def update_data_file(
 ) -> DataFileRead:
     """Change some of a data file's details. Only the fields sent are changed; null clears one."""
     data_file = await session.get(DataFile, data_file_id)
-    if data_file is None:
+    if data_file is None or not await can_see_study(session, actor, data_file.study_id):
         raise not_found(data_file_id)
     await require_editor_of(session, actor, data_file.study_id)
 
@@ -290,7 +304,7 @@ async def update_data_file(
         )
         await session.commit()
 
-    updated = await read_data_file(session, data_file_id)
+    updated = await read_data_file(session, data_file_id, actor)
     assert updated is not None  # It was found above, and records are never deleted.
     return updated
 
@@ -303,9 +317,12 @@ DATA_FILE_SAMPLE_SORT_COLUMNS: dict[str, InstrumentedAttribute[Any]] = {
 }
 
 
-async def get_data_file_or_404(session: AsyncSession, data_file_id: uuid.UUID) -> DataFile:
+async def get_data_file_or_404(
+    session: AsyncSession, data_file_id: uuid.UUID, actor: Actor
+) -> DataFile:
+    """Find a data file, or respond with 404. One in a study the actor can't see is not found."""
     data_file = await session.get(DataFile, data_file_id)
-    if data_file is None:
+    if data_file is None or not await can_see_study(session, actor, data_file.study_id):
         raise not_found(data_file_id)
     return data_file
 
@@ -325,6 +342,7 @@ def linked_sample_read(sample: Sample, label: str | None) -> DataFileSampleRead:
 async def list_data_file_samples(
     data_file_id: uuid.UUID,
     session: SessionDep,
+    actor: ActorDep,
     q: Annotated[
         str | None,
         Query(max_length=200, description="Search sample names and external IDs, ignoring case"),
@@ -337,7 +355,7 @@ async def list_data_file_samples(
     offset: Annotated[int, Query(ge=0)] = 0,
 ) -> Page[DataFileSampleRead]:
     """List the samples whose data is in a file, a page at a time, with the total that match."""
-    await get_data_file_or_404(session, data_file_id)
+    await get_data_file_or_404(session, data_file_id, actor)
     conditions: list[ColumnElement[bool]] = [DataFileSample.data_file_id == data_file_id]
     if q:
         conditions.append(
@@ -383,7 +401,7 @@ async def link_data_file_sample(
 
     Returns 201 when the link is new and 200 when it already existed, so it's safe to repeat.
     """
-    data_file = await get_data_file_or_404(session, data_file_id)
+    data_file = await get_data_file_or_404(session, data_file_id, actor)
     await require_editor_of(session, actor, data_file.study_id)
     sample = await session.get(Sample, sample_id)
     if sample is None or sample.study_id != data_file.study_id:
@@ -439,7 +457,7 @@ async def unlink_data_file_sample(
     data_file_id: uuid.UUID, sample_id: uuid.UUID, session: SessionDep, actor: ActorDep
 ) -> None:
     """Remove a sample from a data file."""
-    data_file = await get_data_file_or_404(session, data_file_id)
+    data_file = await get_data_file_or_404(session, data_file_id, actor)
     await require_editor_of(session, actor, data_file.study_id)
     link = await session.get(DataFileSample, (data_file_id, sample_id))
     if link is None:
@@ -464,10 +482,11 @@ async def unlink_data_file_sample(
 
 @router.get("/samples/{sample_id}/data-files")
 async def list_sample_data_files(
-    sample_id: uuid.UUID, session: SessionDep
+    sample_id: uuid.UUID, session: SessionDep, actor: ActorDep
 ) -> list[SampleDataFileRead]:
     """List the data files a sample appears in, by name."""
-    if await session.get(Sample, sample_id) is None:
+    sample = await session.get(Sample, sample_id)
+    if sample is None or not await can_see_study(session, actor, sample.study_id):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Sample {sample_id} not found",
@@ -509,9 +528,11 @@ async def is_derived_from(
 
 
 @router.get("/data-files/{data_file_id}/inputs")
-async def list_inputs(data_file_id: uuid.UUID, session: SessionDep) -> list[DataFileSummary]:
+async def list_inputs(
+    data_file_id: uuid.UUID, session: SessionDep, actor: ActorDep
+) -> list[DataFileSummary]:
     """List the files this file was derived from, by name."""
-    await get_data_file_or_404(session, data_file_id)
+    await get_data_file_or_404(session, data_file_id, actor)
     result = await session.scalars(
         select(DataFile)
         .join(DataFileInput, DataFileInput.input_data_file_id == DataFile.id)
@@ -522,9 +543,11 @@ async def list_inputs(data_file_id: uuid.UUID, session: SessionDep) -> list[Data
 
 
 @router.get("/data-files/{data_file_id}/outputs")
-async def list_outputs(data_file_id: uuid.UUID, session: SessionDep) -> list[DataFileSummary]:
+async def list_outputs(
+    data_file_id: uuid.UUID, session: SessionDep, actor: ActorDep
+) -> list[DataFileSummary]:
     """List the files derived from this file, by name."""
-    await get_data_file_or_404(session, data_file_id)
+    await get_data_file_or_404(session, data_file_id, actor)
     result = await session.scalars(
         select(DataFile)
         .join(DataFileInput, DataFileInput.data_file_id == DataFile.id)
@@ -546,7 +569,7 @@ async def add_input(
 
     Returns 201 when this is new and 200 when it was already recorded, so it's safe to repeat.
     """
-    data_file = await get_data_file_or_404(session, data_file_id)
+    data_file = await get_data_file_or_404(session, data_file_id, actor)
     await require_editor_of(session, actor, data_file.study_id)
     source = await session.get(DataFile, input_id)
     if source is None or source.study_id != data_file.study_id:
@@ -588,7 +611,7 @@ async def remove_input(
     data_file_id: uuid.UUID, input_id: uuid.UUID, session: SessionDep, actor: ActorDep
 ) -> None:
     """Remove the record that a file was derived from another."""
-    data_file = await get_data_file_or_404(session, data_file_id)
+    data_file = await get_data_file_or_404(session, data_file_id, actor)
     await require_editor_of(session, actor, data_file.study_id)
     link = await session.get(DataFileInput, (data_file_id, input_id))
     if link is None:

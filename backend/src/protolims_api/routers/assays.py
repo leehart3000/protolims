@@ -19,7 +19,14 @@ from protolims_api.audit import record_event
 from protolims_api.conflicts import external_id_conflict, is_external_id_conflict
 from protolims_api.db import SessionDep
 from protolims_api.models import Assay, AssaySample, Project, Sample, Study
-from protolims_api.permissions import ActorDep, require_editor_of, require_study_role
+from protolims_api.permissions import (
+    Actor,
+    ActorDep,
+    can_see_study,
+    require_editor_of,
+    require_study_role,
+    visible_studies,
+)
 from protolims_api.routers.studies import get_study_or_404
 from protolims_api.schemas.assay import (
     AssayCreate,
@@ -103,9 +110,10 @@ def assay_sample_read(sample: Sample, label: str | None) -> AssaySampleRead:
     )
 
 
-async def get_assay_or_404(session: AsyncSession, assay_id: uuid.UUID) -> Assay:
+async def get_assay_or_404(session: AsyncSession, assay_id: uuid.UUID, actor: Actor) -> Assay:
+    """Find an assay, or respond with 404. One in a study the actor can't see is not found."""
     assay = await session.get(Assay, assay_id)
-    if assay is None:
+    if assay is None or not await can_see_study(session, actor, assay.study_id):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Assay {assay_id} not found",
@@ -125,7 +133,7 @@ async def create_assay(
     actor: ActorDep,
 ) -> AssayRead:
     """Create an assay within a study. Assay names are unique within their study."""
-    study = await get_study_or_404(session, project_code, study_code)
+    study = await get_study_or_404(session, project_code, study_code, actor)
     await require_study_role(session, actor, study, "editor")
     assay = Assay(study_id=study.id, created_by=actor.label, **payload.model_dump())
     session.add(assay)
@@ -165,6 +173,7 @@ async def list_assays(
     project_code: str,
     study_code: str,
     session: SessionDep,
+    actor: ActorDep,
     q: Annotated[
         str | None,
         Query(max_length=200, description="Search assay names and external IDs, ignoring case"),
@@ -176,7 +185,7 @@ async def list_assays(
     offset: Annotated[int, Query(ge=0)] = 0,
 ) -> Page[AssayRead]:
     """List a study's assays a page at a time, with the total number that match."""
-    study = await get_study_or_404(session, project_code, study_code)
+    study = await get_study_or_404(session, project_code, study_code, actor)
     conditions: list[ColumnElement[bool]] = [Assay.study_id == study.id]
     if q:
         conditions.append(
@@ -206,9 +215,10 @@ async def list_assays(
 
 
 @router.get("/assays/{assay_id}")
-async def get_assay(assay_id: uuid.UUID, session: SessionDep) -> AssayRead:
+async def get_assay(assay_id: uuid.UUID, session: SessionDep, actor: ActorDep) -> AssayRead:
     """Get one assay by its permanent ID."""
-    row = (await session.execute(ASSAY_QUERY.where(Assay.id == assay_id))).one_or_none()
+    query = ASSAY_QUERY.where(Assay.id == assay_id, visible_studies(actor))
+    row = (await session.execute(query)).one_or_none()
     if row is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -223,7 +233,7 @@ async def update_assay(
     assay_id: uuid.UUID, payload: AssayUpdate, session: SessionDep, actor: ActorDep
 ) -> AssayRead:
     """Change some of an assay's details. Only the fields sent are changed; null clears one."""
-    assay = await get_assay_or_404(session, assay_id)
+    assay = await get_assay_or_404(session, assay_id, actor)
     await require_editor_of(session, actor, assay.study_id)
 
     requested = payload.model_dump(exclude_unset=True)
@@ -265,6 +275,7 @@ async def update_assay(
 async def list_assay_samples(
     assay_id: uuid.UUID,
     session: SessionDep,
+    actor: ActorDep,
     q: Annotated[
         str | None,
         Query(max_length=200, description="Search sample names and external IDs, ignoring case"),
@@ -277,7 +288,7 @@ async def list_assay_samples(
     offset: Annotated[int, Query(ge=0)] = 0,
 ) -> Page[AssaySampleRead]:
     """List the samples an assay measured, a page at a time, with the total number that match."""
-    await get_assay_or_404(session, assay_id)
+    await get_assay_or_404(session, assay_id, actor)
     conditions: list[ColumnElement[bool]] = [AssaySample.assay_id == assay_id]
     if q:
         conditions.append(
@@ -323,7 +334,7 @@ async def link_sample(
 
     Returns 201 when the link is new and 200 when it already existed, so it's safe to repeat.
     """
-    assay = await get_assay_or_404(session, assay_id)
+    assay = await get_assay_or_404(session, assay_id, actor)
     await require_editor_of(session, actor, assay.study_id)
     sample = await session.get(Sample, sample_id)
     if sample is None or sample.study_id != assay.study_id:
@@ -373,7 +384,7 @@ async def unlink_sample(
     assay_id: uuid.UUID, sample_id: uuid.UUID, session: SessionDep, actor: ActorDep
 ) -> None:
     """Remove a sample from an assay."""
-    assay = await get_assay_or_404(session, assay_id)
+    assay = await get_assay_or_404(session, assay_id, actor)
     await require_editor_of(session, actor, assay.study_id)
     link = await session.get(AssaySample, (assay_id, sample_id))
     if link is None:
@@ -397,9 +408,12 @@ async def unlink_sample(
 
 
 @router.get("/samples/{sample_id}/assays")
-async def list_sample_assays(sample_id: uuid.UUID, session: SessionDep) -> list[SampleAssayRead]:
+async def list_sample_assays(
+    sample_id: uuid.UUID, session: SessionDep, actor: ActorDep
+) -> list[SampleAssayRead]:
     """List the assays a sample was measured in, by name."""
-    if await session.get(Sample, sample_id) is None:
+    sample = await session.get(Sample, sample_id)
+    if sample is None or not await can_see_study(session, actor, sample.study_id):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Sample {sample_id} not found",

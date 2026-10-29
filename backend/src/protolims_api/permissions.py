@@ -4,6 +4,12 @@ Roles, lowest to highest: viewer (read), editor (add and change records), admin 
 roles). A project role covers all of that project's studies; a study role covers just that
 study; someone's role on a study is the higher of the two. Site administrators (a setting,
 by ORCID iD) act as admin everywhere, and can create projects.
+
+Who can see what: when public reading is on (PROTOLIMS_PUBLIC_READ), everyone can see
+everything. When it's off, nothing can be seen without signing in; then people see the studies
+they have a role on (through the project or the study itself), and the projects those studies
+are in. Anything someone can't see answers 404 Not Found, exactly as if it didn't exist, even
+when they try to change it. Something they can see but not change answers 403 Forbidden.
 """
 
 import hashlib
@@ -13,12 +19,19 @@ from datetime import UTC, datetime
 from typing import Annotated, Literal
 
 from fastapi import Cookie, Depends, HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import ColumnElement, or_, select, true
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from protolims_api.config import get_settings
 from protolims_api.db import SessionDep
-from protolims_api.models import AppUser, ProjectMember, Study, StudyMember, UserSession
+from protolims_api.models import (
+    AppUser,
+    Project,
+    ProjectMember,
+    Study,
+    StudyMember,
+    UserSession,
+)
 
 SESSION_COOKIE = "protolims_session"
 
@@ -110,6 +123,62 @@ def refuse(actor: Actor) -> HTTPException:
     if actor.user is None:
         return HTTPException(status.HTTP_401_UNAUTHORIZED, "Please sign in to do this")
     return HTTPException(status.HTTP_403_FORBIDDEN, "You don't have permission to do this")
+
+
+async def require_sign_in_when_private(actor: ActorDep) -> None:
+    """When public reading is off, stop requests from anyone who isn't signed in. Used on every
+    router except signing in (and the health checks, which aren't in a router)."""
+    if actor.user is None and not get_settings().public_read:
+        raise refuse(actor)
+
+
+def sees_everything(actor: Actor) -> bool:
+    """Whether someone can see every project and study: when public reading is on, or if
+    they're a site administrator."""
+    return get_settings().public_read or actor.site_admin
+
+
+def visible_studies(actor: Actor) -> ColumnElement[bool]:
+    """A condition matching the studies someone can see, for a query on Study: those in
+    projects they have a role on, and those they have a role on themselves."""
+    if sees_everything(actor):
+        return true()
+    # Anyone not signed in was already stopped by require_sign_in_when_private.
+    assert actor.user is not None
+    user_id = actor.user.id
+    return or_(
+        Study.project_id.in_(
+            select(ProjectMember.project_id).where(ProjectMember.user_id == user_id)
+        ),
+        Study.id.in_(select(StudyMember.study_id).where(StudyMember.user_id == user_id)),
+    )
+
+
+def visible_projects(actor: Actor) -> ColumnElement[bool]:
+    """A condition matching the projects someone can see, for a query on Project: those they
+    have a role on, and those with a study they have a role on."""
+    if sees_everything(actor):
+        return true()
+    assert actor.user is not None  # As above.
+    user_id = actor.user.id
+    return or_(
+        Project.id.in_(select(ProjectMember.project_id).where(ProjectMember.user_id == user_id)),
+        Project.id.in_(
+            select(Study.project_id)
+            .join(StudyMember, StudyMember.study_id == Study.id)
+            .where(StudyMember.user_id == user_id)
+        ),
+    )
+
+
+async def can_see_study(session: AsyncSession, actor: Actor, study_id: uuid.UUID) -> bool:
+    """Whether someone can see a study, and so every record in it."""
+    if sees_everything(actor):
+        return True
+    found = await session.scalar(
+        select(Study.id).where(Study.id == study_id, visible_studies(actor))
+    )
+    return found is not None
 
 
 def require(actor: Actor, role: str | None, needed: Role) -> None:

@@ -1,21 +1,10 @@
 """Tests for giving people roles on projects and studies."""
 
-from collections.abc import Callable
 from typing import Any
 
 from fastapi.testclient import TestClient
+from helpers import ALICE, API, BOB, CAROL, DAVE, PROJECT, SITE_ADMIN, STUDY, SignIn
 from sqlalchemy import Engine, text
-
-# The sign_in_as fixture (see conftest.py): sign in by ORCID iD, get the request headers.
-SignIn = Callable[..., dict[str, str]]
-
-API = "/api/v1"
-SITE_ADMIN = "0000-0001-5109-3700"  # PROTOLIMS_SITE_ADMINS in conftest.py
-ALICE = "0000-0001-2345-6789"
-BOB = "0000-0009-8765-4328"
-CAROL = "0000-0001-1111-1118"
-PROJECT = f"{API}/projects/P1"
-STUDY = f"{PROJECT}/studies/S1"
 
 
 def make_study(client: TestClient) -> None:
@@ -166,7 +155,7 @@ def test_study_admins_manage_only_their_studys_roles(
         == 200
     )
     assert client.delete(f"{STUDY}/members/{ALICE}", headers=alice).status_code == 204
-    assert client.delete(f"{STUDY}/members/0000-0002-2222-2224", headers=alice).status_code == 204
+    assert client.delete(f"{STUDY}/members/{DAVE}", headers=alice).status_code == 204
 
     assert [(action, entity) for action, entity, _, _ in audit(database)][-4:] == [
         ("set_member", "study"),

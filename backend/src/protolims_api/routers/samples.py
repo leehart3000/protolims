@@ -19,7 +19,13 @@ from protolims_api.audit import record_event
 from protolims_api.conflicts import external_id_conflict, is_external_id_conflict
 from protolims_api.db import SessionDep
 from protolims_api.models import Project, Sample, Study, Subject
-from protolims_api.permissions import ActorDep, require_editor_of, require_study_role
+from protolims_api.permissions import (
+    ActorDep,
+    can_see_study,
+    require_editor_of,
+    require_study_role,
+    visible_studies,
+)
 from protolims_api.routers.studies import get_study_or_404
 from protolims_api.schemas.common import Page
 from protolims_api.schemas.sample import SampleCreate, SampleFields, SampleRead, SampleUpdate
@@ -128,7 +134,7 @@ async def create_sample(
     actor: ActorDep,
 ) -> SampleRead:
     """Create a sample within a study. Sample names are unique within their study."""
-    study = await get_study_or_404(session, project_code, study_code)
+    study = await get_study_or_404(session, project_code, study_code, actor)
     await require_study_role(session, actor, study, "editor")
     subject_name, parent_name = await linked_names(
         session, study.id, payload.subject_id, payload.parent_sample_id
@@ -171,6 +177,7 @@ async def list_samples(
     project_code: str,
     study_code: str,
     session: SessionDep,
+    actor: ActorDep,
     subject: Annotated[
         uuid.UUID | None, Query(description="Only list samples from this subject")
     ] = None,
@@ -188,7 +195,7 @@ async def list_samples(
     offset: Annotated[int, Query(ge=0)] = 0,
 ) -> Page[SampleRead]:
     """List a study's samples a page at a time, with the total number that match."""
-    study = await get_study_or_404(session, project_code, study_code)
+    study = await get_study_or_404(session, project_code, study_code, actor)
     conditions: list[ColumnElement[bool]] = [Sample.study_id == study.id]
     if subject is not None:
         conditions.append(Sample.subject_id == subject)
@@ -222,9 +229,10 @@ async def list_samples(
 
 
 @router.get("/samples/{sample_id}")
-async def get_sample(sample_id: uuid.UUID, session: SessionDep) -> SampleRead:
+async def get_sample(sample_id: uuid.UUID, session: SessionDep, actor: ActorDep) -> SampleRead:
     """Get one sample by its permanent ID."""
-    row = (await session.execute(SAMPLE_QUERY.where(Sample.id == sample_id))).one_or_none()
+    query = SAMPLE_QUERY.where(Sample.id == sample_id, visible_studies(actor))
+    row = (await session.execute(query)).one_or_none()
     if row is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -240,7 +248,7 @@ async def update_sample(
 ) -> SampleRead:
     """Change some of a sample's details. Only the fields sent are changed; null clears one."""
     sample = await session.get(Sample, sample_id)
-    if sample is None:
+    if sample is None or not await can_see_study(session, actor, sample.study_id):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Sample {sample_id} not found",

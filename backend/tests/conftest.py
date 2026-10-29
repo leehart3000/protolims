@@ -7,15 +7,17 @@ created and migrated automatically, and emptied before each test.
 import hashlib
 import os
 import secrets
-from collections.abc import Callable, Iterator
+from collections.abc import Iterator
 from pathlib import Path
 
 import pytest
 from alembic import command
 from alembic.config import Config
 from fastapi.testclient import TestClient
+from helpers import SITE_ADMIN, SignIn
 from sqlalchemy import Engine, create_engine, make_url, text
 
+from protolims_api.config import get_settings
 from protolims_api.models import Base
 
 TEST_DATABASE_URL = "postgresql+psycopg://protolims:protolims_dev@127.0.0.1:5433/protolims_test"
@@ -30,8 +32,8 @@ os.environ["PROTOLIMS_ORCID_BASE_URL"] = "https://orcid.example"
 os.environ["PROTOLIMS_ORCID_CLIENT_ID"] = "APP-TEST"
 os.environ["PROTOLIMS_ORCID_CLIENT_SECRET"] = "test-secret"
 
-# The tests' site administrator, and public reading on, as on protolims.org.
-SITE_ADMIN = "0000-0001-5109-3700"
+# The tests' site administrator, and public reading on, as on protolims.org. Tests of a
+# private instance use the private fixture.
 os.environ["PROTOLIMS_SITE_ADMINS"] = SITE_ADMIN
 os.environ["PROTOLIMS_PUBLIC_READ"] = "true"
 
@@ -124,9 +126,6 @@ def anonymous() -> Iterator[TestClient]:
         yield test_client
 
 
-SignIn = Callable[..., dict[str, str]]
-
-
 @pytest.fixture
 def sign_in_as(database: Engine, clean_tables: None) -> SignIn:
     """Sign someone in, by ORCID iD, without going to ORCID. Returns the request headers for
@@ -136,3 +135,9 @@ def sign_in_as(database: Engine, clean_tables: None) -> SignIn:
         return add_session(database, orcid_id, name)
 
     return sign_in
+
+
+@pytest.fixture
+def private(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Public reading off for this test, as on a private instance."""
+    monkeypatch.setattr(get_settings(), "public_read", False)

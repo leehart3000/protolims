@@ -12,7 +12,13 @@ from sqlalchemy.orm import InstrumentedAttribute
 from protolims_api.audit import record_event
 from protolims_api.db import SessionDep
 from protolims_api.models import Project, Study
-from protolims_api.permissions import ActorDep, require_project_role, require_study_role
+from protolims_api.permissions import (
+    Actor,
+    ActorDep,
+    require_project_role,
+    require_study_role,
+    visible_studies,
+)
 from protolims_api.routers.projects import get_project_or_404
 from protolims_api.schemas.common import Page
 from protolims_api.schemas.study import (
@@ -57,7 +63,7 @@ async def create_study(
 
     Only the project's admins (and site administrators) can.
     """
-    project = await get_project_or_404(session, project_code)
+    project = await get_project_or_404(session, project_code, actor)
     await require_project_role(session, actor, project.id, "admin")
     study = Study(project_id=project.id, created_by=actor.label, **payload.model_dump())
     session.add(study)
@@ -86,6 +92,7 @@ async def create_study(
 async def list_studies(
     project_code: str,
     session: SessionDep,
+    actor: ActorDep,
     q: Annotated[
         str | None,
         Query(max_length=200, description="Search study codes and titles, ignoring case"),
@@ -96,9 +103,13 @@ async def list_studies(
     limit: Annotated[int, Query(ge=1, le=500)] = 50,
     offset: Annotated[int, Query(ge=0)] = 0,
 ) -> Page[StudyRead]:
-    """List a project's studies a page at a time, with the total number that match."""
-    project = await get_project_or_404(session, project_code)
-    conditions: list[ColumnElement[bool]] = [Study.project_id == project.id]
+    """List the studies the actor can see in a project, a page at a time, with the total
+    number that match."""
+    project = await get_project_or_404(session, project_code, actor)
+    conditions: list[ColumnElement[bool]] = [
+        Study.project_id == project.id,
+        visible_studies(actor),
+    ]
     if q:
         conditions.append(study_search(q))
     count_query = select(func.count()).select_from(Study).where(*conditions)
@@ -114,11 +125,16 @@ async def list_studies(
     return Page[StudyRead](items=[StudyRead.model_validate(study) for study in result], total=total)
 
 
-async def get_study_or_404(session: AsyncSession, project_code: str, study_code: str) -> Study:
-    """Find a study by its project's code and its own code, or respond with 404."""
-    project = await get_project_or_404(session, project_code)
+async def get_study_or_404(
+    session: AsyncSession, project_code: str, study_code: str, actor: Actor
+) -> Study:
+    """Find a study by its project's code and its own code, or respond with 404. A study the
+    actor can't see is not found, too."""
+    project = await get_project_or_404(session, project_code, actor)
     study = await session.scalar(
-        select(Study).where(Study.project_id == project.id, Study.code == study_code)
+        select(Study).where(
+            Study.project_id == project.id, Study.code == study_code, visible_studies(actor)
+        )
     )
     if study is None:
         raise HTTPException(
@@ -129,9 +145,12 @@ async def get_study_or_404(session: AsyncSession, project_code: str, study_code:
 
 
 @router.get("/projects/{project_code}/studies/{study_code}")
-async def get_study(project_code: str, study_code: str, session: SessionDep) -> StudyRead:
+async def get_study(
+    project_code: str, study_code: str, session: SessionDep, actor: ActorDep
+) -> StudyRead:
     """Get one study by its project's code and its own code."""
-    return StudyRead.model_validate(await get_study_or_404(session, project_code, study_code))
+    study = await get_study_or_404(session, project_code, study_code, actor)
+    return StudyRead.model_validate(study)
 
 
 @router.patch("/projects/{project_code}/studies/{study_code}")
@@ -142,7 +161,7 @@ async def update_study(
 
     The study's editors and admins can.
     """
-    study = await get_study_or_404(session, project_code, study_code)
+    study = await get_study_or_404(session, project_code, study_code, actor)
     await require_study_role(session, actor, study, "editor")
 
     requested = payload.model_dump(exclude_unset=True)
@@ -172,6 +191,7 @@ async def update_study(
 @router.get("/studies")
 async def list_all_studies(
     session: SessionDep,
+    actor: ActorDep,
     project: Annotated[
         str | None, Query(description="Only list studies in the project with this code")
     ] = None,
@@ -188,8 +208,9 @@ async def list_all_studies(
     limit: Annotated[int, Query(ge=1, le=500)] = 50,
     offset: Annotated[int, Query(ge=0)] = 0,
 ) -> Page[StudyWithProjectRead]:
-    """List studies across all projects a page at a time, with the total number that match."""
-    conditions: list[ColumnElement[bool]] = []
+    """List the studies the actor can see across all projects, a page at a time, with the
+    total number that match."""
+    conditions: list[ColumnElement[bool]] = [visible_studies(actor)]
     if project is not None:
         conditions.append(Project.code == project)
     if q:

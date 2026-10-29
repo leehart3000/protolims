@@ -12,7 +12,13 @@ from sqlalchemy.orm import InstrumentedAttribute
 from protolims_api.audit import record_event
 from protolims_api.db import SessionDep
 from protolims_api.models import Project
-from protolims_api.permissions import ActorDep, require_project_role, require_site_admin
+from protolims_api.permissions import (
+    Actor,
+    ActorDep,
+    require_project_role,
+    require_site_admin,
+    visible_projects,
+)
 from protolims_api.schemas.common import Page
 from protolims_api.schemas.project import ProjectCreate, ProjectRead, ProjectUpdate
 
@@ -28,9 +34,12 @@ PROJECT_SORT_COLUMNS: dict[str, InstrumentedAttribute[Any]] = {
 }
 
 
-async def get_project_or_404(session: AsyncSession, code: str) -> Project:
-    """Find a project by code, or stop the request with 404 Not Found."""
-    project = await session.scalar(select(Project).where(Project.code == code))
+async def get_project_or_404(session: AsyncSession, code: str, actor: Actor) -> Project:
+    """Find a project by code, or stop the request with 404 Not Found. A project the actor
+    can't see is not found, too."""
+    project = await session.scalar(
+        select(Project).where(Project.code == code, visible_projects(actor))
+    )
     if project is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -71,6 +80,7 @@ async def create_project(
 @router.get("")
 async def list_projects(
     session: SessionDep,
+    actor: ActorDep,
     q: Annotated[
         str | None,
         Query(max_length=200, description="Search project codes and names, ignoring case"),
@@ -81,8 +91,9 @@ async def list_projects(
     limit: Annotated[int, Query(ge=1, le=500)] = 50,
     offset: Annotated[int, Query(ge=0)] = 0,
 ) -> Page[ProjectRead]:
-    """List projects a page at a time, with the total number that match."""
-    conditions: list[ColumnElement[bool]] = []
+    """List the projects the actor can see a page at a time, with the total number that
+    match."""
+    conditions: list[ColumnElement[bool]] = [visible_projects(actor)]
     if q:
         conditions.append(
             or_(
@@ -104,9 +115,9 @@ async def list_projects(
 
 
 @router.get("/{code}")
-async def get_project(code: str, session: SessionDep) -> ProjectRead:
+async def get_project(code: str, session: SessionDep, actor: ActorDep) -> ProjectRead:
     """Get one project by its code."""
-    return ProjectRead.model_validate(await get_project_or_404(session, code))
+    return ProjectRead.model_validate(await get_project_or_404(session, code, actor))
 
 
 @router.patch("/{code}")
@@ -117,7 +128,7 @@ async def update_project(
 
     Only the project's admins (and site administrators) can.
     """
-    project = await get_project_or_404(session, code)
+    project = await get_project_or_404(session, code, actor)
     await require_project_role(session, actor, project.id, "admin")
 
     requested = payload.model_dump(exclude_unset=True)

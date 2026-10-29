@@ -748,7 +748,7 @@ async def import_records(
     - **Audit trail:** each new record and link is recorded as made by whoever imported it,
       and each new record's audit entry names the import's `source`.
     """
-    study = await get_study_or_404(session, project_code, study_code)
+    study = await get_study_or_404(session, project_code, study_code, actor)
     await require_study_role(session, actor, study, "editor")
     problems: list[str] = []
     for kind, items in (

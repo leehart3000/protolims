@@ -76,7 +76,7 @@ async def list_project_members(
     project_code: str, session: SessionDep, actor: ActorDep
 ) -> list[MemberRead]:
     """Everyone with a role on the project, by name (people without one last)."""
-    project = await get_project_or_404(session, project_code)
+    project = await get_project_or_404(session, project_code, actor)
     require(actor, await project_role(session, actor, project.id), "admin")
     result = await session.execute(
         select(AppUser, ProjectMember.role)
@@ -96,7 +96,7 @@ async def set_project_member(
     actor: ActorDep,
 ) -> MemberRead:
     """Give someone a role on the project, or change it. Safe to repeat."""
-    project = await get_project_or_404(session, project_code)
+    project = await get_project_or_404(session, project_code, actor)
     require(actor, await project_role(session, actor, project.id), "admin")
     user = await find_or_add_user(session, orcid_id)
     member = await session.get(ProjectMember, (project.id, user.id))
@@ -133,7 +133,7 @@ async def remove_project_member(
     project_code: str, orcid_id: OrcidPath, session: SessionDep, actor: ActorDep
 ) -> None:
     """Take away someone's role on the project. Safe to repeat."""
-    project = await get_project_or_404(session, project_code)
+    project = await get_project_or_404(session, project_code, actor)
     require(actor, await project_role(session, actor, project.id), "admin")
     user = await find_user(session, orcid_id)
     member = None if user is None else await session.get(ProjectMember, (project.id, user.id))
@@ -157,7 +157,7 @@ async def list_study_members(
     project_code: str, study_code: str, session: SessionDep, actor: ActorDep
 ) -> list[MemberRead]:
     """Everyone with a role on the study itself (project roles are listed on the project)."""
-    study = await get_study_or_404(session, project_code, study_code)
+    study = await get_study_or_404(session, project_code, study_code, actor)
     require(actor, await study_role(session, actor, study.project_id, study.id), "admin")
     result = await session.execute(
         select(AppUser, StudyMember.role)
@@ -178,7 +178,7 @@ async def set_study_member(
     actor: ActorDep,
 ) -> MemberRead:
     """Give someone a role on the study, or change it. Safe to repeat."""
-    study = await get_study_or_404(session, project_code, study_code)
+    study = await get_study_or_404(session, project_code, study_code, actor)
     require(actor, await study_role(session, actor, study.project_id, study.id), "admin")
     user = await find_or_add_user(session, orcid_id)
     member = await session.get(StudyMember, (study.id, user.id))
@@ -215,7 +215,7 @@ async def remove_study_member(
     project_code: str, study_code: str, orcid_id: OrcidPath, session: SessionDep, actor: ActorDep
 ) -> None:
     """Take away someone's role on the study. Safe to repeat."""
-    study = await get_study_or_404(session, project_code, study_code)
+    study = await get_study_or_404(session, project_code, study_code, actor)
     require(actor, await study_role(session, actor, study.project_id, study.id), "admin")
     user = await find_user(session, orcid_id)
     member = None if user is None else await session.get(StudyMember, (study.id, user.id))

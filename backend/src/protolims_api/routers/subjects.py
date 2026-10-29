@@ -17,7 +17,13 @@ from protolims_api.audit import record_event
 from protolims_api.conflicts import external_id_conflict, is_external_id_conflict
 from protolims_api.db import SessionDep
 from protolims_api.models import Project, Study, Subject
-from protolims_api.permissions import ActorDep, require_editor_of, require_study_role
+from protolims_api.permissions import (
+    ActorDep,
+    can_see_study,
+    require_editor_of,
+    require_study_role,
+    visible_studies,
+)
 from protolims_api.routers.studies import get_study_or_404
 from protolims_api.schemas.common import Page
 from protolims_api.schemas.subject import SubjectCreate, SubjectFields, SubjectRead, SubjectUpdate
@@ -71,7 +77,7 @@ async def create_subject(
     actor: ActorDep,
 ) -> SubjectRead:
     """Create a subject within a study. Subject names are unique within their study."""
-    study = await get_study_or_404(session, project_code, study_code)
+    study = await get_study_or_404(session, project_code, study_code, actor)
     await require_study_role(session, actor, study, "editor")
     subject = Subject(study_id=study.id, created_by=actor.label, **payload.model_dump())
     session.add(subject)
@@ -111,6 +117,7 @@ async def list_subjects(
     project_code: str,
     study_code: str,
     session: SessionDep,
+    actor: ActorDep,
     q: Annotated[
         str | None,
         Query(max_length=200, description="Search subject names and external IDs, ignoring case"),
@@ -122,7 +129,7 @@ async def list_subjects(
     offset: Annotated[int, Query(ge=0)] = 0,
 ) -> Page[SubjectRead]:
     """List a study's subjects a page at a time, with the total number that match."""
-    study = await get_study_or_404(session, project_code, study_code)
+    study = await get_study_or_404(session, project_code, study_code, actor)
     conditions: list[ColumnElement[bool]] = [Subject.study_id == study.id]
     if q:
         conditions.append(
@@ -150,9 +157,10 @@ async def list_subjects(
 
 
 @router.get("/subjects/{subject_id}")
-async def get_subject(subject_id: uuid.UUID, session: SessionDep) -> SubjectRead:
+async def get_subject(subject_id: uuid.UUID, session: SessionDep, actor: ActorDep) -> SubjectRead:
     """Get one subject by its permanent ID."""
-    row = (await session.execute(SUBJECT_QUERY.where(Subject.id == subject_id))).one_or_none()
+    query = SUBJECT_QUERY.where(Subject.id == subject_id, visible_studies(actor))
+    row = (await session.execute(query)).one_or_none()
     if row is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -168,7 +176,7 @@ async def update_subject(
 ) -> SubjectRead:
     """Change some of a subject's details. Only the fields sent are changed; null clears one."""
     subject = await session.get(Subject, subject_id)
-    if subject is None:
+    if subject is None or not await can_see_study(session, actor, subject.study_id):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Subject {subject_id} not found",

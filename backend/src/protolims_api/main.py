@@ -2,7 +2,7 @@
 
 import secrets
 
-from fastapi import FastAPI, HTTPException, Request, Response
+from fastapi import Depends, FastAPI, HTTPException, Request, Response
 from fastapi.responses import JSONResponse
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
@@ -10,6 +10,7 @@ from starlette.middleware.base import RequestResponseEndpoint
 
 from protolims_api.config import get_settings
 from protolims_api.db import SessionDep
+from protolims_api.permissions import require_sign_in_when_private
 from protolims_api.routers import (
     assays,
     auth,
@@ -35,15 +36,18 @@ app = FastAPI(
     redoc_url=None,
     openapi_url="/api/openapi.json",
 )
-app.include_router(projects.router, prefix="/api/v1")
-app.include_router(studies.router, prefix="/api/v1")
-app.include_router(subjects.router, prefix="/api/v1")
-app.include_router(samples.router, prefix="/api/v1")
-app.include_router(assays.router, prefix="/api/v1")
-app.include_router(data_files.router, prefix="/api/v1")
-app.include_router(importing.router, prefix="/api/v1")
+
+# Signing in is always open. Everything else needs someone signed in when public reading is off.
+private = [Depends(require_sign_in_when_private)]
+app.include_router(projects.router, prefix="/api/v1", dependencies=private)
+app.include_router(studies.router, prefix="/api/v1", dependencies=private)
+app.include_router(subjects.router, prefix="/api/v1", dependencies=private)
+app.include_router(samples.router, prefix="/api/v1", dependencies=private)
+app.include_router(assays.router, prefix="/api/v1", dependencies=private)
+app.include_router(data_files.router, prefix="/api/v1", dependencies=private)
+app.include_router(importing.router, prefix="/api/v1", dependencies=private)
 app.include_router(auth.router, prefix="/api/v1")
-app.include_router(members.router, prefix="/api/v1")
+app.include_router(members.router, prefix="/api/v1", dependencies=private)
 
 
 @app.middleware("http")
