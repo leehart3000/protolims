@@ -8,8 +8,10 @@ from protolims_api.models.project import Project
 from protolims_api.models.sample import Sample
 from protolims_api.models.study import Study
 from protolims_api.models.subject import Subject
+from protolims_api.models.user import AppUser, SignInAttempt, UserSession
 
 __all__ = [
+    "AppUser",
     "Assay",
     "AssaySample",
     "AuditEvent",
@@ -19,6 +21,8 @@ __all__ = [
     "DataFileSample",
     "Project",
     "Sample",
+    "SignInAttempt",
     "Study",
     "Subject",
+    "UserSession",
 ]

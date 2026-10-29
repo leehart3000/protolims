@@ -12,6 +12,7 @@ from protolims_api.config import get_settings
 from protolims_api.db import SessionDep
 from protolims_api.routers import (
     assays,
+    auth,
     data_files,
     importing,
     projects,
@@ -40,6 +41,7 @@ app.include_router(samples.router, prefix="/api/v1")
 app.include_router(assays.router, prefix="/api/v1")
 app.include_router(data_files.router, prefix="/api/v1")
 app.include_router(importing.router, prefix="/api/v1")
+app.include_router(auth.router, prefix="/api/v1")
 
 
 @app.middleware("http")

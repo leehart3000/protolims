@@ -21,6 +21,13 @@ TEST_DATABASE_URL = "postgresql+psycopg://protolims:protolims_dev@127.0.0.1:5433
 # Must be set before the app reads its settings.
 os.environ.setdefault("PROTOLIMS_DATABASE_URL", TEST_DATABASE_URL)
 
+# Tests sign in with a fake ORCID (see test_auth.py). These are set outright, rather than with
+# setdefault, so a real client in backend/.env is never used by the tests.
+os.environ["PROTOLIMS_PUBLIC_URL"] = "http://127.0.0.1:5173"
+os.environ["PROTOLIMS_ORCID_BASE_URL"] = "https://orcid.example"
+os.environ["PROTOLIMS_ORCID_CLIENT_ID"] = "APP-TEST"
+os.environ["PROTOLIMS_ORCID_CLIENT_SECRET"] = "test-secret"
+
 ALEMBIC_INI = Path(__file__).resolve().parent.parent / "alembic.ini"
 
 
