@@ -3,6 +3,7 @@ import { LogIn, LogOut, UserRound } from 'lucide-react'
 import { useLocation } from 'react-router'
 
 import { signOut } from '../api/queries'
+import { signInHref } from '../signIn'
 import { useMe } from '../useMe'
 
 const headerButton =
@@ -25,10 +26,9 @@ export default function AccountMenu() {
   }
 
   if (!me.user) {
-    const query = new URLSearchParams({ return_to: location.pathname + location.search })
     return (
       <a
-        href={`/api/v1/auth/orcid/login?${query.toString()}`}
+        href={signInHref(location.pathname, location.search)}
         title="Sign in with your ORCID iD"
         className={headerButton}
       >

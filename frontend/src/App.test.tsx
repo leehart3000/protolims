@@ -6,13 +6,13 @@ import App from './App'
 import { TestProviders } from './test/TestProviders'
 
 // Answers as the API would with nobody signed in and nothing recorded yet.
-function stubEmptyApi() {
+function stubEmptyApi(publicRead = true) {
   vi.stubGlobal(
     'fetch',
     vi.fn((request: Request) => {
       if (new URL(request.url).pathname === '/api/v1/auth/me') {
         return Promise.resolve(
-          Response.json({ user: null, site_admin: false, public_read: true, roles: [] }),
+          Response.json({ user: null, site_admin: false, public_read: publicRead, roles: [] }),
         )
       }
       return Promise.resolve(Response.json({ items: [], total: 0 }))
@@ -20,7 +20,9 @@ function stubEmptyApi() {
   )
 }
 
-beforeEach(stubEmptyApi)
+beforeEach(() => {
+  stubEmptyApi()
+})
 
 function renderApp(route = '/') {
   render(
@@ -72,6 +74,18 @@ describe('App', () => {
       'href',
       '/api/v1/auth/orcid/login?return_to=%2Fstudies',
     )
+  })
+
+  it('asks people to sign in first on a private site', async () => {
+    stubEmptyApi(false)
+    renderApp('/projects?q=brca')
+
+    expect(await screen.findByRole('heading', { name: 'Sign in' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Sign in with ORCID' })).toHaveAttribute(
+      'href',
+      '/api/v1/auth/orcid/login?return_to=%2Fprojects%3Fq%3Dbrca',
+    )
+    expect(screen.queryByRole('link', { name: 'Projects' })).not.toBeInTheDocument()
   })
 
   it('shows a not-found page for unknown addresses', () => {

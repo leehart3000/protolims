@@ -2,10 +2,12 @@ import { Link, NavLink, Route, Routes } from 'react-router'
 
 import AccountMenu from './components/AccountMenu'
 import ThemeToggle from './components/ThemeToggle'
+import { useMe } from './useMe'
 import HomePage from './pages/HomePage'
 import NewProjectPage from './pages/NewProjectPage'
 import NewStudyPage from './pages/NewStudyPage'
 import NotFoundPage from './pages/NotFoundPage'
+import SignInPage from './pages/SignInPage'
 import ProjectDetailPage from './pages/ProjectDetailPage'
 import ProjectsPage from './pages/ProjectsPage'
 import StudiesPage from './pages/StudiesPage'
@@ -30,6 +32,10 @@ function navLinkClass({ isActive }: { isActive: boolean }) {
 }
 
 export default function App() {
+  const { data: me } = useMe()
+  // On a private site (public reading off), nothing can be seen without signing in.
+  const mustSignIn = me !== undefined && !me.public_read && me.user === null
+
   return (
     <div className="flex min-h-screen flex-col">
       <header className="border-b border-line bg-panel">
@@ -43,12 +49,16 @@ export default function App() {
             </span>
           </Link>
           <nav aria-label="Main" className="flex flex-1 gap-1">
-            <NavLink to="/projects" className={navLinkClass}>
-              Projects
-            </NavLink>
-            <NavLink to="/studies" className={navLinkClass}>
-              Studies
-            </NavLink>
+            {!mustSignIn && (
+              <>
+                <NavLink to="/projects" className={navLinkClass}>
+                  Projects
+                </NavLink>
+                <NavLink to="/studies" className={navLinkClass}>
+                  Studies
+                </NavLink>
+              </>
+            )}
           </nav>
           <AccountMenu />
           <ThemeToggle />
@@ -56,39 +66,46 @@ export default function App() {
       </header>
 
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 pt-6 pb-10">
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/projects" element={<ProjectsPage />} />
-          <Route path="/projects/new" element={<NewProjectPage />} />
-          <Route path="/projects/:code" element={<ProjectDetailPage />} />
-          <Route path="/projects/:code/edit" element={<EditProjectPage />} />
-          <Route path="/projects/:code/studies/new" element={<NewStudyPage />} />
-          <Route path="/projects/:code/studies/:studyCode" element={<StudyDetailPage />} />
-          <Route path="/projects/:code/studies/:studyCode/edit" element={<EditStudyPage />} />
-          <Route
-            path="/projects/:code/studies/:studyCode/subjects/new"
-            element={<NewSubjectPage />}
-          />
-          <Route
-            path="/projects/:code/studies/:studyCode/samples/new"
-            element={<NewSamplePage />}
-          />
-          <Route path="/projects/:code/studies/:studyCode/assays/new" element={<NewAssayPage />} />
-          <Route
-            path="/projects/:code/studies/:studyCode/data-files/new"
-            element={<NewDataFilePage />}
-          />
-          <Route path="/subjects/:subjectId" element={<SubjectDetailPage />} />
-          <Route path="/subjects/:subjectId/edit" element={<EditSubjectPage />} />
-          <Route path="/samples/:sampleId" element={<SampleDetailPage />} />
-          <Route path="/samples/:sampleId/edit" element={<EditSamplePage />} />
-          <Route path="/assays/:assayId" element={<AssayDetailPage />} />
-          <Route path="/assays/:assayId/edit" element={<EditAssayPage />} />
-          <Route path="/data-files/:dataFileId" element={<DataFileDetailPage />} />
-          <Route path="/data-files/:dataFileId/edit" element={<EditDataFilePage />} />
-          <Route path="/studies" element={<StudiesPage />} />
-          <Route path="*" element={<NotFoundPage />} />
-        </Routes>
+        {mustSignIn ? (
+          <SignInPage />
+        ) : (
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/projects" element={<ProjectsPage />} />
+            <Route path="/projects/new" element={<NewProjectPage />} />
+            <Route path="/projects/:code" element={<ProjectDetailPage />} />
+            <Route path="/projects/:code/edit" element={<EditProjectPage />} />
+            <Route path="/projects/:code/studies/new" element={<NewStudyPage />} />
+            <Route path="/projects/:code/studies/:studyCode" element={<StudyDetailPage />} />
+            <Route path="/projects/:code/studies/:studyCode/edit" element={<EditStudyPage />} />
+            <Route
+              path="/projects/:code/studies/:studyCode/subjects/new"
+              element={<NewSubjectPage />}
+            />
+            <Route
+              path="/projects/:code/studies/:studyCode/samples/new"
+              element={<NewSamplePage />}
+            />
+            <Route
+              path="/projects/:code/studies/:studyCode/assays/new"
+              element={<NewAssayPage />}
+            />
+            <Route
+              path="/projects/:code/studies/:studyCode/data-files/new"
+              element={<NewDataFilePage />}
+            />
+            <Route path="/subjects/:subjectId" element={<SubjectDetailPage />} />
+            <Route path="/subjects/:subjectId/edit" element={<EditSubjectPage />} />
+            <Route path="/samples/:sampleId" element={<SampleDetailPage />} />
+            <Route path="/samples/:sampleId/edit" element={<EditSamplePage />} />
+            <Route path="/assays/:assayId" element={<AssayDetailPage />} />
+            <Route path="/assays/:assayId/edit" element={<EditAssayPage />} />
+            <Route path="/data-files/:dataFileId" element={<DataFileDetailPage />} />
+            <Route path="/data-files/:dataFileId/edit" element={<EditDataFilePage />} />
+            <Route path="/studies" element={<StudiesPage />} />
+            <Route path="*" element={<NotFoundPage />} />
+          </Routes>
+        )}
       </main>
 
       <footer className="border-t border-line">
