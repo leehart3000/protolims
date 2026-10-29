@@ -1,0 +1,20 @@
+// The site's icons, chosen once (from Lucide) and used everywhere, so each kind of record and
+// action always looks the same.
+export {
+  CirclePlus as NewIcon,
+  ClipboardList as StudyIcon,
+  ExternalLink as ExternalIcon,
+  FileChartColumn as DataFileIcon,
+  Folders as ProjectIcon,
+  IdCard as SubjectIcon,
+  LogIn as SignInIcon,
+  Microscope as AssayIcon,
+  PencilLine as EditIcon,
+  Pipette as SampleIcon,
+  Save as SaveIcon,
+  ShieldCheck as SiteAdminIcon,
+  SquareMenu as DetailsIcon,
+  UserRoundPlus as AddPersonIcon,
+  UserRoundX as RemovePersonIcon,
+  UsersRound as MembersIcon,
+} from 'lucide-react'

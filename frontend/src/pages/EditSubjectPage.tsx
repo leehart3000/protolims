@@ -1,5 +1,4 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Save } from 'lucide-react'
 import { useNavigate, useParams } from 'react-router'
 
 import { api } from '../api/client'
@@ -17,6 +16,7 @@ import {
 import type { SubjectType } from '../labels'
 import { errorBox } from '../styles'
 import type { SubjectDetails } from '../subjects'
+import { SaveIcon } from '../icons'
 
 type Subject = components['schemas']['SubjectRead']
 type SubjectUpdate = components['schemas']['SubjectUpdate']
@@ -95,7 +95,7 @@ function EditSubject({ subject }: { subject: Subject }) {
       <SubjectForm
         initial={initial}
         submitLabel="Save changes"
-        submitIcon={Save}
+        submitIcon={SaveIcon}
         pendingLabel="Saving…"
         cancelTo={subjectPath}
         isPending={mutation.isPending}

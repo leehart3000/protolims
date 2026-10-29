@@ -1,5 +1,4 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { SquarePlus } from 'lucide-react'
 import { useNavigate, useParams } from 'react-router'
 
 import { api } from '../api/client'
@@ -10,6 +9,7 @@ import { DetailList } from '../components/DetailList'
 import { PageTitle } from '../components/PageTitle'
 import { StudyForm } from '../components/StudyForm'
 import { DuplicateCodeError, refusal } from '../forms'
+import { NewIcon } from '../icons'
 
 type StudyCreate = components['schemas']['StudyCreate']
 
@@ -74,7 +74,7 @@ export default function NewStudyPage() {
         initial={{ code: '', title: '', description: null, design_factors: [] }}
         withCode
         submitLabel="Create study"
-        submitIcon={SquarePlus}
+        submitIcon={NewIcon}
         pendingLabel="Creating…"
         cancelTo={projectPath}
         isPending={mutation.isPending}

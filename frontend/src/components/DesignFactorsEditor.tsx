@@ -1,4 +1,6 @@
-import { SquareMinus, SquarePlus } from 'lucide-react'
+import { CircleMinus } from 'lucide-react'
+
+import { NewIcon } from '../icons'
 
 import { inputClass, secondaryButton } from '../styles'
 
@@ -65,7 +67,7 @@ export function DesignFactorsEditor({
                   onChange(rows.filter((other) => other.key !== row.key))
                 }}
               >
-                <SquareMinus aria-hidden="true" className="size-4 shrink-0" />
+                <CircleMinus aria-hidden="true" className="size-4 shrink-0" />
                 Remove
               </button>
             </li>
@@ -80,7 +82,7 @@ export function DesignFactorsEditor({
           onChange([...rows, { key, name: '', description: '' }])
         }}
       >
-        <SquarePlus aria-hidden="true" className="size-4 shrink-0" />
+        <NewIcon aria-hidden="true" className="size-4 shrink-0" />
         Add factor
       </button>
     </fieldset>

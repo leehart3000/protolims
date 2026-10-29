@@ -1,4 +1,3 @@
-import { Save } from 'lucide-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate, useParams } from 'react-router'
 
@@ -16,6 +15,7 @@ import {
   refusal,
 } from '../forms'
 import { errorBox } from '../styles'
+import { SaveIcon } from '../icons'
 
 type Assay = components['schemas']['AssayRead']
 type AssayUpdate = components['schemas']['AssayUpdate']
@@ -105,7 +105,7 @@ function EditAssay({ assay }: { assay: Assay }) {
       <AssayForm
         initial={initial}
         submitLabel="Save changes"
-        submitIcon={Save}
+        submitIcon={SaveIcon}
         pendingLabel="Saving…"
         cancelTo={assayPath}
         isPending={mutation.isPending}

@@ -1,4 +1,4 @@
-import { SquarePen } from 'lucide-react'
+import { EditIcon } from '../icons'
 import type { ReactNode } from 'react'
 import { Link } from 'react-router'
 
@@ -21,14 +21,14 @@ export function EditButton({
 
   if (reason) {
     return (
-      <DisabledButton icon={SquarePen} className={secondaryButton} reason={reason}>
+      <DisabledButton icon={EditIcon} className={secondaryButton} reason={reason}>
         {children}
       </DisabledButton>
     )
   }
   return (
     <Link to={to} className={`${secondaryButton} inline-flex items-center gap-2`}>
-      <SquarePen aria-hidden="true" className="size-4 shrink-0" />
+      <EditIcon aria-hidden="true" className="size-4 shrink-0" />
       {children}
     </Link>
   )

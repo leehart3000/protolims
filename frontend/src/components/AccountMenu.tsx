@@ -1,10 +1,12 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { LogIn, LogOut, UserRound } from 'lucide-react'
+import { LogOut, UserRound } from 'lucide-react'
 import { useLocation } from 'react-router'
 
 import { signOut } from '../api/queries'
+import { SignInIcon } from '../icons'
 import { signInHref } from '../signIn'
 import { useMe } from '../useMe'
+import { SiteAdminBadge } from './SiteAdminBadge'
 
 const headerButton =
   'inline-flex items-center gap-2 rounded-md px-2.5 py-2 text-sm font-medium text-muted hover:bg-line/60 hover:text-fg disabled:opacity-60'
@@ -32,7 +34,7 @@ export default function AccountMenu() {
         title="Sign in with your ORCID iD"
         className={headerButton}
       >
-        <LogIn aria-hidden="true" className="size-5" />
+        <SignInIcon aria-hidden="true" className="size-5" />
         Sign in
       </a>
     )
@@ -53,6 +55,7 @@ export default function AccountMenu() {
         <span className="max-w-40 truncate" title={name}>
           {name}
         </span>
+        {me.site_admin && <SiteAdminBadge />}
       </p>
       <button
         type="button"

@@ -1,4 +1,3 @@
-import { Save } from 'lucide-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate, useParams } from 'react-router'
 
@@ -17,6 +16,7 @@ import {
 } from '../forms'
 import { collectedAt, type SampleFormValues } from '../samples'
 import { errorBox } from '../styles'
+import { SaveIcon } from '../icons'
 
 type Sample = components['schemas']['SampleRead']
 type SampleUpdate = components['schemas']['SampleUpdate']
@@ -151,7 +151,7 @@ function EditSample({ sample }: { sample: Sample }) {
           parentHint="This sample and the samples derived from it aren't listed, as a sample can't be derived from itself."
           initial={initial}
           submitLabel="Save changes"
-          submitIcon={Save}
+          submitIcon={SaveIcon}
           pendingLabel="Saving…"
           cancelTo={samplePath}
           isPending={mutation.isPending}

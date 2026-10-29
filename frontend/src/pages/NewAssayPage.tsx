@@ -1,4 +1,3 @@
-import { SquarePlus } from 'lucide-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate, useParams } from 'react-router'
 
@@ -10,6 +9,7 @@ import { AssayForm } from '../components/AssayForm'
 import { Breadcrumbs } from '../components/Breadcrumbs'
 import { DetailList } from '../components/DetailList'
 import { PageTitle } from '../components/PageTitle'
+import { NewIcon } from '../icons'
 import {
   DuplicateNameError,
   DuplicateExternalIdError,
@@ -92,7 +92,7 @@ export default function NewAssayPage() {
           external_id: null,
         }}
         submitLabel="Create assay"
-        submitIcon={SquarePlus}
+        submitIcon={NewIcon}
         pendingLabel="Creating…"
         cancelTo={studyPath}
         isPending={mutation.isPending}

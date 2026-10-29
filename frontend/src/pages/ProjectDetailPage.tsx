@@ -24,6 +24,8 @@ import {
   tableWrapper,
 } from '../styles'
 import { useListControls } from '../useListControls'
+import { SectionHeading } from '../components/SectionHeading'
+import { StudyIcon } from '../icons'
 
 type Project = components['schemas']['ProjectRead']
 type StudyColumn = Exclude<StudySort, `-${string}`>
@@ -140,7 +142,7 @@ function ProjectDetails({ project }: { project: Project }) {
       </DetailsCard>
 
       <div className="mt-10 flex items-center justify-between gap-4">
-        <h2 className="text-xl font-semibold">Studies</h2>
+        <SectionHeading icon={StudyIcon}>Studies</SectionHeading>
         <NewStudyButton projectCode={project.code} />
       </div>
       <StudyList projectCode={project.code} />

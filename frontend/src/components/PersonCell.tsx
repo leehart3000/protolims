@@ -1,6 +1,5 @@
-import { ExternalLink } from 'lucide-react'
-
 import type { components } from '../api/schema'
+import { ExternalIcon } from '../icons'
 import { textLink } from '../styles'
 
 type User = components['schemas']['UserRead']
@@ -20,7 +19,7 @@ export function PersonCell({ user }: { user: User }) {
         rel="noopener noreferrer"
       >
         {user.subject}
-        <ExternalLink aria-hidden="true" className="size-3 shrink-0" />
+        <ExternalIcon aria-hidden="true" className="size-3 shrink-0" />
       </a>
     </>
   )

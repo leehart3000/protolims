@@ -1,5 +1,4 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { SquarePlus } from 'lucide-react'
 import { useNavigate, useParams } from 'react-router'
 
 import { api } from '../api/client'
@@ -9,6 +8,7 @@ import { Breadcrumbs } from '../components/Breadcrumbs'
 import { DetailList } from '../components/DetailList'
 import { PageTitle } from '../components/PageTitle'
 import { SubjectForm } from '../components/SubjectForm'
+import { NewIcon } from '../icons'
 import {
   DuplicateNameError,
   DuplicateExternalIdError,
@@ -86,7 +86,7 @@ export default function NewSubjectPage() {
       <SubjectForm
         initial={{ name: '', subject_type: '', species: null, external_id: null }}
         submitLabel="Create subject"
-        submitIcon={SquarePlus}
+        submitIcon={NewIcon}
         pendingLabel="Creating…"
         cancelTo={studyPath}
         isPending={mutation.isPending}

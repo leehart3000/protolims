@@ -1,4 +1,3 @@
-import { SquarePlus } from 'lucide-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate, useParams, useSearchParams } from 'react-router'
 
@@ -12,6 +11,7 @@ import { PageTitle } from '../components/PageTitle'
 import { DuplicateLocationError, invalidDetailsMessage } from '../dataFiles'
 import { errorBox } from '../styles'
 import { DuplicateExternalIdError, isExternalIdConflict, refusal } from '../forms'
+import { NewIcon } from '../icons'
 
 type Assay = components['schemas']['AssayRead']
 type DataFileCreate = components['schemas']['DataFileCreate']
@@ -79,7 +79,7 @@ function NewDataFileForm({
         external_id: null,
       }}
       submitLabel="Record data file"
-      submitIcon={SquarePlus}
+      submitIcon={NewIcon}
       pendingLabel="Recording…"
       cancelTo={initialAssayId ? `/assays/${initialAssayId}` : studyPath}
       isPending={mutation.isPending}

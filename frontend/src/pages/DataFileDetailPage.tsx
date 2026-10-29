@@ -24,6 +24,8 @@ import { dataFileLevelLabel } from '../labels'
 import { errorBox, textLink } from '../styles'
 import { useListControls } from '../useListControls'
 import { editorOf } from '../permissions'
+import { SectionHeading } from '../components/SectionHeading'
+import { DataFileIcon, SampleIcon } from '../icons'
 
 type DataFile = components['schemas']['DataFileRead']
 
@@ -182,13 +184,19 @@ function DataFileDetails({ file }: { file: DataFile }) {
       <h2 className="mt-10 text-xl font-semibold">Summary</h2>
       <KeyValueList values={file.summary} emptyText="No summary recorded." />
 
-      <h2 className="mt-10 text-xl font-semibold">Samples</h2>
+      <SectionHeading icon={SampleIcon} className="mt-10">
+        Samples
+      </SectionHeading>
       <DataFileSampleList dataFileId={file.id} />
 
-      <h2 className="mt-10 text-xl font-semibold">Made from</h2>
+      <SectionHeading icon={DataFileIcon} className="mt-10">
+        Made from
+      </SectionHeading>
       <RelatedFiles dataFileId={file.id} which="inputs" />
 
-      <h2 className="mt-10 text-xl font-semibold">Used to make</h2>
+      <SectionHeading icon={DataFileIcon} className="mt-10">
+        Used to make
+      </SectionHeading>
       <RelatedFiles dataFileId={file.id} which="outputs" />
     </>
   )

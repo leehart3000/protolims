@@ -17,6 +17,7 @@ import { formatDate } from '../format'
 import { editorOf } from '../permissions'
 import { sampleStatusLabel } from '../labels'
 import { errorBox, textLink } from '../styles'
+import { AssayIcon, DataFileIcon, SampleIcon } from '../icons'
 
 type Sample = components['schemas']['SampleRead']
 
@@ -161,7 +162,7 @@ function SampleDetails({ sample }: { sample: Sample }) {
       <KeyValueList values={sample.factor_values} emptyText="No factor values recorded." />
 
       <div className="mt-10 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-        <SectionHeading>Derived samples</SectionHeading>
+        <SectionHeading icon={SampleIcon}>Derived samples</SectionHeading>
         <NewButton need={editing} to={derivedPath}>
           New derived sample
         </NewButton>
@@ -172,9 +173,13 @@ function SampleDetails({ sample }: { sample: Sample }) {
           New derived sample
         </NewButton>
       </p>
-      <h2 className="mt-10 text-xl font-semibold">Assays</h2>
+      <SectionHeading icon={AssayIcon} className="mt-10">
+        Assays
+      </SectionHeading>
       <SampleAssays sampleId={sample.id} />
-      <h2 className="mt-10 text-xl font-semibold">Data files</h2>
+      <SectionHeading icon={DataFileIcon} className="mt-10">
+        Data files
+      </SectionHeading>
       <SampleDataFiles sampleId={sample.id} />
     </>
   )

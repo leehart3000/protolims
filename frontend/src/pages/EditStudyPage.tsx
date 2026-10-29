@@ -1,5 +1,4 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Save } from 'lucide-react'
 import { useNavigate, useParams } from 'react-router'
 
 import { api } from '../api/client'
@@ -11,6 +10,7 @@ import { StudyForm } from '../components/StudyForm'
 import type { StudyDetails } from '../studies'
 import { refusal } from '../forms'
 import { errorBox } from '../styles'
+import { SaveIcon } from '../icons'
 
 type Study = components['schemas']['StudyRead']
 type StudyUpdate = components['schemas']['StudyUpdate']
@@ -81,7 +81,7 @@ function EditStudy({ projectCode, study }: { projectCode: string; study: Study }
         }}
         withCode={false}
         submitLabel="Save changes"
-        submitIcon={Save}
+        submitIcon={SaveIcon}
         pendingLabel="Saving…"
         cancelTo={studyPath}
         isPending={mutation.isPending}

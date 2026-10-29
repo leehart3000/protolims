@@ -1,4 +1,4 @@
-import { SquareMenu } from 'lucide-react'
+import { DetailsIcon } from '../icons'
 
 import { rowButton, tableCell } from '../styles'
 
@@ -9,7 +9,7 @@ export function RowArrow() {
   return (
     <td className={tableCell} aria-hidden="true">
       <span className={rowButton}>
-        <SquareMenu className="size-4 shrink-0" />
+        <DetailsIcon className="size-4 shrink-0" />
         <span className="hidden sm:inline">Details</span>
       </span>
     </td>

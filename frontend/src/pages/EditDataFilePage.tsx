@@ -1,4 +1,3 @@
-import { Save } from 'lucide-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate, useParams } from 'react-router'
 
@@ -16,6 +15,7 @@ import {
 import type { DataFileLevel } from '../labels'
 import { errorBox } from '../styles'
 import { DuplicateExternalIdError, isExternalIdConflict, refusal } from '../forms'
+import { SaveIcon } from '../icons'
 
 type DataFile = components['schemas']['DataFileRead']
 type DataFileUpdate = components['schemas']['DataFileUpdate']
@@ -113,7 +113,7 @@ function EditDataFile({ file }: { file: DataFile }) {
           assays={assays.data}
           initial={initial}
           submitLabel="Save changes"
-          submitIcon={Save}
+          submitIcon={SaveIcon}
           pendingLabel="Saving…"
           cancelTo={filePath}
           isPending={mutation.isPending}

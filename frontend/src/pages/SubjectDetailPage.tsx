@@ -13,6 +13,8 @@ import { formatDate } from '../format'
 import { subjectTypeLabel } from '../labels'
 import { errorBox } from '../styles'
 import { editorOf } from '../permissions'
+import { SectionHeading } from '../components/SectionHeading'
+import { SampleIcon } from '../icons'
 
 type Subject = components['schemas']['SubjectRead']
 
@@ -59,7 +61,9 @@ function SubjectDetails({ subject }: { subject: Subject }) {
       <h2 className="mt-10 text-xl font-semibold">Attributes</h2>
       <KeyValueList values={subject.attributes} emptyText="No attributes recorded." />
 
-      <h2 className="mt-10 text-xl font-semibold">Samples</h2>
+      <SectionHeading icon={SampleIcon} className="mt-10">
+        Samples
+      </SectionHeading>
       <SampleList
         projectCode={subject.project_code}
         studyCode={subject.study_code}

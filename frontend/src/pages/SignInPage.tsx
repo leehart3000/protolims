@@ -1,7 +1,7 @@
-import { LogIn } from 'lucide-react'
 import { useLocation } from 'react-router'
 
 import { PageTitle } from '../components/PageTitle'
+import { SignInIcon } from '../icons'
 import { signInHref } from '../signIn'
 import { primaryButton } from '../styles'
 
@@ -22,7 +22,7 @@ export default function SignInPage() {
           href={signInHref(location.pathname, location.search)}
           className={`${primaryButton} inline-flex items-center gap-2`}
         >
-          <LogIn aria-hidden="true" className="size-5" />
+          <SignInIcon aria-hidden="true" className="size-5" />
           Sign in with ORCID
         </a>
       </p>

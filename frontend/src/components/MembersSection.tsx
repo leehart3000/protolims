@@ -1,10 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Save, UserRoundMinus, UserRoundPlus, UsersRound } from 'lucide-react'
 import { useId, useState } from 'react'
 
 import { fetchMembers } from '../api/queries'
 import type { components } from '../api/schema'
 import { text } from '../forms'
+import { AddPersonIcon, MembersIcon, RemovePersonIcon, SaveIcon } from '../icons'
 import { changeRole, orcidPattern, type Place, type Role, ROLE_OPTIONS } from '../members'
 import { roleOn } from '../permissions'
 import {
@@ -92,7 +92,7 @@ function MemberRow({
         <td className={tableCell}>{roleLabel(role)}</td>
         <td className={tableCell}>
           <DisabledButton
-            icon={UserRoundMinus}
+            icon={RemovePersonIcon}
             className={secondaryButton}
             reason={locked}
             label={`Remove ${who}`}
@@ -142,7 +142,7 @@ function MemberRow({
             }}
             className={`${unsaved ? unsavedButton : secondaryButton} inline-flex items-center gap-2`}
           >
-            <Save aria-hidden="true" className="size-4 shrink-0" />
+            <SaveIcon aria-hidden="true" className="size-4 shrink-0" />
             Save
           </button>
           {unsaved && (
@@ -190,7 +190,7 @@ function MemberRow({
             }}
             className={`${secondaryButton} inline-flex items-center gap-2`}
           >
-            <UserRoundMinus aria-hidden="true" className="size-4 shrink-0" />
+            <RemovePersonIcon aria-hidden="true" className="size-4 shrink-0" />
             {/* Just the icon on narrow screens; the button's label still names who. */}
             <span className="hidden sm:inline">Remove</span>
           </button>
@@ -231,7 +231,7 @@ function Members({ place, adminLocked }: { place: Place; adminLocked?: string })
 
   return (
     <section className="mt-10">
-      <SectionHeading icon={UsersRound}>Members</SectionHeading>
+      <SectionHeading icon={MembersIcon}>Members</SectionHeading>
       <p className="mt-2 max-w-3xl text-muted">
         {studyCode === undefined
           ? 'People with a role on this project, which covers all its studies.'
@@ -351,7 +351,7 @@ function Members({ place, adminLocked }: { place: Place; adminLocked?: string })
           disabled={change.isPending}
           className={`${primaryButton} inline-flex items-center gap-2 text-sm`}
         >
-          <UserRoundPlus aria-hidden="true" className="size-4 shrink-0" />
+          <AddPersonIcon aria-hidden="true" className="size-4 shrink-0" />
           Add
         </button>
       </form>

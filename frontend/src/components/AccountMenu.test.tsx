@@ -73,6 +73,13 @@ describe('AccountMenu', () => {
     expect(requests).toContain('POST /api/v1/auth/logout')
   })
 
+  it('marks a site administrator with a badge', async () => {
+    stubApi([{ ...jo, site_admin: true }])
+    renderMenu()
+
+    expect(await screen.findByText('Site admin')).toBeInTheDocument()
+  })
+
   it('shows the ORCID iD when the name is private', async () => {
     stubApi([{ ...jo, user: { ...joUser, name: null } }])
     renderMenu()

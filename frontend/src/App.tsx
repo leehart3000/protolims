@@ -2,6 +2,7 @@ import { Link, NavLink, Route, Routes } from 'react-router'
 
 import AccountMenu from './components/AccountMenu'
 import ThemeToggle from './components/ThemeToggle'
+import { MembersIcon, ProjectIcon, StudyIcon } from './icons'
 import { useMe } from './useMe'
 import HomePage from './pages/HomePage'
 import NewProjectPage from './pages/NewProjectPage'
@@ -29,7 +30,7 @@ import EditDataFilePage from './pages/EditDataFilePage'
 import NewDataFilePage from './pages/NewDataFilePage'
 
 function navLinkClass({ isActive }: { isActive: boolean }) {
-  return `rounded-md px-2 py-1.5 text-sm font-medium ${isActive ? 'text-primary' : 'text-muted hover:text-fg'}`
+  return `flex items-center gap-1.5 rounded-md px-2 py-1.5 text-sm font-medium ${isActive ? 'text-primary' : 'text-muted hover:text-fg'}`
 }
 
 export default function App() {
@@ -58,13 +59,16 @@ export default function App() {
             {!mustSignIn && (
               <>
                 <NavLink to="/projects" className={navLinkClass}>
+                  <ProjectIcon aria-hidden="true" className="size-4 shrink-0" />
                   Projects
                 </NavLink>
                 <NavLink to="/studies" className={navLinkClass}>
+                  <StudyIcon aria-hidden="true" className="size-4 shrink-0" />
                   Studies
                 </NavLink>
                 {me?.site_admin && (
                   <NavLink to="/users" className={navLinkClass}>
+                    <MembersIcon aria-hidden="true" className="size-4 shrink-0" />
                     Users
                   </NavLink>
                 )}

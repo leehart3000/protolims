@@ -1,5 +1,4 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { SquarePlus } from 'lucide-react'
 import { useNavigate } from 'react-router'
 
 import { api } from '../api/client'
@@ -8,6 +7,7 @@ import { Breadcrumbs } from '../components/Breadcrumbs'
 import { PageTitle } from '../components/PageTitle'
 import { ProjectForm } from '../components/ProjectForm'
 import { DuplicateCodeError, refusal } from '../forms'
+import { NewIcon } from '../icons'
 
 type ProjectCreate = components['schemas']['ProjectCreate']
 
@@ -52,7 +52,7 @@ export default function NewProjectPage() {
         }}
         withCode
         submitLabel="Create project"
-        submitIcon={SquarePlus}
+        submitIcon={NewIcon}
         pendingLabel="Creating…"
         cancelTo="/projects"
         isPending={mutation.isPending}

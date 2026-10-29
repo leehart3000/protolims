@@ -82,7 +82,7 @@ describe('UsersPage', () => {
     renderPage()
 
     const leeRow = await screen.findByRole('row', { name: /Lee Hart/ })
-    expect(within(leeRow).getByText('Site administrator')).toBeInTheDocument()
+    expect(within(leeRow).getByText('Site admin')).toBeInTheDocument()
     expect(within(leeRow).getByText('29 October 2026')).toBeInTheDocument()
 
     const aliceRow = screen.getByRole('row', { name: /Alice/ })

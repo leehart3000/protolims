@@ -1,5 +1,4 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { UserRoundMinus } from 'lucide-react'
 import { Link } from 'react-router'
 
 import { fetchUserPage, type UserSort } from '../api/queries'
@@ -8,8 +7,10 @@ import { PagedTable } from '../components/PagedTable'
 import { PageTitle } from '../components/PageTitle'
 import { PersonCell } from '../components/PersonCell'
 import { SearchBox } from '../components/SearchBox'
+import { SiteAdminBadge } from '../components/SiteAdminBadge'
 import { SortHeader } from '../components/SortHeader'
 import { formatDate } from '../format'
+import { RemovePersonIcon } from '../icons'
 import { removeUser } from '../members'
 import {
   errorBox,
@@ -135,7 +136,11 @@ function UserList() {
                     </td>
                     <td className={tableCell}>
                       <ul className="space-y-1">
-                        {user.site_admin && <li className="font-medium">Site administrator</li>}
+                        {user.site_admin && (
+                          <li>
+                            <SiteAdminBadge label />
+                          </li>
+                        )}
                         {user.roles.map((role) => (
                           <li key={`${role.project}/${role.study ?? ''}`}>
                             <RoleLink role={role} />
@@ -165,7 +170,7 @@ function UserList() {
                             }}
                             className={`${secondaryButton} inline-flex items-center gap-2`}
                           >
-                            <UserRoundMinus aria-hidden="true" className="size-4 shrink-0" />
+                            <RemovePersonIcon aria-hidden="true" className="size-4 shrink-0" />
                             <span className="hidden sm:inline">Remove</span>
                           </button>
                         )}

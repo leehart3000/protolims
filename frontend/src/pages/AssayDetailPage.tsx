@@ -18,6 +18,7 @@ import { formatDate } from '../format'
 import { editorOf } from '../permissions'
 import { errorBox } from '../styles'
 import { useListControls } from '../useListControls'
+import { DataFileIcon, SampleIcon } from '../icons'
 
 type Assay = components['schemas']['AssayRead']
 
@@ -108,11 +109,13 @@ function AssayDetails({ assay }: { assay: Assay }) {
       <h2 className="mt-10 text-xl font-semibold">Parameters</h2>
       <KeyValueList values={assay.parameters} emptyText="No parameters recorded." />
 
-      <h2 className="mt-10 text-xl font-semibold">Samples</h2>
+      <SectionHeading icon={SampleIcon} className="mt-10">
+        Samples
+      </SectionHeading>
       <AssaySampleList assayId={assay.id} />
 
       <div className="mt-10 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-        <SectionHeading>Data files</SectionHeading>
+        <SectionHeading icon={DataFileIcon}>Data files</SectionHeading>
         <NewButton need={editing} to={newFilePath}>
           New data file
         </NewButton>

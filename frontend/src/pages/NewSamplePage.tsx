@@ -1,4 +1,3 @@
-import { SquarePlus } from 'lucide-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate, useParams, useSearchParams } from 'react-router'
 
@@ -17,6 +16,7 @@ import {
 } from '../forms'
 import { collectedAt } from '../samples'
 import { errorBox } from '../styles'
+import { NewIcon } from '../icons'
 
 type SampleCreate = components['schemas']['SampleCreate']
 type Sample = components['schemas']['SampleRead']
@@ -86,7 +86,7 @@ function NewSampleForm({
         external_id: null,
       }}
       submitLabel="Create sample"
-      submitIcon={SquarePlus}
+      submitIcon={NewIcon}
       pendingLabel="Creating…"
       cancelTo={parent ? `/samples/${parent.id}` : studyPath}
       isPending={mutation.isPending}

@@ -1,5 +1,4 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Save } from 'lucide-react'
 import { useNavigate, useParams } from 'react-router'
 
 import { api } from '../api/client'
@@ -11,6 +10,7 @@ import { ProjectForm } from '../components/ProjectForm'
 import type { ProjectDetails } from '../projects'
 import { refusal } from '../forms'
 import { errorBox } from '../styles'
+import { SaveIcon } from '../icons'
 
 type Project = components['schemas']['ProjectRead']
 type ProjectUpdate = components['schemas']['ProjectUpdate']
@@ -77,7 +77,7 @@ function EditProject({ project }: { project: Project }) {
         initial={initial}
         withCode={false}
         submitLabel="Save changes"
-        submitIcon={Save}
+        submitIcon={SaveIcon}
         pendingLabel="Saving…"
         cancelTo={projectPath}
         isPending={mutation.isPending}

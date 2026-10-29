@@ -1,16 +1,17 @@
-import { type LucideIcon, SquarePlus } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Link } from 'react-router'
 
+import { NewIcon } from '../icons'
 import { type Need, useRefusal } from '../permissions'
 import { primaryButton } from '../styles'
 import { DisabledButton } from './DisabledButton'
 
-// A button-styled link that starts creating a record, with the square-plus icon unless
+// A button-styled link that starts creating a record, with the New icon unless
 // another is given. With `need`, it's disabled, saying why, for anyone who can't do it.
 export function NewButton({
   to,
-  icon: Icon = SquarePlus,
+  icon: Icon = NewIcon,
   need,
   align,
   children,
