@@ -27,16 +27,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from protolims_api.config import Settings, get_settings
 from protolims_api.db import SessionDep
-from protolims_api.models import (
-    AppUser,
-    Project,
-    ProjectMember,
-    SignInAttempt,
-    Study,
-    StudyMember,
-    UserSession,
-)
+from protolims_api.models import AppUser, SignInAttempt, UserSession
 from protolims_api.permissions import SESSION_COOKIE, ActorDep, hash_token
+from protolims_api.roles import roles_of_users
 from protolims_api.schemas.user import RoleRead, UserRead
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -267,31 +260,6 @@ async def orcid_callback(
     return response
 
 
-async def roles_of(session: AsyncSession, user: AppUser) -> list[RoleRead]:
-    """Someone's roles on projects, then on studies, each in order of their codes."""
-    on_projects = await session.execute(
-        select(Project.code, ProjectMember.role)
-        .join(ProjectMember, ProjectMember.project_id == Project.id)
-        .where(ProjectMember.user_id == user.id)
-        .order_by(Project.code)
-    )
-    on_studies = await session.execute(
-        select(Project.code, Study.code, StudyMember.role)
-        .join(Study, Study.project_id == Project.id)
-        .join(StudyMember, StudyMember.study_id == Study.id)
-        .where(StudyMember.user_id == user.id)
-        .order_by(Project.code, Study.code)
-    )
-    rows: list[tuple[str, str | None, str]] = [
-        (project, None, role) for project, role in on_projects
-    ]
-    rows += [(project, study, role) for project, study, role in on_studies]
-    return [
-        RoleRead.model_validate({"project": project, "study": study, "role": role})
-        for project, study, role in rows
-    ]
-
-
 @router.get("/me")
 async def who_am_i(session: SessionDep, actor: ActorDep) -> Me:
     """Who is signed in on this browser, if anyone, what they can do, and what this server
@@ -301,7 +269,7 @@ async def who_am_i(session: SessionDep, actor: ActorDep) -> Me:
         user=None if user is None else UserRead.model_validate(user),
         site_admin=actor.site_admin,
         public_read=get_settings().public_read,
-        roles=[] if user is None else await roles_of(session, user),
+        roles=[] if user is None else (await roles_of_users(session, [user.id]))[user.id],
     )
 
 

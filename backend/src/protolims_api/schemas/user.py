@@ -1,6 +1,7 @@
 """Schemas for people who sign in, and their roles."""
 
 import uuid
+from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict
 
@@ -25,6 +26,18 @@ class RoleRead(BaseModel):
     project: str
     study: str | None
     role: Role
+
+
+class UserSummary(UserRead):
+    """Someone, for the site administrators' list of everyone: when they joined and last
+    signed in, and their roles."""
+
+    created_at: datetime
+    # Null for someone added by their ORCID iD who hasn't signed in yet.
+    last_signed_in_at: datetime | None
+    # Whether they're a site administrator (set by PROTOLIMS_SITE_ADMINS, not here).
+    site_admin: bool
+    roles: list[RoleRead]
 
 
 class MemberRole(BaseModel):

@@ -21,6 +21,7 @@ from protolims_api.routers import (
     samples,
     studies,
     subjects,
+    users,
 )
 
 PROXY_KEY_HEADER = "X-ProtoLIMS-Proxy-Key"
@@ -48,6 +49,7 @@ app.include_router(data_files.router, prefix="/api/v1", dependencies=private)
 app.include_router(importing.router, prefix="/api/v1", dependencies=private)
 app.include_router(auth.router, prefix="/api/v1")
 app.include_router(members.router, prefix="/api/v1", dependencies=private)
+app.include_router(users.router, prefix="/api/v1", dependencies=private)
 
 
 @app.middleware("http")
