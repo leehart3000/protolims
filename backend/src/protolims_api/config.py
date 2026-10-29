@@ -1,10 +1,12 @@
 """Application settings, read from environment variables."""
 
 from functools import lru_cache
-from typing import Self
+from typing import Annotated, Self
 
 from pydantic import Field, SecretStr, field_validator, model_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
+
+from protolims_api.orcid import OrcidId
 
 
 class Settings(BaseSettings):
@@ -38,6 +40,14 @@ class Settings(BaseSettings):
     # How long someone stays signed in.
     session_days: int = Field(default=14, ge=1, le=90)
 
+    # Site administrators, by ORCID iD, separated by commas (PROTOLIMS_SITE_ADMINS). They can
+    # create projects and manage everyone's roles. Only whoever runs the server can set this.
+    site_admins: Annotated[list[OrcidId], NoDecode] = Field(default_factory=list)
+
+    # Whether people who aren't signed in can read everything (PROTOLIMS_PUBLIC_READ). Off by
+    # default, so a new instance starts private; on for protolims.org, whose data is all open.
+    public_read: bool = False
+
     # Cloud Run sets K_SERVICE on its services (not on jobs, such as migrations).
     cloud_run_service: str | None = Field(default=None, validation_alias="K_SERVICE")
 
@@ -48,6 +58,14 @@ class Settings(BaseSettings):
         for prefix in ("postgresql://", "postgres://"):
             if value.startswith(prefix):
                 return "postgresql+psycopg://" + value.removeprefix(prefix)
+        return value
+
+    @field_validator("site_admins", mode="before")
+    @classmethod
+    def split_site_admins(cls, value: object) -> object:
+        """Read "iD, iD" from the environment as a list."""
+        if isinstance(value, str):
+            return [part.strip() for part in value.split(",") if part.strip()]
         return value
 
     @model_validator(mode="after")

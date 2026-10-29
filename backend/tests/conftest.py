@@ -4,8 +4,10 @@ Tests run against a separate database (protolims_test by default), which is
 created and migrated automatically, and emptied before each test.
 """
 
+import hashlib
 import os
-from collections.abc import Iterator
+import secrets
+from collections.abc import Callable, Iterator
 from pathlib import Path
 
 import pytest
@@ -27,6 +29,11 @@ os.environ["PROTOLIMS_PUBLIC_URL"] = "http://127.0.0.1:5173"
 os.environ["PROTOLIMS_ORCID_BASE_URL"] = "https://orcid.example"
 os.environ["PROTOLIMS_ORCID_CLIENT_ID"] = "APP-TEST"
 os.environ["PROTOLIMS_ORCID_CLIENT_SECRET"] = "test-secret"
+
+# The tests' site administrator, and public reading on, as on protolims.org.
+SITE_ADMIN = "0000-0001-5109-3700"
+os.environ["PROTOLIMS_SITE_ADMINS"] = SITE_ADMIN
+os.environ["PROTOLIMS_PUBLIC_READ"] = "true"
 
 ALEMBIC_INI = Path(__file__).resolve().parent.parent / "alembic.ini"
 
@@ -73,3 +80,36 @@ def client() -> Iterator[TestClient]:
 
     with TestClient(app) as test_client:
         yield test_client
+
+
+SignIn = Callable[..., dict[str, str]]
+
+
+@pytest.fixture
+def sign_in_as(client: TestClient, database: Engine) -> SignIn:
+    """Sign someone in, by ORCID iD, without going to ORCID. Returns the request headers for
+    their browser: pass them as headers=... on each request made as them."""
+    client.cookies.clear()
+
+    def sign_in(orcid_id: str, name: str | None = None) -> dict[str, str]:
+        token = secrets.token_urlsafe(16)
+        with database.begin() as conn:
+            user_id = conn.execute(
+                text(
+                    "INSERT INTO app_user (provider, subject, name, last_signed_in_at)"
+                    " VALUES ('orcid', :subject, :name, now())"
+                    " ON CONFLICT (provider, subject) DO UPDATE SET name = EXCLUDED.name"
+                    " RETURNING id"
+                ),
+                {"subject": orcid_id, "name": name},
+            ).scalar_one()
+            conn.execute(
+                text(
+                    "INSERT INTO user_session (token_hash, user_id, expires_at)"
+                    " VALUES (:token_hash, :user_id, now() + interval '1 day')"
+                ),
+                {"token_hash": hashlib.sha256(token.encode()).hexdigest(), "user_id": user_id},
+            )
+        return {"Cookie": f"protolims_session={token}"}
+
+    return sign_in

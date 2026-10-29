@@ -24,9 +24,8 @@ class AppUser(UUIDPrimaryKeyMixin, Base):
     # As the provider gave it at the last sign-in, if they shared it.
     name: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
-    last_signed_in_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
-    )
+    # Null for someone added by their ORCID iD who hasn't signed in yet.
+    last_signed_in_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 class UserSession(UUIDPrimaryKeyMixin, Base):

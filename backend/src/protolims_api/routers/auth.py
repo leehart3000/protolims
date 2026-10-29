@@ -12,9 +12,7 @@ The API does the whole sign-in itself, so the browser never holds any tokens:
    HttpOnly, so page scripts can't read it, and only a hash of it is stored.
 """
 
-import hashlib
 import secrets
-import uuid
 from datetime import UTC, datetime, timedelta
 from typing import Annotated, Any
 from urllib.parse import urlencode
@@ -23,17 +21,18 @@ import httpx
 import jwt
 from fastapi import APIRouter, Cookie, HTTPException, Query, Response, status
 from fastapi.responses import RedirectResponse
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from protolims_api.config import Settings, get_settings
 from protolims_api.db import SessionDep
 from protolims_api.models import AppUser, SignInAttempt, UserSession
+from protolims_api.permissions import SESSION_COOKIE, ActorDep, hash_token
+from protolims_api.schemas.user import UserRead
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
-SESSION_COOKIE = "protolims_session"
 STATE_COOKIE = "protolims_sign_in"
 AUTH_PATH = "/api/v1/auth"
 CALLBACK_PATH = f"{AUTH_PATH}/orcid/callback"
@@ -45,25 +44,14 @@ UNCHECKED_REPLY = "ORCID's reply couldn't be checked, so you haven't been signed
 transport: httpx.AsyncBaseTransport | None = None
 
 
-class UserRead(BaseModel):
-    """Someone who has signed in."""
-
-    model_config = ConfigDict(from_attributes=True)
-
-    id: uuid.UUID
-    provider: str
-    subject: str
-    name: str | None
-
-
 class Me(BaseModel):
-    """Who is signed in on this browser: null if nobody."""
+    """Who is signed in on this browser (null if nobody), and what this server allows."""
 
     user: UserRead | None
-
-
-def hash_token(token: str) -> str:
-    return hashlib.sha256(token.encode()).hexdigest()
+    # Whether they're a site administrator.
+    site_admin: bool
+    # Whether people who aren't signed in can read everything here.
+    public_read: bool
 
 
 def safe_return_to(value: str | None) -> str:
@@ -165,20 +153,6 @@ async def remember_user(session: AsyncSession, subject: str, name: str | None) -
     user.last_signed_in_at = datetime.now(UTC)
     await session.flush()
     return user
-
-
-async def current_user(session: AsyncSession, token: str | None) -> AppUser | None:
-    """Who the session cookie belongs to, if it's a current session."""
-    if token is None:
-        return None
-    return await session.scalar(
-        select(AppUser)
-        .join(UserSession, UserSession.user_id == AppUser.id)
-        .where(
-            UserSession.token_hash == hash_token(token),
-            UserSession.expires_at > datetime.now(UTC),
-        )
-    )
 
 
 @router.get("/orcid/login", response_class=RedirectResponse, status_code=status.HTTP_302_FOUND)
@@ -283,13 +257,13 @@ async def orcid_callback(
 
 
 @router.get("/me")
-async def who_am_i(
-    session: SessionDep,
-    session_token: Annotated[str | None, Cookie(alias=SESSION_COOKIE)] = None,
-) -> Me:
-    """Who is signed in on this browser, if anyone."""
-    user = await current_user(session, session_token)
-    return Me(user=None if user is None else UserRead.model_validate(user))
+async def who_am_i(actor: ActorDep) -> Me:
+    """Who is signed in on this browser, if anyone, and what this server allows."""
+    return Me(
+        user=None if actor.user is None else UserRead.model_validate(actor.user),
+        site_admin=actor.site_admin,
+        public_read=get_settings().public_read,
+    )
 
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT, response_class=Response)

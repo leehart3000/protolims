@@ -15,6 +15,7 @@ from protolims_api.routers import (
     auth,
     data_files,
     importing,
+    members,
     projects,
     samples,
     studies,
@@ -42,6 +43,7 @@ app.include_router(assays.router, prefix="/api/v1")
 app.include_router(data_files.router, prefix="/api/v1")
 app.include_router(importing.router, prefix="/api/v1")
 app.include_router(auth.router, prefix="/api/v1")
+app.include_router(members.router, prefix="/api/v1")
 
 
 @app.middleware("http")
