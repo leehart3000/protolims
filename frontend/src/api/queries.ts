@@ -302,3 +302,20 @@ export async function fetchSampleDataFiles(sampleId: string) {
   }
   return data
 }
+
+// Who is signed in on this browser (user is null if nobody), and what this server allows.
+export async function fetchMe() {
+  const { data } = await api.GET('/api/v1/auth/me')
+  if (!data) {
+    throw new Error('Could not check who is signed in')
+  }
+  return data
+}
+
+// Sign this browser out, ending its session.
+export async function signOut() {
+  const { response } = await api.POST('/api/v1/auth/logout')
+  if (!response.ok) {
+    throw new Error('Could not sign out')
+  }
+}

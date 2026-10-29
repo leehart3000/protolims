@@ -13,13 +13,14 @@ export interface paths {
         };
         /**
          * List Projects
-         * @description List projects a page at a time, with the total number that match.
+         * @description List the projects the actor can see a page at a time, with the total number that
+         *     match.
          */
         get: operations["list_projects_api_v1_projects_get"];
         put?: never;
         /**
          * Create Project
-         * @description Create a project.
+         * @description Create a project. Only site administrators can.
          */
         post: operations["create_project_api_v1_projects_post"];
         delete?: never;
@@ -48,6 +49,8 @@ export interface paths {
         /**
          * Update Project
          * @description Change some of a project's details. Only the fields sent are changed; null clears one.
+         *
+         *     Only the project's admins (and site administrators) can.
          */
         patch: operations["update_project_api_v1_projects__code__patch"];
         trace?: never;
@@ -61,13 +64,16 @@ export interface paths {
         };
         /**
          * List Studies
-         * @description List a project's studies a page at a time, with the total number that match.
+         * @description List the studies the actor can see in a project, a page at a time, with the total
+         *     number that match.
          */
         get: operations["list_studies_api_v1_projects__project_code__studies_get"];
         put?: never;
         /**
          * Create Study
          * @description Create a study within a project. Study codes are unique within their project.
+         *
+         *     Only the project's admins (and site administrators) can.
          */
         post: operations["create_study_api_v1_projects__project_code__studies_post"];
         delete?: never;
@@ -96,6 +102,8 @@ export interface paths {
         /**
          * Update Study
          * @description Change a study's title, description or design factors. Only the fields sent change.
+         *
+         *     The study's editors and admins can.
          */
         patch: operations["update_study_api_v1_projects__project_code__studies__study_code__patch"];
         trace?: never;
@@ -109,7 +117,8 @@ export interface paths {
         };
         /**
          * List All Studies
-         * @description List studies across all projects a page at a time, with the total number that match.
+         * @description List the studies the actor can see across all projects, a page at a time, with the
+         *     total number that match.
          */
         get: operations["list_all_studies_api_v1_studies_get"];
         put?: never;
@@ -545,10 +554,182 @@ export interface paths {
          *       what would happen, but nothing is saved. Do a dry run first.
          *     - **Limits:** at most 5,000 records and links per request; send bigger studies in batches.
          *       An import never creates projects or studies.
-         *     - **Audit trail:** each new record and link is recorded as made by `import: <source>`.
+         *     - **Who can import:** the study's editors and admins.
+         *     - **Audit trail:** each new record and link is recorded as made by whoever imported it,
+         *       and each new record's audit entry names the import's `source`.
          */
         post: operations["import_records_api_v1_projects__project_code__studies__study_code__import_post"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/orcid/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Sign In With Orcid
+         * @description Start signing in: go to ORCID, which will send the browser back to the callback.
+         */
+        get: operations["sign_in_with_orcid_api_v1_auth_orcid_login_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/orcid/callback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Orcid Callback
+         * @description Finish signing in, when ORCID sends the browser back. Then go back to where it started.
+         *
+         *     If the person cancelled at ORCID, nobody is signed in and the browser just goes back.
+         */
+        get: operations["orcid_callback_api_v1_auth_orcid_callback_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Who Am I
+         * @description Who is signed in on this browser, if anyone, and what this server allows.
+         */
+        get: operations["who_am_i_api_v1_auth_me_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/logout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Sign Out
+         * @description Sign this browser out, ending its session.
+         */
+        post: operations["sign_out_api_v1_auth_logout_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_code}/members": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Project Members
+         * @description Everyone with a role on the project, by name (people without one last).
+         */
+        get: operations["list_project_members_api_v1_projects__project_code__members_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_code}/members/{orcid_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Set Project Member
+         * @description Give someone a role on the project, or change it. Safe to repeat.
+         */
+        put: operations["set_project_member_api_v1_projects__project_code__members__orcid_id__put"];
+        post?: never;
+        /**
+         * Remove Project Member
+         * @description Take away someone's role on the project. Safe to repeat.
+         */
+        delete: operations["remove_project_member_api_v1_projects__project_code__members__orcid_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_code}/studies/{study_code}/members": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Study Members
+         * @description Everyone with a role on the study itself (project roles are listed on the project).
+         */
+        get: operations["list_study_members_api_v1_projects__project_code__studies__study_code__members_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_code}/studies/{study_code}/members/{orcid_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Set Study Member
+         * @description Give someone a role on the study, or change it. Safe to repeat.
+         */
+        put: operations["set_study_member_api_v1_projects__project_code__studies__study_code__members__orcid_id__put"];
+        post?: never;
+        /**
+         * Remove Study Member
+         * @description Take away someone's role on the study. Safe to repeat.
+         */
+        delete: operations["remove_study_member_api_v1_projects__project_code__studies__study_code__members__orcid_id__delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1064,6 +1245,40 @@ export interface components {
              * @default 0
              */
             different: number;
+        };
+        /**
+         * Me
+         * @description Who is signed in on this browser (null if nobody), and what this server allows.
+         */
+        Me: {
+            user: components["schemas"]["UserRead"] | null;
+            /** Site Admin */
+            site_admin: boolean;
+            /** Public Read */
+            public_read: boolean;
+        };
+        /**
+         * MemberRead
+         * @description Someone's role on a project or study.
+         */
+        MemberRead: {
+            user: components["schemas"]["UserRead"];
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "viewer" | "editor" | "admin";
+        };
+        /**
+         * MemberRole
+         * @description The role to give someone.
+         */
+        MemberRole: {
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "viewer" | "editor" | "admin";
         };
         /** Page[AssayRead] */
         Page_AssayRead_: {
@@ -1607,6 +1822,23 @@ export interface components {
                 [key: string]: unknown;
             } | null;
         };
+        /**
+         * UserRead
+         * @description Someone who has signed in, or been added by their ORCID iD ahead of signing in.
+         */
+        UserRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Provider */
+            provider: string;
+            /** Subject */
+            subject: string;
+            /** Name */
+            name: string | null;
+        };
         /** ValidationError */
         ValidationError: {
             /** Location */
@@ -1641,7 +1873,9 @@ export interface operations {
             };
             header?: never;
             path?: never;
-            cookie?: never;
+            cookie?: {
+                protolims_session?: string | null;
+            };
         };
         requestBody?: never;
         responses: {
@@ -1670,7 +1904,9 @@ export interface operations {
             query?: never;
             header?: never;
             path?: never;
-            cookie?: never;
+            cookie?: {
+                protolims_session?: string | null;
+            };
         };
         requestBody: {
             content: {
@@ -1705,7 +1941,9 @@ export interface operations {
             path: {
                 code: string;
             };
-            cookie?: never;
+            cookie?: {
+                protolims_session?: string | null;
+            };
         };
         requestBody?: never;
         responses: {
@@ -1736,7 +1974,9 @@ export interface operations {
             path: {
                 code: string;
             };
-            cookie?: never;
+            cookie?: {
+                protolims_session?: string | null;
+            };
         };
         requestBody: {
             content: {
@@ -1778,7 +2018,9 @@ export interface operations {
             path: {
                 project_code: string;
             };
-            cookie?: never;
+            cookie?: {
+                protolims_session?: string | null;
+            };
         };
         requestBody?: never;
         responses: {
@@ -1809,7 +2051,9 @@ export interface operations {
             path: {
                 project_code: string;
             };
-            cookie?: never;
+            cookie?: {
+                protolims_session?: string | null;
+            };
         };
         requestBody: {
             content: {
@@ -1845,7 +2089,9 @@ export interface operations {
                 project_code: string;
                 study_code: string;
             };
-            cookie?: never;
+            cookie?: {
+                protolims_session?: string | null;
+            };
         };
         requestBody?: never;
         responses: {
@@ -1877,7 +2123,9 @@ export interface operations {
                 project_code: string;
                 study_code: string;
             };
-            cookie?: never;
+            cookie?: {
+                protolims_session?: string | null;
+            };
         };
         requestBody: {
             content: {
@@ -1919,7 +2167,9 @@ export interface operations {
             };
             header?: never;
             path?: never;
-            cookie?: never;
+            cookie?: {
+                protolims_session?: string | null;
+            };
         };
         requestBody?: never;
         responses: {
@@ -1958,7 +2208,9 @@ export interface operations {
                 project_code: string;
                 study_code: string;
             };
-            cookie?: never;
+            cookie?: {
+                protolims_session?: string | null;
+            };
         };
         requestBody?: never;
         responses: {
@@ -1990,7 +2242,9 @@ export interface operations {
                 project_code: string;
                 study_code: string;
             };
-            cookie?: never;
+            cookie?: {
+                protolims_session?: string | null;
+            };
         };
         requestBody: {
             content: {
@@ -2025,7 +2279,9 @@ export interface operations {
             path: {
                 subject_id: string;
             };
-            cookie?: never;
+            cookie?: {
+                protolims_session?: string | null;
+            };
         };
         requestBody?: never;
         responses: {
@@ -2056,7 +2312,9 @@ export interface operations {
             path: {
                 subject_id: string;
             };
-            cookie?: never;
+            cookie?: {
+                protolims_session?: string | null;
+            };
         };
         requestBody: {
             content: {
@@ -2103,7 +2361,9 @@ export interface operations {
                 project_code: string;
                 study_code: string;
             };
-            cookie?: never;
+            cookie?: {
+                protolims_session?: string | null;
+            };
         };
         requestBody?: never;
         responses: {
@@ -2135,7 +2395,9 @@ export interface operations {
                 project_code: string;
                 study_code: string;
             };
-            cookie?: never;
+            cookie?: {
+                protolims_session?: string | null;
+            };
         };
         requestBody: {
             content: {
@@ -2170,7 +2432,9 @@ export interface operations {
             path: {
                 sample_id: string;
             };
-            cookie?: never;
+            cookie?: {
+                protolims_session?: string | null;
+            };
         };
         requestBody?: never;
         responses: {
@@ -2201,7 +2465,9 @@ export interface operations {
             path: {
                 sample_id: string;
             };
-            cookie?: never;
+            cookie?: {
+                protolims_session?: string | null;
+            };
         };
         requestBody: {
             content: {
@@ -2244,7 +2510,9 @@ export interface operations {
                 project_code: string;
                 study_code: string;
             };
-            cookie?: never;
+            cookie?: {
+                protolims_session?: string | null;
+            };
         };
         requestBody?: never;
         responses: {
@@ -2276,7 +2544,9 @@ export interface operations {
                 project_code: string;
                 study_code: string;
             };
-            cookie?: never;
+            cookie?: {
+                protolims_session?: string | null;
+            };
         };
         requestBody: {
             content: {
@@ -2311,7 +2581,9 @@ export interface operations {
             path: {
                 assay_id: string;
             };
-            cookie?: never;
+            cookie?: {
+                protolims_session?: string | null;
+            };
         };
         requestBody?: never;
         responses: {
@@ -2342,7 +2614,9 @@ export interface operations {
             path: {
                 assay_id: string;
             };
-            cookie?: never;
+            cookie?: {
+                protolims_session?: string | null;
+            };
         };
         requestBody: {
             content: {
@@ -2384,7 +2658,9 @@ export interface operations {
             path: {
                 assay_id: string;
             };
-            cookie?: never;
+            cookie?: {
+                protolims_session?: string | null;
+            };
         };
         requestBody?: never;
         responses: {
@@ -2416,7 +2692,9 @@ export interface operations {
                 assay_id: string;
                 sample_id: string;
             };
-            cookie?: never;
+            cookie?: {
+                protolims_session?: string | null;
+            };
         };
         requestBody: {
             content: {
@@ -2452,7 +2730,9 @@ export interface operations {
                 assay_id: string;
                 sample_id: string;
             };
-            cookie?: never;
+            cookie?: {
+                protolims_session?: string | null;
+            };
         };
         requestBody?: never;
         responses: {
@@ -2481,7 +2761,9 @@ export interface operations {
             path: {
                 sample_id: string;
             };
-            cookie?: never;
+            cookie?: {
+                protolims_session?: string | null;
+            };
         };
         requestBody?: never;
         responses: {
@@ -2524,7 +2806,9 @@ export interface operations {
                 project_code: string;
                 study_code: string;
             };
-            cookie?: never;
+            cookie?: {
+                protolims_session?: string | null;
+            };
         };
         requestBody?: never;
         responses: {
@@ -2556,7 +2840,9 @@ export interface operations {
                 project_code: string;
                 study_code: string;
             };
-            cookie?: never;
+            cookie?: {
+                protolims_session?: string | null;
+            };
         };
         requestBody: {
             content: {
@@ -2591,7 +2877,9 @@ export interface operations {
             path: {
                 data_file_id: string;
             };
-            cookie?: never;
+            cookie?: {
+                protolims_session?: string | null;
+            };
         };
         requestBody?: never;
         responses: {
@@ -2622,7 +2910,9 @@ export interface operations {
             path: {
                 data_file_id: string;
             };
-            cookie?: never;
+            cookie?: {
+                protolims_session?: string | null;
+            };
         };
         requestBody: {
             content: {
@@ -2664,7 +2954,9 @@ export interface operations {
             path: {
                 data_file_id: string;
             };
-            cookie?: never;
+            cookie?: {
+                protolims_session?: string | null;
+            };
         };
         requestBody?: never;
         responses: {
@@ -2696,7 +2988,9 @@ export interface operations {
                 data_file_id: string;
                 sample_id: string;
             };
-            cookie?: never;
+            cookie?: {
+                protolims_session?: string | null;
+            };
         };
         requestBody: {
             content: {
@@ -2732,7 +3026,9 @@ export interface operations {
                 data_file_id: string;
                 sample_id: string;
             };
-            cookie?: never;
+            cookie?: {
+                protolims_session?: string | null;
+            };
         };
         requestBody?: never;
         responses: {
@@ -2761,7 +3057,9 @@ export interface operations {
             path: {
                 sample_id: string;
             };
-            cookie?: never;
+            cookie?: {
+                protolims_session?: string | null;
+            };
         };
         requestBody?: never;
         responses: {
@@ -2792,7 +3090,9 @@ export interface operations {
             path: {
                 data_file_id: string;
             };
-            cookie?: never;
+            cookie?: {
+                protolims_session?: string | null;
+            };
         };
         requestBody?: never;
         responses: {
@@ -2823,7 +3123,9 @@ export interface operations {
             path: {
                 data_file_id: string;
             };
-            cookie?: never;
+            cookie?: {
+                protolims_session?: string | null;
+            };
         };
         requestBody?: never;
         responses: {
@@ -2855,7 +3157,9 @@ export interface operations {
                 data_file_id: string;
                 input_id: string;
             };
-            cookie?: never;
+            cookie?: {
+                protolims_session?: string | null;
+            };
         };
         requestBody?: never;
         responses: {
@@ -2887,7 +3191,9 @@ export interface operations {
                 data_file_id: string;
                 input_id: string;
             };
-            cookie?: never;
+            cookie?: {
+                protolims_session?: string | null;
+            };
         };
         requestBody?: never;
         responses: {
@@ -2917,7 +3223,9 @@ export interface operations {
                 project_code: string;
                 study_code: string;
             };
-            cookie?: never;
+            cookie?: {
+                protolims_session?: string | null;
+            };
         };
         requestBody: {
             content: {
@@ -2933,6 +3241,342 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ImportResult"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    sign_in_with_orcid_api_v1_auth_orcid_login_get: {
+        parameters: {
+            query?: {
+                /** @description The page on this site to go back to afterwards */
+                return_to?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            302: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    orcid_callback_api_v1_auth_orcid_callback_get: {
+        parameters: {
+            query?: {
+                state?: string | null;
+                code?: string | null;
+                error?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: {
+                protolims_sign_in?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            302: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    who_am_i_api_v1_auth_me_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                protolims_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Me"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    sign_out_api_v1_auth_logout_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                protolims_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_project_members_api_v1_projects__project_code__members_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_code: string;
+            };
+            cookie?: {
+                protolims_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemberRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_project_member_api_v1_projects__project_code__members__orcid_id__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_code: string;
+                /** @description Their ORCID iD, e.g. 0000-0002-1825-0097 */
+                orcid_id: string;
+            };
+            cookie?: {
+                protolims_session?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MemberRole"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemberRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    remove_project_member_api_v1_projects__project_code__members__orcid_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_code: string;
+                /** @description Their ORCID iD, e.g. 0000-0002-1825-0097 */
+                orcid_id: string;
+            };
+            cookie?: {
+                protolims_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_study_members_api_v1_projects__project_code__studies__study_code__members_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_code: string;
+                study_code: string;
+            };
+            cookie?: {
+                protolims_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemberRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_study_member_api_v1_projects__project_code__studies__study_code__members__orcid_id__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_code: string;
+                study_code: string;
+                /** @description Their ORCID iD, e.g. 0000-0002-1825-0097 */
+                orcid_id: string;
+            };
+            cookie?: {
+                protolims_session?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MemberRole"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemberRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    remove_study_member_api_v1_projects__project_code__studies__study_code__members__orcid_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_code: string;
+                study_code: string;
+                /** @description Their ORCID iD, e.g. 0000-0002-1825-0097 */
+                orcid_id: string;
+            };
+            cookie?: {
+                protolims_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

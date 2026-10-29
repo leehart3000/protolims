@@ -1,5 +1,6 @@
 import { Link, NavLink, Route, Routes } from 'react-router'
 
+import AccountMenu from './components/AccountMenu'
 import ThemeToggle from './components/ThemeToggle'
 import HomePage from './pages/HomePage'
 import NewProjectPage from './pages/NewProjectPage'
@@ -49,6 +50,7 @@ export default function App() {
               Studies
             </NavLink>
           </nav>
+          <AccountMenu />
           <ThemeToggle />
         </div>
       </header>

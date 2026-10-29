@@ -12,8 +12,26 @@
           "projects"
         ],
         "summary": "Create Project",
-        "description": "Create a project.",
+        "description": "Create a project. Only site administrators can.",
         "operationId": "create_project_api_v1_projects_post",
+        "parameters": [
+          {
+            "name": "protolims_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Protolims Session"
+            }
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -52,7 +70,7 @@
           "projects"
         ],
         "summary": "List Projects",
-        "description": "List projects a page at a time, with the total number that match.",
+        "description": "List the projects the actor can see a page at a time, with the total number that\nmatch.",
         "operationId": "list_projects_api_v1_projects_get",
         "parameters": [
           {
@@ -116,6 +134,22 @@
               "default": 0,
               "title": "Offset"
             }
+          },
+          {
+            "name": "protolims_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Protolims Session"
+            }
           }
         ],
         "responses": {
@@ -159,6 +193,22 @@
               "type": "string",
               "title": "Code"
             }
+          },
+          {
+            "name": "protolims_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Protolims Session"
+            }
           }
         ],
         "responses": {
@@ -189,7 +239,7 @@
           "projects"
         ],
         "summary": "Update Project",
-        "description": "Change some of a project's details. Only the fields sent are changed; null clears one.",
+        "description": "Change some of a project's details. Only the fields sent are changed; null clears one.\n\nOnly the project's admins (and site administrators) can.",
         "operationId": "update_project_api_v1_projects__code__patch",
         "parameters": [
           {
@@ -199,6 +249,22 @@
             "schema": {
               "type": "string",
               "title": "Code"
+            }
+          },
+          {
+            "name": "protolims_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Protolims Session"
             }
           }
         ],
@@ -242,7 +308,7 @@
           "studies"
         ],
         "summary": "Create Study",
-        "description": "Create a study within a project. Study codes are unique within their project.",
+        "description": "Create a study within a project. Study codes are unique within their project.\n\nOnly the project's admins (and site administrators) can.",
         "operationId": "create_study_api_v1_projects__project_code__studies_post",
         "parameters": [
           {
@@ -252,6 +318,22 @@
             "schema": {
               "type": "string",
               "title": "Project Code"
+            }
+          },
+          {
+            "name": "protolims_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Protolims Session"
             }
           }
         ],
@@ -293,7 +375,7 @@
           "studies"
         ],
         "summary": "List Studies",
-        "description": "List a project's studies a page at a time, with the total number that match.",
+        "description": "List the studies the actor can see in a project, a page at a time, with the total\nnumber that match.",
         "operationId": "list_studies_api_v1_projects__project_code__studies_get",
         "parameters": [
           {
@@ -366,6 +448,22 @@
               "default": 0,
               "title": "Offset"
             }
+          },
+          {
+            "name": "protolims_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Protolims Session"
+            }
           }
         ],
         "responses": {
@@ -418,6 +516,22 @@
               "type": "string",
               "title": "Study Code"
             }
+          },
+          {
+            "name": "protolims_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Protolims Session"
+            }
           }
         ],
         "responses": {
@@ -448,7 +562,7 @@
           "studies"
         ],
         "summary": "Update Study",
-        "description": "Change a study's title, description or design factors. Only the fields sent change.",
+        "description": "Change a study's title, description or design factors. Only the fields sent change.\n\nThe study's editors and admins can.",
         "operationId": "update_study_api_v1_projects__project_code__studies__study_code__patch",
         "parameters": [
           {
@@ -467,6 +581,22 @@
             "schema": {
               "type": "string",
               "title": "Study Code"
+            }
+          },
+          {
+            "name": "protolims_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Protolims Session"
             }
           }
         ],
@@ -510,7 +640,7 @@
           "studies"
         ],
         "summary": "List All Studies",
-        "description": "List studies across all projects a page at a time, with the total number that match.",
+        "description": "List the studies the actor can see across all projects, a page at a time, with the\ntotal number that match.",
         "operationId": "list_all_studies_api_v1_studies_get",
         "parameters": [
           {
@@ -594,6 +724,22 @@
               "default": 0,
               "title": "Offset"
             }
+          },
+          {
+            "name": "protolims_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Protolims Session"
+            }
           }
         ],
         "responses": {
@@ -645,6 +791,22 @@
             "schema": {
               "type": "string",
               "title": "Study Code"
+            }
+          },
+          {
+            "name": "protolims_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Protolims Session"
             }
           }
         ],
@@ -770,6 +932,22 @@
               "default": 0,
               "title": "Offset"
             }
+          },
+          {
+            "name": "protolims_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Protolims Session"
+            }
           }
         ],
         "responses": {
@@ -814,6 +992,22 @@
               "format": "uuid",
               "title": "Subject Id"
             }
+          },
+          {
+            "name": "protolims_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Protolims Session"
+            }
           }
         ],
         "responses": {
@@ -855,6 +1049,22 @@
               "type": "string",
               "format": "uuid",
               "title": "Subject Id"
+            }
+          },
+          {
+            "name": "protolims_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Protolims Session"
             }
           }
         ],
@@ -917,6 +1127,22 @@
             "schema": {
               "type": "string",
               "title": "Study Code"
+            }
+          },
+          {
+            "name": "protolims_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Protolims Session"
             }
           }
         ],
@@ -1082,6 +1308,22 @@
               "default": 0,
               "title": "Offset"
             }
+          },
+          {
+            "name": "protolims_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Protolims Session"
+            }
           }
         ],
         "responses": {
@@ -1126,6 +1368,22 @@
               "format": "uuid",
               "title": "Sample Id"
             }
+          },
+          {
+            "name": "protolims_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Protolims Session"
+            }
           }
         ],
         "responses": {
@@ -1167,6 +1425,22 @@
               "type": "string",
               "format": "uuid",
               "title": "Sample Id"
+            }
+          },
+          {
+            "name": "protolims_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Protolims Session"
             }
           }
         ],
@@ -1229,6 +1503,22 @@
             "schema": {
               "type": "string",
               "title": "Study Code"
+            }
+          },
+          {
+            "name": "protolims_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Protolims Session"
             }
           }
         ],
@@ -1358,6 +1648,22 @@
               "default": 0,
               "title": "Offset"
             }
+          },
+          {
+            "name": "protolims_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Protolims Session"
+            }
           }
         ],
         "responses": {
@@ -1402,6 +1708,22 @@
               "format": "uuid",
               "title": "Assay Id"
             }
+          },
+          {
+            "name": "protolims_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Protolims Session"
+            }
           }
         ],
         "responses": {
@@ -1443,6 +1765,22 @@
               "type": "string",
               "format": "uuid",
               "title": "Assay Id"
+            }
+          },
+          {
+            "name": "protolims_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Protolims Session"
             }
           }
         ],
@@ -1558,6 +1896,22 @@
               "default": 0,
               "title": "Offset"
             }
+          },
+          {
+            "name": "protolims_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Protolims Session"
+            }
           }
         ],
         "responses": {
@@ -1611,6 +1965,22 @@
               "type": "string",
               "format": "uuid",
               "title": "Sample Id"
+            }
+          },
+          {
+            "name": "protolims_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Protolims Session"
             }
           }
         ],
@@ -1674,6 +2044,22 @@
               "format": "uuid",
               "title": "Sample Id"
             }
+          },
+          {
+            "name": "protolims_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Protolims Session"
+            }
           }
         ],
         "responses": {
@@ -1710,6 +2096,22 @@
               "type": "string",
               "format": "uuid",
               "title": "Sample Id"
+            }
+          },
+          {
+            "name": "protolims_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Protolims Session"
             }
           }
         ],
@@ -1766,6 +2168,22 @@
             "schema": {
               "type": "string",
               "title": "Study Code"
+            }
+          },
+          {
+            "name": "protolims_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Protolims Session"
             }
           }
         ],
@@ -1935,6 +2353,22 @@
               "default": 0,
               "title": "Offset"
             }
+          },
+          {
+            "name": "protolims_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Protolims Session"
+            }
           }
         ],
         "responses": {
@@ -1979,6 +2413,22 @@
               "format": "uuid",
               "title": "Data File Id"
             }
+          },
+          {
+            "name": "protolims_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Protolims Session"
+            }
           }
         ],
         "responses": {
@@ -2020,6 +2470,22 @@
               "type": "string",
               "format": "uuid",
               "title": "Data File Id"
+            }
+          },
+          {
+            "name": "protolims_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Protolims Session"
             }
           }
         ],
@@ -2135,6 +2601,22 @@
               "default": 0,
               "title": "Offset"
             }
+          },
+          {
+            "name": "protolims_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Protolims Session"
+            }
           }
         ],
         "responses": {
@@ -2188,6 +2670,22 @@
               "type": "string",
               "format": "uuid",
               "title": "Sample Id"
+            }
+          },
+          {
+            "name": "protolims_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Protolims Session"
             }
           }
         ],
@@ -2251,6 +2749,22 @@
               "format": "uuid",
               "title": "Sample Id"
             }
+          },
+          {
+            "name": "protolims_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Protolims Session"
+            }
           }
         ],
         "responses": {
@@ -2287,6 +2801,22 @@
               "type": "string",
               "format": "uuid",
               "title": "Sample Id"
+            }
+          },
+          {
+            "name": "protolims_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Protolims Session"
             }
           }
         ],
@@ -2336,6 +2866,22 @@
               "format": "uuid",
               "title": "Data File Id"
             }
+          },
+          {
+            "name": "protolims_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Protolims Session"
+            }
           }
         ],
         "responses": {
@@ -2383,6 +2929,22 @@
               "type": "string",
               "format": "uuid",
               "title": "Data File Id"
+            }
+          },
+          {
+            "name": "protolims_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Protolims Session"
             }
           }
         ],
@@ -2442,6 +3004,22 @@
               "format": "uuid",
               "title": "Input Id"
             }
+          },
+          {
+            "name": "protolims_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Protolims Session"
+            }
           }
         ],
         "responses": {
@@ -2494,6 +3072,22 @@
               "format": "uuid",
               "title": "Input Id"
             }
+          },
+          {
+            "name": "protolims_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Protolims Session"
+            }
           }
         ],
         "responses": {
@@ -2519,7 +3113,7 @@
           "import"
         ],
         "summary": "Import Records",
-        "description": "Import subjects, samples, assays and data files into a study, safely and repeatably.\n\n- **Matching:** each record is matched to one already in the study by its external ID (its\n  ID in the source) if it has one, otherwise by its name (a data file's location, `uri`, as\n  file names often repeat). An ambiguous match is refused: for example, an external ID\n  that belongs to one record while the name belongs to another.\n- **Existing records are never changed.** A matched record that differs from the import is\n  left as it is, and the reply lists the differences for you to review. Only the fields the\n  import sends are compared.\n- **New records are created.** A sample's `subject` and `parent` are names, of a record in\n  the same request or one already in the study, in any order.\n- **Assays and their samples:** an assay lists the samples it measured by name, each with\n  an optional label. A missing link is added, even to an existing assay. An existing link\n  with a different label is reported, not changed. Links the import doesn't mention are\n  left alone.\n- **Data files:** a file gives its `assay` and `samples` by name, and the files it was made\n  from (`inputs`) by location. Links follow the same rules as an assay's. A file can't be\n  derived from itself, directly or through other files.\n- **All or nothing:** if anything is wrong, nothing is saved, and the reply (422) lists every\n  problem found.\n- **Dry run:** `dry_run` must be given. With `true`, everything is checked and the reply says\n  what would happen, but nothing is saved. Do a dry run first.\n- **Limits:** at most 5,000 records and links per request; send bigger studies in batches.\n  An import never creates projects or studies.\n- **Audit trail:** each new record and link is recorded as made by `import: <source>`.",
+        "description": "Import subjects, samples, assays and data files into a study, safely and repeatably.\n\n- **Matching:** each record is matched to one already in the study by its external ID (its\n  ID in the source) if it has one, otherwise by its name (a data file's location, `uri`, as\n  file names often repeat). An ambiguous match is refused: for example, an external ID\n  that belongs to one record while the name belongs to another.\n- **Existing records are never changed.** A matched record that differs from the import is\n  left as it is, and the reply lists the differences for you to review. Only the fields the\n  import sends are compared.\n- **New records are created.** A sample's `subject` and `parent` are names, of a record in\n  the same request or one already in the study, in any order.\n- **Assays and their samples:** an assay lists the samples it measured by name, each with\n  an optional label. A missing link is added, even to an existing assay. An existing link\n  with a different label is reported, not changed. Links the import doesn't mention are\n  left alone.\n- **Data files:** a file gives its `assay` and `samples` by name, and the files it was made\n  from (`inputs`) by location. Links follow the same rules as an assay's. A file can't be\n  derived from itself, directly or through other files.\n- **All or nothing:** if anything is wrong, nothing is saved, and the reply (422) lists every\n  problem found.\n- **Dry run:** `dry_run` must be given. With `true`, everything is checked and the reply says\n  what would happen, but nothing is saved. Do a dry run first.\n- **Limits:** at most 5,000 records and links per request; send bigger studies in batches.\n  An import never creates projects or studies.\n- **Who can import:** the study's editors and admins.\n- **Audit trail:** each new record and link is recorded as made by whoever imported it,\n  and each new record's audit entry names the import's `source`.",
         "operationId": "import_records_api_v1_projects__project_code__studies__study_code__import_post",
         "parameters": [
           {
@@ -2538,6 +3132,22 @@
             "schema": {
               "type": "string",
               "title": "Study Code"
+            }
+          },
+          {
+            "name": "protolims_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Protolims Session"
             }
           }
         ],
@@ -2561,6 +3171,670 @@
                 }
               }
             }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/orcid/login": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Sign In With Orcid",
+        "description": "Start signing in: go to ORCID, which will send the browser back to the callback.",
+        "operationId": "sign_in_with_orcid_api_v1_auth_orcid_login_get",
+        "parameters": [
+          {
+            "name": "return_to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The page on this site to go back to afterwards",
+              "title": "Return To"
+            },
+            "description": "The page on this site to go back to afterwards"
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/orcid/callback": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Orcid Callback",
+        "description": "Finish signing in, when ORCID sends the browser back. Then go back to where it started.\n\nIf the person cancelled at ORCID, nobody is signed in and the browser just goes back.",
+        "operationId": "orcid_callback_api_v1_auth_orcid_callback_get",
+        "parameters": [
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "State"
+            }
+          },
+          {
+            "name": "code",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Code"
+            }
+          },
+          {
+            "name": "error",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Error"
+            }
+          },
+          {
+            "name": "protolims_sign_in",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Protolims Sign In"
+            }
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/me": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Who Am I",
+        "description": "Who is signed in on this browser, if anyone, and what this server allows.",
+        "operationId": "who_am_i_api_v1_auth_me_get",
+        "parameters": [
+          {
+            "name": "protolims_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Protolims Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Me"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Sign Out",
+        "description": "Sign this browser out, ending its session.",
+        "operationId": "sign_out_api_v1_auth_logout_post",
+        "parameters": [
+          {
+            "name": "protolims_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Protolims Session"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{project_code}/members": {
+      "get": {
+        "tags": [
+          "members"
+        ],
+        "summary": "List Project Members",
+        "description": "Everyone with a role on the project, by name (people without one last).",
+        "operationId": "list_project_members_api_v1_projects__project_code__members_get",
+        "parameters": [
+          {
+            "name": "project_code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Code"
+            }
+          },
+          {
+            "name": "protolims_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Protolims Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MemberRead"
+                  },
+                  "title": "Response List Project Members Api V1 Projects  Project Code  Members Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{project_code}/members/{orcid_id}": {
+      "put": {
+        "tags": [
+          "members"
+        ],
+        "summary": "Set Project Member",
+        "description": "Give someone a role on the project, or change it. Safe to repeat.",
+        "operationId": "set_project_member_api_v1_projects__project_code__members__orcid_id__put",
+        "parameters": [
+          {
+            "name": "project_code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Code"
+            }
+          },
+          {
+            "name": "orcid_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Their ORCID iD, e.g. 0000-0002-1825-0097",
+              "title": "Orcid Id"
+            },
+            "description": "Their ORCID iD, e.g. 0000-0002-1825-0097"
+          },
+          {
+            "name": "protolims_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Protolims Session"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MemberRole"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "members"
+        ],
+        "summary": "Remove Project Member",
+        "description": "Take away someone's role on the project. Safe to repeat.",
+        "operationId": "remove_project_member_api_v1_projects__project_code__members__orcid_id__delete",
+        "parameters": [
+          {
+            "name": "project_code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Code"
+            }
+          },
+          {
+            "name": "orcid_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Their ORCID iD, e.g. 0000-0002-1825-0097",
+              "title": "Orcid Id"
+            },
+            "description": "Their ORCID iD, e.g. 0000-0002-1825-0097"
+          },
+          {
+            "name": "protolims_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Protolims Session"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{project_code}/studies/{study_code}/members": {
+      "get": {
+        "tags": [
+          "members"
+        ],
+        "summary": "List Study Members",
+        "description": "Everyone with a role on the study itself (project roles are listed on the project).",
+        "operationId": "list_study_members_api_v1_projects__project_code__studies__study_code__members_get",
+        "parameters": [
+          {
+            "name": "project_code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Code"
+            }
+          },
+          {
+            "name": "study_code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Study Code"
+            }
+          },
+          {
+            "name": "protolims_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Protolims Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MemberRead"
+                  },
+                  "title": "Response List Study Members Api V1 Projects  Project Code  Studies  Study Code  Members Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{project_code}/studies/{study_code}/members/{orcid_id}": {
+      "put": {
+        "tags": [
+          "members"
+        ],
+        "summary": "Set Study Member",
+        "description": "Give someone a role on the study, or change it. Safe to repeat.",
+        "operationId": "set_study_member_api_v1_projects__project_code__studies__study_code__members__orcid_id__put",
+        "parameters": [
+          {
+            "name": "project_code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Code"
+            }
+          },
+          {
+            "name": "study_code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Study Code"
+            }
+          },
+          {
+            "name": "orcid_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Their ORCID iD, e.g. 0000-0002-1825-0097",
+              "title": "Orcid Id"
+            },
+            "description": "Their ORCID iD, e.g. 0000-0002-1825-0097"
+          },
+          {
+            "name": "protolims_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Protolims Session"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MemberRole"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "members"
+        ],
+        "summary": "Remove Study Member",
+        "description": "Take away someone's role on the study. Safe to repeat.",
+        "operationId": "remove_study_member_api_v1_projects__project_code__studies__study_code__members__orcid_id__delete",
+        "parameters": [
+          {
+            "name": "project_code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Code"
+            }
+          },
+          {
+            "name": "study_code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Study Code"
+            }
+          },
+          {
+            "name": "orcid_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Their ORCID iD, e.g. 0000-0002-1825-0097",
+              "title": "Orcid Id"
+            },
+            "description": "Their ORCID iD, e.g. 0000-0002-1825-0097"
+          },
+          {
+            "name": "protolims_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Protolims Session"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
           },
           "422": {
             "description": "Validation Error",
@@ -3942,6 +5216,79 @@
         "type": "object",
         "title": "KindSummary",
         "description": "How many records of one kind were (or would be) created, and how many already existed."
+      },
+      "Me": {
+        "properties": {
+          "user": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserRead"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "site_admin": {
+            "type": "boolean",
+            "title": "Site Admin"
+          },
+          "public_read": {
+            "type": "boolean",
+            "title": "Public Read"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user",
+          "site_admin",
+          "public_read"
+        ],
+        "title": "Me",
+        "description": "Who is signed in on this browser (null if nobody), and what this server allows."
+      },
+      "MemberRead": {
+        "properties": {
+          "user": {
+            "$ref": "#/components/schemas/UserRead"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "viewer",
+              "editor",
+              "admin"
+            ],
+            "title": "Role"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user",
+          "role"
+        ],
+        "title": "MemberRead",
+        "description": "Someone's role on a project or study."
+      },
+      "MemberRole": {
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": [
+              "viewer",
+              "editor",
+              "admin"
+            ],
+            "title": "Role"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "role"
+        ],
+        "title": "MemberRole",
+        "description": "The role to give someone."
       },
       "Page_AssayRead_": {
         "properties": {
@@ -5483,6 +6830,43 @@
         "type": "object",
         "title": "SubjectUpdate",
         "description": "Changes to a subject. Only the fields sent are changed; sending null clears a field.\n\nThe study can't be changed: a subject stays in the study it was created in."
+      },
+      "UserRead": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "provider": {
+            "type": "string",
+            "title": "Provider"
+          },
+          "subject": {
+            "type": "string",
+            "title": "Subject"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "provider",
+          "subject",
+          "name"
+        ],
+        "title": "UserRead",
+        "description": "Someone who has signed in, or been added by their ORCID iD ahead of signing in."
       },
       "ValidationError": {
         "properties": {

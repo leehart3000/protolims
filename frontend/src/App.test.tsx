@@ -1,9 +1,24 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import App from './App'
 import { TestProviders } from './test/TestProviders'
+
+// Answers as the API would with nobody signed in and nothing recorded yet.
+function stubEmptyApi() {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn((request: Request) => {
+      if (new URL(request.url).pathname === '/api/v1/auth/me') {
+        return Promise.resolve(Response.json({ user: null, site_admin: false, public_read: true }))
+      }
+      return Promise.resolve(Response.json({ items: [], total: 0 }))
+    }),
+  )
+}
+
+beforeEach(stubEmptyApi)
 
 function renderApp(route = '/') {
   render(
@@ -31,10 +46,6 @@ describe('App', () => {
   })
 
   it('goes to the projects page from the main navigation', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(() => Promise.resolve(Response.json({ items: [], total: 0 }))),
-    )
     const user = userEvent.setup()
     renderApp()
 
@@ -44,16 +55,21 @@ describe('App', () => {
   })
 
   it('goes to the studies page from the main navigation', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(() => Promise.resolve(Response.json({ items: [], total: 0 }))),
-    )
     const user = userEvent.setup()
     renderApp()
 
     await user.click(screen.getByRole('link', { name: 'Studies' }))
 
     expect(screen.getByRole('heading', { name: 'Studies' })).toBeInTheDocument()
+  })
+
+  it('offers to sign in when nobody is signed in', async () => {
+    renderApp('/studies')
+
+    expect(await screen.findByRole('link', { name: 'Sign in' })).toHaveAttribute(
+      'href',
+      '/api/v1/auth/orcid/login?return_to=%2Fstudies',
+    )
   })
 
   it('shows a not-found page for unknown addresses', () => {
