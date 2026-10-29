@@ -3961,6 +3961,60 @@
         }
       }
     },
+    "/api/v1/users/{orcid_id}": {
+      "delete": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Remove User",
+        "description": "Remove someone from the list of users. Only site administrators can, and only for someone\nwith no roles who isn't a site administrator, so nobody loses access this way: remove their\nroles first. Any sessions they have end. Records that name them keep their ORCID iD, and if\nthey sign in again, they're added back with no roles.",
+        "operationId": "remove_user_api_v1_users__orcid_id__delete",
+        "parameters": [
+          {
+            "name": "orcid_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Their ORCID iD, e.g. 0000-0002-1825-0097",
+              "title": "Orcid Id"
+            },
+            "description": "Their ORCID iD, e.g. 0000-0002-1825-0097"
+          },
+          {
+            "name": "protolims_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Protolims Session"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "tags": [

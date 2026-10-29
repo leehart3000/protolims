@@ -1,4 +1,5 @@
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { UserRoundMinus } from 'lucide-react'
 import { Link } from 'react-router'
 
 import { fetchUserPage, type UserSort } from '../api/queries'
@@ -9,8 +10,10 @@ import { PersonCell } from '../components/PersonCell'
 import { SearchBox } from '../components/SearchBox'
 import { SortHeader } from '../components/SortHeader'
 import { formatDate } from '../format'
+import { removeUser } from '../members'
 import {
   errorBox,
+  secondaryButton,
   table,
   tableCell,
   tableHead,
@@ -49,6 +52,11 @@ function UserList() {
     queryFn: () => fetchUserPage({ q: q || undefined, sort, limit, offset }),
     placeholderData: keepPreviousData,
   })
+  const queryClient = useQueryClient()
+  const removal = useMutation({
+    mutationFn: removeUser,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['users'] }),
+  })
 
   if (query.isPending) {
     return <p className="mt-6 text-muted">Loading users…</p>
@@ -86,6 +94,11 @@ function UserList() {
         value={search}
         onChange={changeSearch}
       />
+      {removal.isError && (
+        <p role="alert" className={`mt-4 ${errorBox}`}>
+          {removal.error.message}
+        </p>
+      )}
       {total === 0 ? (
         <p className="mt-6 text-muted">{q ? `No users match “${q}”.` : 'No users yet.'}</p>
       ) : (
@@ -99,6 +112,9 @@ function UserList() {
                     Roles
                   </th>
                   {heading('Last signed in', 'last_signed_in_at', tableHeader)}
+                  <th scope="col" className={`${tableHeader} w-px`}>
+                    <span className="sr-only">Remove</span>
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-line">
@@ -123,6 +139,23 @@ function UserList() {
                     <td className={`${tableCell} whitespace-nowrap text-muted`}>
                       {user.last_signed_in_at ? formatDate(user.last_signed_in_at) : 'Never'}
                     </td>
+                    <td className={tableCell}>
+                      {/* Only people with no roles can be removed, so nobody loses access. */}
+                      {!user.site_admin && user.roles.length === 0 && (
+                        <button
+                          type="button"
+                          aria-label={`Remove ${user.name ?? user.subject}`}
+                          disabled={removal.isPending}
+                          onClick={() => {
+                            removal.mutate(user.subject)
+                          }}
+                          className={`${secondaryButton} inline-flex items-center gap-2`}
+                        >
+                          <UserRoundMinus aria-hidden="true" className="size-4 shrink-0" />
+                          <span className="hidden sm:inline">Remove</span>
+                        </button>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -145,7 +178,8 @@ export default function UsersPage() {
         <>
           <p className="mt-2 max-w-3xl text-muted">
             Everyone who has signed in, or been given a role by their ORCID iD, and their roles.
-            Roles are given on each project's or study's page.
+            Roles are given on each project's or study's page. People with no roles can be removed;
+            if they sign in again, they're added back.
           </p>
           <UserList />
         </>

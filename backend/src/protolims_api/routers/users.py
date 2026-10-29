@@ -2,15 +2,17 @@
 
 from typing import Annotated, Any, Literal
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, HTTPException, Query, status
 from sqlalchemy import ColumnElement, func, or_, select
 from sqlalchemy.orm import InstrumentedAttribute
 
+from protolims_api.audit import record_event
 from protolims_api.config import get_settings
 from protolims_api.db import SessionDep
 from protolims_api.models import AppUser
 from protolims_api.permissions import ActorDep, require_site_admin
 from protolims_api.roles import roles_of_users
+from protolims_api.routers.members import OrcidPath, find_user
 from protolims_api.schemas.common import Page
 from protolims_api.schemas.user import UserRead, UserSummary
 
@@ -83,3 +85,36 @@ async def list_users(
         ],
         total=total,
     )
+
+
+@router.delete("/users/{orcid_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def remove_user(orcid_id: OrcidPath, session: SessionDep, actor: ActorDep) -> None:
+    """Remove someone from the list of users. Only site administrators can, and only for someone
+    with no roles who isn't a site administrator, so nobody loses access this way: remove their
+    roles first. Any sessions they have end. Records that name them keep their ORCID iD, and if
+    they sign in again, they're added back with no roles.
+    """
+    require_site_admin(actor)
+    user = await find_user(session, orcid_id)
+    if user is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, f"No user with ORCID iD {orcid_id}")
+    if orcid_id in get_settings().site_admins:
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            "Site administrators can't be removed: they're set in the server's settings.",
+        )
+    if (await roles_of_users(session, [user.id]))[user.id]:
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            "This person still has roles. Remove their roles first.",
+        )
+    await record_event(
+        session,
+        action="remove_user",
+        entity_type="user",
+        entity_id=user.id,
+        actor=actor.label,
+        changes={"before": {"orcid": orcid_id, "name": user.name}},
+    )
+    await session.delete(user)
+    await session.commit()

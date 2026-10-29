@@ -757,6 +757,29 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/users/{orcid_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Remove User
+         * @description Remove someone from the list of users. Only site administrators can, and only for someone
+         *     with no roles who isn't a site administrator, so nobody loses access this way: remove their
+         *     roles first. Any sessions they have end. Records that name them keep their ORCID iD, and if
+         *     they sign in again, they're added back with no roles.
+         */
+        delete: operations["remove_user_api_v1_users__orcid_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -3690,6 +3713,38 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["Page_UserSummary_"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    remove_user_api_v1_users__orcid_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Their ORCID iD, e.g. 0000-0002-1825-0097 */
+                orcid_id: string;
+            };
+            cookie?: {
+                protolims_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

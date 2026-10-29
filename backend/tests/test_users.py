@@ -77,3 +77,43 @@ def test_only_site_administrators_can_see_everyone(
 ) -> None:
     assert anonymous.get(USERS).status_code == 401
     assert client.get(USERS, headers=sign_in_as(ALICE)).status_code == 403
+
+
+def test_site_administrators_can_remove_people_without_roles(
+    client: TestClient, anonymous: TestClient, sign_in_as: SignIn, database: Engine
+) -> None:
+    make_records(client)
+    bob = sign_in_as(BOB, "Bob")
+    client.put(f"{STUDY}/members/{ALICE}", json={"role": "viewer"})
+    # Carol was added by her ORCID iD, then her role was taken away again.
+    client.put(f"{STUDY}/members/{CAROL}", json={"role": "viewer"})
+    client.delete(f"{STUDY}/members/{CAROL}")
+
+    assert anonymous.delete(f"{USERS}/{CAROL}").status_code == 401
+    assert client.delete(f"{USERS}/{CAROL}", headers=sign_in_as(ALICE)).status_code == 403
+    refused = client.delete(f"{USERS}/{ALICE}")
+    assert (refused.status_code, refused.json()["detail"]) == (
+        409,
+        "This person still has roles. Remove their roles first.",
+    )
+    assert client.delete(f"{USERS}/{SITE_ADMIN}").status_code == 409
+    assert client.delete(f"{USERS}/0000-0002-2222-2224").status_code == 404
+    assert client.delete(f"{USERS}/0000-0002-2222-2225").status_code == 422
+
+    assert client.delete(f"{USERS}/{CAROL}").status_code == 204
+    # Removing Bob also signs him out.
+    assert client.delete(f"{USERS}/{BOB}").status_code == 204
+    assert client.get(f"{API}/auth/me", headers=bob).json()["user"] is None
+    assert [subject for subject, _ in people(client.get(USERS))] == [ALICE, SITE_ADMIN]
+
+    with database.connect() as conn:
+        removed = conn.execute(
+            text(
+                "SELECT actor, changes FROM audit_event WHERE action = 'remove_user'"
+                " ORDER BY occurred_at, id"
+            )
+        ).all()
+    assert [tuple(row) for row in removed] == [
+        (f"orcid:{SITE_ADMIN}", {"before": {"orcid": CAROL, "name": None}}),
+        (f"orcid:{SITE_ADMIN}", {"before": {"orcid": BOB, "name": "Bob"}}),
+    ]

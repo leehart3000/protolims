@@ -47,3 +47,21 @@ export async function changeRole(place: Place, orcidId: string, role: Role | nul
   }
   throw refusal(response.status, 'Could not change the role. Please try again later.')
 }
+
+// Remove someone with no roles from the list of users (site administrators only). The API
+// explains why it refuses someone who still has roles, or is a site administrator.
+export async function removeUser(orcidId: string) {
+  const { error, response } = await api.DELETE('/api/v1/users/{orcid_id}', {
+    params: { path: { orcid_id: orcidId } },
+  })
+  if (response.ok) {
+    return
+  }
+  const body: unknown = error
+  const detail =
+    typeof body === 'object' && body !== null && 'detail' in body ? body.detail : undefined
+  if (response.status === 409 && typeof detail === 'string') {
+    throw new Error(detail)
+  }
+  throw refusal(response.status, 'Could not remove them. Please try again later.')
+}

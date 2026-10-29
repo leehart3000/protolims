@@ -123,6 +123,69 @@ describe('UsersPage', () => {
     expect(await screen.findByText('No users yet.')).toBeInTheDocument()
   })
 
+  it('removes people who have no roles', async () => {
+    const removed: string[] = []
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((request: Request) => {
+        if (request.method === 'DELETE') {
+          removed.push(new URL(request.url).pathname)
+          return Promise.resolve(new Response(null, { status: 204 }))
+        }
+        return Promise.resolve(Response.json({ items: [lee, alice, carol], total: 3 }))
+      }),
+    )
+    const user = userEvent.setup()
+    renderPage()
+
+    await user.click(await screen.findByRole('button', { name: 'Remove 0000-0001-1111-1118' }))
+
+    // Only Carol has no roles: Lee is a site administrator, and Alice has roles.
+    expect(screen.queryByRole('button', { name: 'Remove Lee Hart' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Remove Alice' })).not.toBeInTheDocument()
+    await vi.waitFor(() => {
+      expect(removed).toEqual(['/api/v1/users/0000-0001-1111-1118'])
+    })
+  })
+
+  it('explains why someone could not be removed', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((request: Request) =>
+        Promise.resolve(
+          request.method === 'DELETE'
+            ? Response.json({ detail: 'Remove their roles first.' }, { status: 409 })
+            : Response.json({ items: [carol], total: 1 }),
+        ),
+      ),
+    )
+    const user = userEvent.setup()
+    renderPage()
+
+    await user.click(await screen.findByRole('button', { name: 'Remove 0000-0001-1111-1118' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Remove their roles first.')
+  })
+
+  it('says when removing someone is refused', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((request: Request) =>
+        Promise.resolve(
+          request.method === 'DELETE'
+            ? new Response(null, { status: 403 })
+            : Response.json({ items: [carol], total: 1 }),
+        ),
+      ),
+    )
+    const user = userEvent.setup()
+    renderPage()
+
+    await user.click(await screen.findByRole('button', { name: 'Remove 0000-0001-1111-1118' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent("you don't have permission")
+  })
+
   it('says when the users cannot be loaded', async () => {
     stubUsers(() => Response.json({ detail: 'Error' }, { status: 500 }))
     renderPage()
