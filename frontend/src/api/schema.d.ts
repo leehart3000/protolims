@@ -736,6 +736,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Users
+         * @description List everyone a page at a time, with their roles, and the total number that match.
+         *     People without a name (or who haven't signed in) come last. Only site administrators can.
+         */
+        get: operations["list_users_api_v1_users_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -1346,6 +1367,13 @@ export interface components {
             /** Total */
             total: number;
         };
+        /** Page[UserSummary] */
+        Page_UserSummary_: {
+            /** Items */
+            items: components["schemas"]["UserSummary"][];
+            /** Total */
+            total: number;
+        };
         /**
          * ProjectCreate
          * @description Data needed to create a project.
@@ -1856,6 +1884,35 @@ export interface components {
             subject: string;
             /** Name */
             name: string | null;
+        };
+        /**
+         * UserSummary
+         * @description Someone, for the site administrators' list of everyone: when they joined and last
+         *     signed in, and their roles.
+         */
+        UserSummary: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Provider */
+            provider: string;
+            /** Subject */
+            subject: string;
+            /** Name */
+            name: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Last Signed In At */
+            last_signed_in_at: string | null;
+            /** Site Admin */
+            site_admin: boolean;
+            /** Roles */
+            roles: components["schemas"]["RoleRead"][];
         };
         /** ValidationError */
         ValidationError: {
@@ -3595,6 +3652,44 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_users_api_v1_users_get: {
+        parameters: {
+            query?: {
+                /** @description Search names and ORCID iDs, ignoring case */
+                q?: string | null;
+                /** @description The column to sort by; a leading - reverses the order */
+                sort?: "name" | "-name" | "last_signed_in_at" | "-last_signed_in_at" | "created_at" | "-created_at";
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: {
+                protolims_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_UserSummary_"];
+                };
             };
             /** @description Validation Error */
             422: {

@@ -3849,6 +3849,118 @@
         }
       }
     },
+    "/api/v1/users": {
+      "get": {
+        "tags": [
+          "users"
+        ],
+        "summary": "List Users",
+        "description": "List everyone a page at a time, with their roles, and the total number that match.\nPeople without a name (or who haven't signed in) come last. Only site administrators can.",
+        "operationId": "list_users_api_v1_users_get",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 200
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Search names and ORCID iDs, ignoring case",
+              "title": "Q"
+            },
+            "description": "Search names and ORCID iDs, ignoring case"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "name",
+                "-name",
+                "last_signed_in_at",
+                "-last_signed_in_at",
+                "created_at",
+                "-created_at"
+              ],
+              "type": "string",
+              "description": "The column to sort by; a leading - reverses the order",
+              "default": "name",
+              "title": "Sort"
+            },
+            "description": "The column to sort by; a leading - reverses the order"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          },
+          {
+            "name": "protolims_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Protolims Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_UserSummary_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "tags": [
@@ -5487,6 +5599,27 @@
         ],
         "title": "Page[SubjectRead]"
       },
+      "Page_UserSummary_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/UserSummary"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total"
+        ],
+        "title": "Page[UserSummary]"
+      },
       "ProjectCreate": {
         "properties": {
           "code": {
@@ -6911,6 +7044,75 @@
         ],
         "title": "UserRead",
         "description": "Someone who has signed in, or been added by their ORCID iD ahead of signing in."
+      },
+      "UserSummary": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "provider": {
+            "type": "string",
+            "title": "Provider"
+          },
+          "subject": {
+            "type": "string",
+            "title": "Subject"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "last_signed_in_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Signed In At"
+          },
+          "site_admin": {
+            "type": "boolean",
+            "title": "Site Admin"
+          },
+          "roles": {
+            "items": {
+              "$ref": "#/components/schemas/RoleRead"
+            },
+            "type": "array",
+            "title": "Roles"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "provider",
+          "subject",
+          "name",
+          "created_at",
+          "last_signed_in_at",
+          "site_admin",
+          "roles"
+        ],
+        "title": "UserSummary",
+        "description": "Someone, for the site administrators' list of everyone: when they joined and last\nsigned in, and their roles."
       },
       "ValidationError": {
         "properties": {

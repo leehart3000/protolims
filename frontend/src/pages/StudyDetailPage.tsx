@@ -15,6 +15,7 @@ import { SearchBox } from '../components/SearchBox'
 import { SectionHeading } from '../components/SectionHeading'
 import { SubjectTable } from '../components/SubjectTable'
 import { DetailsCard } from '../components/DetailsCard'
+import { MembersSection } from '../components/MembersSection'
 import { formatDate } from '../format'
 import { editorOf } from '../permissions'
 import { errorBox } from '../styles'
@@ -179,6 +180,8 @@ function StudyDetails({ projectCode, study }: { projectCode: string; study: Stud
           New data file
         </NewButton>
       </p>
+
+      <MembersSection projectCode={projectCode} studyCode={study.code} />
     </>
   )
 }

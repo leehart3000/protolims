@@ -319,3 +319,33 @@ export async function signOut() {
     throw new Error('Could not sign out')
   }
 }
+
+type UserListQuery = NonNullable<paths['/api/v1/users']['get']['parameters']['query']>
+
+export type UserSort = NonNullable<UserListQuery['sort']>
+
+// One page of everyone who has signed in or been added, with their roles (site
+// administrators only).
+export async function fetchUserPage(query: UserListQuery) {
+  const { data } = await api.GET('/api/v1/users', { params: { query } })
+  if (!data) {
+    throw new Error('Could not load users')
+  }
+  return data
+}
+
+// Everyone with a role on a project or, given a study code, on that study itself.
+export async function fetchMembers(projectCode: string, studyCode?: string) {
+  const { data } =
+    studyCode === undefined
+      ? await api.GET('/api/v1/projects/{project_code}/members', {
+          params: { path: { project_code: projectCode } },
+        })
+      : await api.GET('/api/v1/projects/{project_code}/studies/{study_code}/members', {
+          params: { path: { project_code: projectCode, study_code: studyCode } },
+        })
+  if (!Array.isArray(data)) {
+    throw new Error('Could not load members')
+  }
+  return data
+}

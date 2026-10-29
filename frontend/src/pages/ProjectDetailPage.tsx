@@ -5,6 +5,7 @@ import { fetchProject, fetchStudyPage, type StudySort } from '../api/queries'
 import type { components } from '../api/schema'
 import { DetailList } from '../components/DetailList'
 import { DetailsCard } from '../components/DetailsCard'
+import { MembersSection } from '../components/MembersSection'
 import { NewStudyButton } from '../components/NewStudyButton'
 import { PagedTable } from '../components/PagedTable'
 import { PageTitle } from '../components/PageTitle'
@@ -145,6 +146,7 @@ function ProjectDetails({ project }: { project: Project }) {
       <p className="mt-4">
         <NewStudyButton align="start" projectCode={project.code} />
       </p>
+      <MembersSection projectCode={project.code} />
     </>
   )
 }

@@ -12,6 +12,7 @@ import ProjectDetailPage from './pages/ProjectDetailPage'
 import ProjectsPage from './pages/ProjectsPage'
 import StudiesPage from './pages/StudiesPage'
 import StudyDetailPage from './pages/StudyDetailPage'
+import UsersPage from './pages/UsersPage'
 import NewSubjectPage from './pages/NewSubjectPage'
 import SubjectDetailPage from './pages/SubjectDetailPage'
 import SampleDetailPage from './pages/SampleDetailPage'
@@ -57,6 +58,11 @@ export default function App() {
                 <NavLink to="/studies" className={navLinkClass}>
                   Studies
                 </NavLink>
+                {me?.site_admin && (
+                  <NavLink to="/users" className={navLinkClass}>
+                    Users
+                  </NavLink>
+                )}
               </>
             )}
           </nav>
@@ -103,6 +109,7 @@ export default function App() {
             <Route path="/data-files/:dataFileId" element={<DataFileDetailPage />} />
             <Route path="/data-files/:dataFileId/edit" element={<EditDataFilePage />} />
             <Route path="/studies" element={<StudiesPage />} />
+            <Route path="/users" element={<UsersPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         )}

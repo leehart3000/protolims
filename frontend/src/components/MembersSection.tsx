@@ -1,0 +1,250 @@
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Save, UserMinus, UserPlus, Users } from 'lucide-react'
+import { useId, useState } from 'react'
+
+import { fetchMembers } from '../api/queries'
+import type { components } from '../api/schema'
+import { text } from '../forms'
+import { changeRole, orcidPattern, type Place, type Role, ROLE_OPTIONS } from '../members'
+import { roleOn } from '../permissions'
+import {
+  errorBox,
+  inputClass,
+  primaryButton,
+  secondaryButton,
+  table,
+  tableCell,
+  tableHead,
+  tableHeader,
+  tableWrapper,
+  textLink,
+} from '../styles'
+import { useMe } from '../useMe'
+import { SectionHeading } from './SectionHeading'
+
+type Member = components['schemas']['MemberRead']
+
+// Who has a role on a project, or on a study itself, and changing that. Only the project's or
+// study's admins (and site administrators) see it; it's hidden from everyone else.
+export function MembersSection(place: Place) {
+  const { projectCode, studyCode } = place
+  const { data: me } = useMe()
+  const isAdmin = me !== undefined && roleOn(me, projectCode, studyCode) === 'admin'
+  if (!isAdmin) {
+    return null
+  }
+  return <Members place={place} />
+}
+
+// One person's row: a new role is chosen, then saved; or they're removed (role null).
+function MemberRow({
+  member,
+  busy,
+  onChange,
+}: {
+  member: Member
+  busy: boolean
+  onChange: (role: Role | null) => void
+}) {
+  const { user, role } = member
+  const [chosen, setChosen] = useState<Role>(role)
+  const who = user.name ?? user.subject
+
+  return (
+    <tr>
+      <td className={tableCell}>
+        {user.name ?? <span className="text-muted italic">Not signed in yet</span>}
+      </td>
+      <td className={`${tableCell} font-mono whitespace-nowrap`}>
+        <a className={textLink} href={`https://orcid.org/${user.subject}`}>
+          {user.subject}
+        </a>
+      </td>
+      <td className={tableCell}>
+        <div className="flex items-center gap-2">
+          <select
+            aria-label={`Role for ${who}`}
+            value={chosen}
+            disabled={busy}
+            onChange={(event) => {
+              setChosen(event.target.value as Role)
+            }}
+            className="rounded-md border border-line bg-panel px-2 py-1"
+          >
+            {ROLE_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+          <button
+            type="button"
+            aria-label={`Save role for ${who}`}
+            disabled={busy || chosen === role}
+            onClick={() => {
+              onChange(chosen)
+            }}
+            className={`${secondaryButton} inline-flex items-center gap-2`}
+          >
+            <Save aria-hidden="true" className="size-4 shrink-0" />
+            Save
+          </button>
+        </div>
+      </td>
+      <td className={tableCell}>
+        <button
+          type="button"
+          aria-label={`Remove ${who}`}
+          disabled={busy}
+          onClick={() => {
+            onChange(null)
+          }}
+          className={`${secondaryButton} inline-flex items-center gap-2`}
+        >
+          <UserMinus aria-hidden="true" className="size-4 shrink-0" />
+          Remove
+        </button>
+      </td>
+    </tr>
+  )
+}
+
+function Members({ place }: { place: Place }) {
+  const { projectCode, studyCode } = place
+  const queryKey = ['members', projectCode, studyCode ?? null]
+  const queryClient = useQueryClient()
+  const members = useQuery({ queryKey, queryFn: () => fetchMembers(projectCode, studyCode) })
+  const change = useMutation({
+    mutationFn: ({ orcidId, role }: { orcidId: string; role: Role | null }) =>
+      changeRole(place, orcidId, role),
+    // Someone's own roles may have changed too.
+    onSuccess: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey }),
+        queryClient.invalidateQueries({ queryKey: ['me'] }),
+      ]),
+  })
+  const orcidId = useId()
+  const roleId = useId()
+
+  return (
+    <section className="mt-10">
+      <SectionHeading icon={Users}>Members</SectionHeading>
+      <p className="mt-2 max-w-3xl text-muted">
+        {studyCode === undefined
+          ? 'People with a role on this project, which covers all its studies.'
+          : "People with a role on this study itself. Roles on the project apply here too, and are listed on the project's page."}
+      </p>
+
+      {change.isError && (
+        <p role="alert" className={`mt-4 ${errorBox}`}>
+          {change.error.message}
+        </p>
+      )}
+
+      {members.isPending ? (
+        <p className="mt-4 text-muted">Loading members…</p>
+      ) : members.isError ? (
+        // Not an alert: it's a side section, and the page's own errors matter more.
+        <p className={`mt-4 ${errorBox}`}>Could not load members. Please try again later.</p>
+      ) : members.data.length === 0 ? (
+        <p className="mt-4 text-muted">No one has a role here yet.</p>
+      ) : (
+        <div className={`mt-4 ${tableWrapper}`}>
+          <table className={table} aria-label="Members">
+            <thead className={tableHead}>
+              <tr>
+                <th scope="col" className={tableHeader}>
+                  Name
+                </th>
+                <th scope="col" className={tableHeader}>
+                  ORCID iD
+                </th>
+                <th scope="col" className={tableHeader}>
+                  Role
+                </th>
+                <th scope="col" className={`${tableHeader} w-px`}>
+                  <span className="sr-only">Remove</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-line">
+              {members.data.map((member) => (
+                // Keyed by role too, so the row starts afresh when the role changes.
+                <MemberRow
+                  key={`${member.user.id}-${member.role}`}
+                  member={member}
+                  busy={change.isPending}
+                  onChange={(role) => {
+                    change.mutate({ orcidId: member.user.subject, role })
+                  }}
+                />
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <form
+        aria-label="Add someone"
+        className="mt-4 flex flex-wrap items-end gap-3"
+        onSubmit={(event) => {
+          event.preventDefault()
+          const form = event.currentTarget
+          const values = new FormData(form)
+          change.mutate(
+            { orcidId: text(values, 'orcid_id'), role: text(values, 'role') as Role },
+            {
+              onSuccess: () => {
+                form.reset()
+              },
+            },
+          )
+        }}
+      >
+        <div className="w-56">
+          <label htmlFor={orcidId} className="block font-medium">
+            ORCID iD
+          </label>
+          <input
+            id={orcidId}
+            name="orcid_id"
+            required
+            pattern={orcidPattern}
+            placeholder="0000-0002-1825-0097"
+            autoComplete="off"
+            className={`${inputClass} border-line font-mono`}
+          />
+        </div>
+        <div>
+          <label htmlFor={roleId} className="block font-medium">
+            Role
+          </label>
+          <select
+            id={roleId}
+            name="role"
+            defaultValue="viewer"
+            className={`${inputClass} border-line`}
+          >
+            {ROLE_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
+        <button
+          type="submit"
+          disabled={change.isPending}
+          className={`${primaryButton} inline-flex items-center gap-2 text-sm`}
+        >
+          <UserPlus aria-hidden="true" className="size-4 shrink-0" />
+          Add
+        </button>
+      </form>
+      <p className="mt-2 text-sm text-muted">
+        People can be added before they first sign in: their role will be waiting for them.
+      </p>
+    </section>
+  )
+}

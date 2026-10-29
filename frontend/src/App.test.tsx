@@ -6,13 +6,13 @@ import App from './App'
 import { TestProviders } from './test/TestProviders'
 
 // Answers as the API would with nobody signed in and nothing recorded yet.
-function stubEmptyApi(publicRead = true) {
+function stubEmptyApi(publicRead = true, siteAdmin = false) {
   vi.stubGlobal(
     'fetch',
     vi.fn((request: Request) => {
       if (new URL(request.url).pathname === '/api/v1/auth/me') {
         return Promise.resolve(
-          Response.json({ user: null, site_admin: false, public_read: publicRead, roles: [] }),
+          Response.json({ user: null, site_admin: siteAdmin, public_read: publicRead, roles: [] }),
         )
       }
       return Promise.resolve(Response.json({ items: [], total: 0 }))
@@ -86,6 +86,13 @@ describe('App', () => {
       '/api/v1/auth/orcid/login?return_to=%2Fprojects%3Fq%3Dbrca',
     )
     expect(screen.queryByRole('link', { name: 'Projects' })).not.toBeInTheDocument()
+  })
+
+  it('links to the users page for site administrators', async () => {
+    stubEmptyApi(true, true)
+    renderApp()
+
+    expect(await screen.findByRole('link', { name: 'Users' })).toHaveAttribute('href', '/users')
   })
 
   it('shows a not-found page for unknown addresses', () => {
