@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react'
+import { cleanup, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 
@@ -172,6 +172,34 @@ describe('MembersSection', () => {
     renderSection()
 
     expect(await screen.findByText(/Could not load members/)).toBeInTheDocument()
+  })
+
+  it("keeps a project admin's row read-only for anyone but a site administrator", async () => {
+    stubApi([{ ...alice, role: 'admin' }, carol])
+    renderSection(undefined, signedInWith([{ project: 'P1', study: null, role: 'admin' }]))
+
+    const remove = await screen.findByRole('button', { name: 'Remove Alice' })
+    expect(remove).toHaveAttribute('aria-disabled', 'true')
+    expect(remove).toHaveAccessibleDescription(
+      'Only a site administrator can change or remove a project admin.',
+    )
+    expect(screen.queryByRole('combobox', { name: 'Role for Alice' })).not.toBeInTheDocument()
+    expect(screen.getByRole('row', { name: /Alice/ })).toHaveTextContent('Admin')
+    // Other people's roles can still be changed, to admin too.
+    const carolsRole = screen.getByRole('combobox', { name: 'Role for 0000-0001-1111-1118' })
+    expect(within(carolsRole).getByRole('option', { name: 'Admin' })).toBeEnabled()
+  })
+
+  it("lets a project admin, but not a study admin, change a study admin's role", async () => {
+    stubApi([{ ...alice, role: 'admin' }])
+    renderSection('S1', signedInWith([{ project: 'P1', study: null, role: 'admin' }]))
+    expect(await screen.findByRole('combobox', { name: 'Role for Alice' })).toBeEnabled()
+    cleanup()
+
+    renderSection('S1', signedInWith([{ project: 'P1', study: 'S1', role: 'admin' }]))
+    expect(await screen.findByRole('button', { name: 'Remove Alice' })).toHaveAccessibleDescription(
+      "Only the project's admins can change or remove a study admin.",
+    )
   })
 
   it('is hidden from anyone who is not an admin there', () => {

@@ -165,6 +165,44 @@ def test_study_admins_manage_only_their_studys_roles(
     ]
 
 
+def test_admins_can_add_admins_but_only_the_level_above_can_take_admin_away(
+    client: TestClient, sign_in_as: SignIn
+) -> None:
+    make_study(client)
+    client.put(f"{PROJECT}/members/{ALICE}", json={"role": "admin"})
+    alice, carol = sign_in_as(ALICE), sign_in_as(CAROL)
+    admin = {"role": "admin"}
+    editor = {"role": "editor"}
+
+    # A project admin can make someone else a project admin...
+    assert client.put(f"{PROJECT}/members/{BOB}", json=admin, headers=alice).status_code == 200
+    # ...and re-set an admin role unchanged, but not take one away, even their own.
+    assert client.put(f"{PROJECT}/members/{ALICE}", json=admin, headers=alice).status_code == 200
+    for who in (BOB, ALICE):
+        refused = client.put(f"{PROJECT}/members/{who}", json=editor, headers=alice)
+        assert (refused.status_code, refused.json()["detail"]) == (
+            403,
+            "Only a site administrator can change or remove a project admin.",
+        )
+        assert client.delete(f"{PROJECT}/members/{who}", headers=alice).status_code == 403
+    # A site administrator can.
+    assert client.put(f"{PROJECT}/members/{BOB}", json=editor).status_code == 200
+
+    # Likewise on a study: a study admin can add study admins, but not take the role away.
+    assert client.put(f"{STUDY}/members/{CAROL}", json=admin, headers=alice).status_code == 200
+    assert client.put(f"{STUDY}/members/{DAVE}", json=admin, headers=carol).status_code == 200
+    for who in (DAVE, CAROL):
+        refused = client.put(f"{STUDY}/members/{who}", json=editor, headers=carol)
+        assert (refused.status_code, refused.json()["detail"]) == (
+            403,
+            "Only the project's admins can change or remove a study admin.",
+        )
+        assert client.delete(f"{STUDY}/members/{who}", headers=carol).status_code == 403
+    # A project admin can.
+    assert client.put(f"{STUDY}/members/{DAVE}", json=editor, headers=alice).status_code == 200
+    assert client.delete(f"{STUDY}/members/{CAROL}", headers=alice).status_code == 204
+
+
 def test_me_says_whether_someone_is_a_site_administrator(
     client: TestClient, anonymous: TestClient, sign_in_as: SignIn
 ) -> None:

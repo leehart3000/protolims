@@ -19,6 +19,7 @@ import {
   tableWrapper,
 } from '../styles'
 import { useMe } from '../useMe'
+import { DisabledButton } from './DisabledButton'
 import { PersonCell } from './PersonCell'
 import { SectionHeading } from './SectionHeading'
 
@@ -29,11 +30,20 @@ type Member = components['schemas']['MemberRead']
 export function MembersSection(place: Place) {
   const { projectCode, studyCode } = place
   const { data: me } = useMe()
-  const isAdmin = me !== undefined && roleOn(me, projectCode, studyCode) === 'admin'
-  if (!isAdmin) {
+  if (me === undefined || roleOn(me, projectCode, studyCode) !== 'admin') {
     return null
   }
-  return <Members place={place} />
+  // Only someone at the level above can take an admin role away: a site administrator for a
+  // project admin, and a project admin for a study admin (the API checks this too).
+  const adminLocked =
+    studyCode === undefined
+      ? me.site_admin
+        ? undefined
+        : 'Only a site administrator can change or remove a project admin.'
+      : roleOn(me, projectCode) === 'admin'
+        ? undefined
+        : "Only the project's admins can change or remove a study admin."
+  return <Members place={place} adminLocked={adminLocked} />
 }
 
 // Gold, for a button with something waiting to be done, such as an unsaved change. Dark text
@@ -52,13 +62,16 @@ function roleLabel(role: Role) {
 
 // One person's row: a new role is chosen, then saved; or they're removed (role null), once
 // that's confirmed.
+// An admin's row is read-only, saying why (`locked`), for anyone who can't take that away.
 function MemberRow({
   member,
   busy,
+  locked,
   onChange,
 }: {
   member: Member
   busy: boolean
+  locked?: string
   onChange: (role: Role | null) => void
 }) {
   const { user, role } = member
@@ -67,6 +80,27 @@ function MemberRow({
   const who = user.name ?? user.subject
   const unsavedId = useId()
   const [confirming, setConfirming] = useState(false)
+
+  if (locked) {
+    return (
+      <tr>
+        <td className={tableCell}>
+          <PersonCell user={user} />
+        </td>
+        <td className={tableCell}>{roleLabel(role)}</td>
+        <td className={tableCell}>
+          <DisabledButton
+            icon={UserRoundMinus}
+            className={secondaryButton}
+            reason={locked}
+            label={`Remove ${who}`}
+          >
+            <span className="hidden sm:inline">Remove</span>
+          </DisabledButton>
+        </td>
+      </tr>
+    )
+  }
 
   return (
     <tr>
@@ -160,7 +194,7 @@ function MemberRow({
   )
 }
 
-function Members({ place }: { place: Place }) {
+function Members({ place, adminLocked }: { place: Place; adminLocked?: string }) {
   const { projectCode, studyCode } = place
   const queryKey = ['members', projectCode, studyCode ?? null]
   const queryClient = useQueryClient()
@@ -238,6 +272,7 @@ function Members({ place }: { place: Place }) {
                   key={`${member.user.id}-${member.role}`}
                   member={member}
                   busy={change.isPending}
+                  locked={member.role === 'admin' ? adminLocked : undefined}
                   onChange={(role) => {
                     change.mutate({
                       orcidId: member.user.subject,

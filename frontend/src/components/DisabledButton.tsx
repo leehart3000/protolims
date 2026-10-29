@@ -4,18 +4,21 @@ import { type ReactNode, useId } from 'react'
 // A button that can't be used, and why. It's marked aria-disabled rather than disabled, so it
 // can still be reached with the keyboard. The reason shows on hover, focus or tap, and screen
 // readers read it as the button's description. `align` is the side of the button the reason
-// lines up with, so it stays on the page.
+// lines up with, so it stays on the page. `label`, if given, is its name for screen readers,
+// for when the visible text doesn't say enough.
 export function DisabledButton({
   icon: Icon,
   className,
   reason,
   align = 'end',
+  label,
   children,
 }: {
   icon: LucideIcon
   className: string
   reason: string
   align?: 'start' | 'end'
+  label?: string
   children: ReactNode
 }) {
   const reasonId = useId()
@@ -25,6 +28,7 @@ export function DisabledButton({
       <button
         type="button"
         aria-disabled="true"
+        aria-label={label}
         aria-describedby={reasonId}
         className={`${className} inline-flex cursor-not-allowed items-center gap-2 opacity-50`}
       >

@@ -4,12 +4,17 @@ People are named by ORCID iD. Someone who hasn't signed in yet can be given a ro
 advance; it's waiting for them when they first sign in. Only admins can see or change roles:
 a project's admins (and site administrators) for the project and its studies, and a study's
 admins for that study.
+
+Admins can give any role up to their own, including admin, at their own level. Taking an
+admin role away (removing it, or changing it to a lower one) needs someone at the level
+above: a site administrator for a project admin, and a project admin for a study admin. So
+nobody can lock themselves, or a fellow admin, out.
 """
 
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Path, Response, status
+from fastapi import APIRouter, HTTPException, Path, Response, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -25,6 +30,16 @@ from protolims_api.schemas.user import MemberRead, MemberRole, UserRead
 router = APIRouter(tags=["members"])
 
 OrcidPath = Annotated[OrcidId, Path(description="Their ORCID iD, e.g. 0000-0002-1825-0097")]
+
+
+PROJECT_ADMIN_ONLY = "Only a site administrator can change or remove a project admin."
+STUDY_ADMIN_ONLY = "Only the project's admins can change or remove a study admin."
+
+
+def protect_admin(before: str | None, after: str | None, *, allowed: bool, refusal: str) -> None:
+    """Stop a change that takes an admin role away, unless it's by someone at the level above."""
+    if before == "admin" and after != "admin" and not allowed:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, refusal)
 
 
 async def find_user(session: AsyncSession, orcid_id: str) -> AppUser | None:
@@ -101,6 +116,7 @@ async def set_project_member(
     user = await find_or_add_user(session, orcid_id)
     member = await session.get(ProjectMember, (project.id, user.id))
     before = None if member is None else member.role
+    protect_admin(before, payload.role, allowed=actor.site_admin, refusal=PROJECT_ADMIN_ONLY)
     if member is None:
         session.add(
             ProjectMember(
@@ -138,6 +154,7 @@ async def remove_project_member(
     user = await find_user(session, orcid_id)
     member = None if user is None else await session.get(ProjectMember, (project.id, user.id))
     if member is not None:
+        protect_admin(member.role, None, allowed=actor.site_admin, refusal=PROJECT_ADMIN_ONLY)
         await session.delete(member)
         await record_change(
             session,
@@ -183,6 +200,12 @@ async def set_study_member(
     user = await find_or_add_user(session, orcid_id)
     member = await session.get(StudyMember, (study.id, user.id))
     before = None if member is None else member.role
+    protect_admin(
+        before,
+        payload.role,
+        allowed=await project_role(session, actor, study.project_id) == "admin",
+        refusal=STUDY_ADMIN_ONLY,
+    )
     if member is None:
         session.add(
             StudyMember(
@@ -220,6 +243,12 @@ async def remove_study_member(
     user = await find_user(session, orcid_id)
     member = None if user is None else await session.get(StudyMember, (study.id, user.id))
     if member is not None:
+        protect_admin(
+            member.role,
+            None,
+            allowed=await project_role(session, actor, study.project_id) == "admin",
+            refusal=STUDY_ADMIN_ONLY,
+        )
         await session.delete(member)
         await record_change(
             session,
