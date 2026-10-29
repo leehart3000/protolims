@@ -181,13 +181,21 @@ describe('MembersSection', () => {
     const remove = await screen.findByRole('button', { name: 'Remove Alice' })
     expect(remove).toHaveAttribute('aria-disabled', 'true')
     expect(remove).toHaveAccessibleDescription(
-      'Only a site administrator can change or remove a project admin.',
+      'Only a site administrator can give or take away the project admin role.',
     )
     expect(screen.queryByRole('combobox', { name: 'Role for Alice' })).not.toBeInTheDocument()
     expect(screen.getByRole('row', { name: /Alice/ })).toHaveTextContent('Admin')
-    // Other people's roles can still be changed, to admin too.
+    // Other people's roles can still be changed, but not to admin, and nobody can be added as
+    // an admin.
     const carolsRole = screen.getByRole('combobox', { name: 'Role for 0000-0001-1111-1118' })
-    expect(within(carolsRole).getByRole('option', { name: 'Admin' })).toBeEnabled()
+    expect(within(carolsRole).getByRole('option', { name: 'Editor' })).toBeEnabled()
+    expect(within(carolsRole).getByRole('option', { name: 'Admin' })).toBeDisabled()
+    expect(
+      within(screen.getByLabelText('Role')).getByRole('option', { name: 'Admin' }),
+    ).toBeDisabled()
+    expect(
+      screen.getByText(/waiting for them\. Only a site administrator can give or take away/),
+    ).toBeInTheDocument()
   })
 
   it("lets a project admin, but not a study admin, change a study admin's role", async () => {
@@ -198,7 +206,7 @@ describe('MembersSection', () => {
 
     renderSection('S1', signedInWith([{ project: 'P1', study: 'S1', role: 'admin' }]))
     expect(await screen.findByRole('button', { name: 'Remove Alice' })).toHaveAccessibleDescription(
-      "Only the project's admins can change or remove a study admin.",
+      "Only the project's admins can give or take away the study admin role.",
     )
   })
 

@@ -130,8 +130,10 @@ def test_study_admins_manage_only_their_studys_roles(
     )
 
     carol = sign_in_as(CAROL, "Carol")
-    response = client.put(f"{STUDY}/members/{BOB}", json={"role": "admin"}, headers=carol)
+    response = client.put(f"{STUDY}/members/{BOB}", json={"role": "editor"}, headers=carol)
     assert response.status_code == 200
+    # Only the project's admins can make Bob a study admin.
+    client.put(f"{STUDY}/members/{BOB}", json={"role": "admin"}, headers=admin)
     other_study = f"{PROJECT}/studies/S2/members/{BOB}"
     assert client.put(other_study, json={"role": "admin"}, headers=carol).status_code == 403
     assert client.get(f"{PROJECT}/members", headers=carol).status_code == 403
@@ -165,41 +167,41 @@ def test_study_admins_manage_only_their_studys_roles(
     ]
 
 
-def test_admins_can_add_admins_but_only_the_level_above_can_take_admin_away(
+def test_only_the_level_above_can_give_or_take_away_an_admin_role(
     client: TestClient, sign_in_as: SignIn
 ) -> None:
     make_study(client)
     client.put(f"{PROJECT}/members/{ALICE}", json={"role": "admin"})
+    client.put(f"{PROJECT}/members/{BOB}", json={"role": "editor"})
     alice, carol = sign_in_as(ALICE), sign_in_as(CAROL)
     admin = {"role": "admin"}
     editor = {"role": "editor"}
 
-    # A project admin can make someone else a project admin...
-    assert client.put(f"{PROJECT}/members/{BOB}", json=admin, headers=alice).status_code == 200
-    # ...and re-set an admin role unchanged, but not take one away, even their own.
+    # A project admin can't make someone a project admin, or take the role away, even their
+    # own, but can re-set it unchanged.
+    refused = client.put(f"{PROJECT}/members/{BOB}", json=admin, headers=alice)
+    assert (refused.status_code, refused.json()["detail"]) == (
+        403,
+        "Only a site administrator can give or take away the project admin role.",
+    )
+    assert client.put(f"{PROJECT}/members/{CAROL}", json=admin, headers=alice).status_code == 403
     assert client.put(f"{PROJECT}/members/{ALICE}", json=admin, headers=alice).status_code == 200
-    for who in (BOB, ALICE):
-        refused = client.put(f"{PROJECT}/members/{who}", json=editor, headers=alice)
-        assert (refused.status_code, refused.json()["detail"]) == (
-            403,
-            "Only a site administrator can change or remove a project admin.",
-        )
-        assert client.delete(f"{PROJECT}/members/{who}", headers=alice).status_code == 403
+    assert client.put(f"{PROJECT}/members/{ALICE}", json=editor, headers=alice).status_code == 403
+    assert client.delete(f"{PROJECT}/members/{ALICE}", headers=alice).status_code == 403
     # A site administrator can.
-    assert client.put(f"{PROJECT}/members/{BOB}", json=editor).status_code == 200
+    assert client.put(f"{PROJECT}/members/{BOB}", json=admin).status_code == 200
+    assert client.delete(f"{PROJECT}/members/{BOB}").status_code == 204
 
-    # Likewise on a study: a study admin can add study admins, but not take the role away.
+    # Likewise on a study: a project admin can make study admins; a study admin can't.
     assert client.put(f"{STUDY}/members/{CAROL}", json=admin, headers=alice).status_code == 200
-    assert client.put(f"{STUDY}/members/{DAVE}", json=admin, headers=carol).status_code == 200
-    for who in (DAVE, CAROL):
-        refused = client.put(f"{STUDY}/members/{who}", json=editor, headers=carol)
-        assert (refused.status_code, refused.json()["detail"]) == (
-            403,
-            "Only the project's admins can change or remove a study admin.",
-        )
-        assert client.delete(f"{STUDY}/members/{who}", headers=carol).status_code == 403
-    # A project admin can.
-    assert client.put(f"{STUDY}/members/{DAVE}", json=editor, headers=alice).status_code == 200
+    refused = client.put(f"{STUDY}/members/{DAVE}", json=admin, headers=carol)
+    assert (refused.status_code, refused.json()["detail"]) == (
+        403,
+        "Only the project's admins can give or take away the study admin role.",
+    )
+    assert client.put(f"{STUDY}/members/{DAVE}", json=editor, headers=carol).status_code == 200
+    assert client.put(f"{STUDY}/members/{CAROL}", json=editor, headers=carol).status_code == 403
+    assert client.delete(f"{STUDY}/members/{CAROL}", headers=carol).status_code == 403
     assert client.delete(f"{STUDY}/members/{CAROL}", headers=alice).status_code == 204
 
 

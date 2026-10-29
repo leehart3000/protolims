@@ -5,10 +5,10 @@ advance; it's waiting for them when they first sign in. Only admins can see or c
 a project's admins (and site administrators) for the project and its studies, and a study's
 admins for that study.
 
-Admins can give any role up to their own, including admin, at their own level. Taking an
-admin role away (removing it, or changing it to a lower one) needs someone at the level
-above: a site administrator for a project admin, and a project admin for a study admin. So
-nobody can lock themselves, or a fellow admin, out.
+Admins manage viewers and editors at their own level. Giving or taking away an admin role
+needs someone at the level above: a site administrator for a project admin, and a project
+admin for a study admin. So nobody can lock themselves, or a fellow admin, out, and nobody can
+make an admin they couldn't then undo.
 """
 
 import uuid
@@ -32,13 +32,14 @@ router = APIRouter(tags=["members"])
 OrcidPath = Annotated[OrcidId, Path(description="Their ORCID iD, e.g. 0000-0002-1825-0097")]
 
 
-PROJECT_ADMIN_ONLY = "Only a site administrator can change or remove a project admin."
-STUDY_ADMIN_ONLY = "Only the project's admins can change or remove a study admin."
+PROJECT_ADMIN_ONLY = "Only a site administrator can give or take away the project admin role."
+STUDY_ADMIN_ONLY = "Only the project's admins can give or take away the study admin role."
 
 
 def protect_admin(before: str | None, after: str | None, *, allowed: bool, refusal: str) -> None:
-    """Stop a change that takes an admin role away, unless it's by someone at the level above."""
-    if before == "admin" and after != "admin" and not allowed:
+    """Stop a change that gives or takes away an admin role, unless it's by someone at the level
+    above. Re-setting a role unchanged is fine."""
+    if "admin" in (before, after) and before != after and not allowed:
         raise HTTPException(status.HTTP_403_FORBIDDEN, refusal)
 
 

@@ -33,16 +33,16 @@ export function MembersSection(place: Place) {
   if (me === undefined || roleOn(me, projectCode, studyCode) !== 'admin') {
     return null
   }
-  // Only someone at the level above can take an admin role away: a site administrator for a
-  // project admin, and a project admin for a study admin (the API checks this too).
+  // Only someone at the level above can give or take away an admin role: a site administrator
+  // for project admins, and a project admin for study admins (the API checks this too).
   const adminLocked =
     studyCode === undefined
       ? me.site_admin
         ? undefined
-        : 'Only a site administrator can change or remove a project admin.'
+        : 'Only a site administrator can give or take away the project admin role.'
       : roleOn(me, projectCode) === 'admin'
         ? undefined
-        : "Only the project's admins can change or remove a study admin."
+        : "Only the project's admins can give or take away the study admin role."
   return <Members place={place} adminLocked={adminLocked} />
 }
 
@@ -62,16 +62,17 @@ function roleLabel(role: Role) {
 
 // One person's row: a new role is chosen, then saved; or they're removed (role null), once
 // that's confirmed.
-// An admin's row is read-only, saying why (`locked`), for anyone who can't take that away.
+// For anyone who can't give or take away an admin role here (`adminLocked` says why), an
+// admin's row is read-only, and Admin can't be chosen for anyone else.
 function MemberRow({
   member,
   busy,
-  locked,
+  adminLocked,
   onChange,
 }: {
   member: Member
   busy: boolean
-  locked?: string
+  adminLocked?: string
   onChange: (role: Role | null) => void
 }) {
   const { user, role } = member
@@ -81,6 +82,7 @@ function MemberRow({
   const unsavedId = useId()
   const [confirming, setConfirming] = useState(false)
 
+  const locked = role === 'admin' ? adminLocked : undefined
   if (locked) {
     return (
       <tr>
@@ -120,7 +122,11 @@ function MemberRow({
             className="rounded-md border border-line bg-panel px-2 py-1"
           >
             {ROLE_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
+              <option
+                key={option.value}
+                value={option.value}
+                disabled={option.value === 'admin' && adminLocked !== undefined}
+              >
                 {option.label}
               </option>
             ))}
@@ -272,7 +278,7 @@ function Members({ place, adminLocked }: { place: Place; adminLocked?: string })
                   key={`${member.user.id}-${member.role}`}
                   member={member}
                   busy={change.isPending}
-                  locked={member.role === 'admin' ? adminLocked : undefined}
+                  adminLocked={adminLocked}
                   onChange={(role) => {
                     change.mutate({
                       orcidId: member.user.subject,
@@ -330,7 +336,11 @@ function Members({ place, adminLocked }: { place: Place; adminLocked?: string })
             className={`${inputClass} border-line`}
           >
             {ROLE_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
+              <option
+                key={option.value}
+                value={option.value}
+                disabled={option.value === 'admin' && adminLocked !== undefined}
+              >
                 {option.label}
               </option>
             ))}
@@ -347,6 +357,7 @@ function Members({ place, adminLocked }: { place: Place; adminLocked?: string })
       </form>
       <p className="mt-2 text-sm text-muted">
         People can be added before they first sign in: their role will be waiting for them.
+        {adminLocked && ` ${adminLocked}`}
       </p>
     </section>
   )
