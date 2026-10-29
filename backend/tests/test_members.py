@@ -172,6 +172,24 @@ def test_me_says_whether_someone_is_a_site_administrator(
         "user": None,
         "site_admin": False,
         "public_read": True,
+        "roles": [],
     }
     assert client.get(f"{API}/auth/me", headers=sign_in_as(SITE_ADMIN)).json()["site_admin"]
     assert not client.get(f"{API}/auth/me", headers=sign_in_as(ALICE)).json()["site_admin"]
+
+
+def test_me_lists_someones_roles(client: TestClient, sign_in_as: SignIn) -> None:
+    make_study(client)
+    client.post(f"{API}/projects", json={"code": "P2", "name": "P2"})
+    client.post(f"{API}/projects/P2/studies", json={"code": "S3", "title": "S3"})
+    client.put(f"{STUDY}/members/{ALICE}", json={"role": "admin"})
+    client.put(f"{API}/projects/P2/studies/S3/members/{ALICE}", json={"role": "viewer"})
+    client.put(f"{PROJECT}/members/{ALICE}", json={"role": "editor"})
+    client.put(f"{PROJECT}/members/{BOB}", json={"role": "admin"})
+
+    assert client.get(f"{API}/auth/me", headers=sign_in_as(ALICE)).json()["roles"] == [
+        {"project": "P1", "study": None, "role": "editor"},
+        {"project": "P1", "study": "S1", "role": "admin"},
+        {"project": "P2", "study": "S3", "role": "viewer"},
+    ]
+    assert client.get(f"{API}/auth/me", headers=sign_in_as(CAROL)).json()["roles"] == []

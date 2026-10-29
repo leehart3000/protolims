@@ -19,6 +19,14 @@ class UserRead(BaseModel):
     name: str | None
 
 
+class RoleRead(BaseModel):
+    """One of someone's roles: on a whole project (study is null), or on one study in it."""
+
+    project: str
+    study: str | None
+    role: Role
+
+
 class MemberRole(BaseModel):
     """The role to give someone."""
 
