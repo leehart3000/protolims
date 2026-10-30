@@ -178,13 +178,11 @@ export default function StudiesPage() {
         />
       )}
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-        <PageTitle icon={StudyIcon}>Studies</PageTitle>
-        {projectCode && (
-          <div className="flex items-center gap-4">
-            <AllStudiesLink />
-            <NewStudyButton projectCode={projectCode} />
-          </div>
-        )}
+        <div className="flex items-center gap-3">
+          <PageTitle icon={StudyIcon}>Studies</PageTitle>
+          {projectCode && <NewStudyButton round projectCode={projectCode} />}
+        </div>
+        {projectCode && <AllStudiesLink />}
       </div>
       {projectCode && <ProjectSummary projectCode={projectCode} />}
       <StudyList key={projectCode ?? ''} projectCode={projectCode} />

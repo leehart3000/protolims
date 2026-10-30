@@ -143,9 +143,9 @@ function ProjectDetails({ project }: { project: Project }) {
         />
       </DetailsCard>
 
-      <div className="mt-10 flex items-center justify-between gap-4">
+      <div className="mt-10 flex items-center gap-3">
         <SectionHeading icon={StudyIcon}>Studies</SectionHeading>
-        <NewStudyButton projectCode={project.code} />
+        <NewStudyButton round projectCode={project.code} />
       </div>
       <StudyList projectCode={project.code} />
       <p className="mt-4">

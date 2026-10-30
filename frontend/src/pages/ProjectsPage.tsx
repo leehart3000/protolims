@@ -126,9 +126,9 @@ function ProjectList() {
 export default function ProjectsPage() {
   return (
     <>
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex items-center gap-3">
         <PageTitle icon={ProjectIcon}>Projects</PageTitle>
-        <NewButton to="/projects/new" need={{ siteAdmin: true }}>
+        <NewButton round to="/projects/new" need={{ siteAdmin: true }}>
           New project
         </NewButton>
       </div>

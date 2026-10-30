@@ -125,9 +125,9 @@ function StudyDetails({ projectCode, study }: { projectCode: string; study: Stud
         )}
       </DetailsCard>
 
-      <div className="mt-10 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+      <div className="mt-10 flex flex-wrap items-center gap-x-3 gap-y-2">
         <SectionHeading icon={SubjectIcon}>Subjects</SectionHeading>
-        <NewButton need={editing} to={`${studyPath}/subjects/new`}>
+        <NewButton round need={editing} to={`${studyPath}/subjects/new`}>
           New subject
         </NewButton>
       </div>
@@ -138,9 +138,9 @@ function StudyDetails({ projectCode, study }: { projectCode: string; study: Stud
         </NewButton>
       </p>
 
-      <div className="mt-10 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+      <div className="mt-10 flex flex-wrap items-center gap-x-3 gap-y-2">
         <SectionHeading icon={SampleIcon}>Samples</SectionHeading>
-        <NewButton need={editing} to={`${studyPath}/samples/new`}>
+        <NewButton round need={editing} to={`${studyPath}/samples/new`}>
           New sample
         </NewButton>
       </div>
@@ -155,9 +155,9 @@ function StudyDetails({ projectCode, study }: { projectCode: string; study: Stud
         </NewButton>
       </p>
 
-      <div className="mt-10 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+      <div className="mt-10 flex flex-wrap items-center gap-x-3 gap-y-2">
         <SectionHeading icon={AssayIcon}>Assays</SectionHeading>
-        <NewButton need={editing} to={`${studyPath}/assays/new`}>
+        <NewButton round need={editing} to={`${studyPath}/assays/new`}>
           New assay
         </NewButton>
       </div>
@@ -167,9 +167,9 @@ function StudyDetails({ projectCode, study }: { projectCode: string; study: Stud
           New assay
         </NewButton>
       </p>
-      <div className="mt-10 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+      <div className="mt-10 flex flex-wrap items-center gap-x-3 gap-y-2">
         <SectionHeading icon={DataFileIcon}>Data files</SectionHeading>
-        <NewButton need={editing} to={`${studyPath}/data-files/new`}>
+        <NewButton round need={editing} to={`${studyPath}/data-files/new`}>
           New data file
         </NewButton>
       </div>

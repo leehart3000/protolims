@@ -163,9 +163,9 @@ function SampleDetails({ sample }: { sample: Sample }) {
       <h2 className="mt-10 text-xl font-semibold">Factor values</h2>
       <KeyValueList values={sample.factor_values} emptyText="No factor values recorded." />
 
-      <div className="mt-10 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+      <div className="mt-10 flex flex-wrap items-center gap-x-3 gap-y-2">
         <SectionHeading icon={SampleIcon}>Derived samples</SectionHeading>
-        <NewButton need={editing} to={derivedPath}>
+        <NewButton round need={editing} to={derivedPath}>
           New derived sample
         </NewButton>
       </div>

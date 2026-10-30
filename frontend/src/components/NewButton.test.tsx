@@ -40,6 +40,37 @@ describe('NewButton', () => {
     expect(link.querySelector('svg')).toHaveAttribute('aria-hidden', 'true')
   })
 
+  it('can be a round button, named for screen readers and with a tooltip', () => {
+    render(
+      <TestProviders>
+        <NewButton round to="/things/new">
+          New thing
+        </NewButton>
+        <NewButton round to="/things/new" need={{ siteAdmin: true }} align="start">
+          New other thing
+        </NewButton>
+      </TestProviders>,
+    )
+
+    const link = screen.getByRole('link', { name: 'New thing' })
+    expect(link).toHaveAttribute('title', 'New thing')
+    expect(link).toHaveAttribute('href', '/things/new')
+  })
+
+  it('can be a round button that is disabled, saying why', () => {
+    render(
+      <TestProviders me={nobody}>
+        <NewButton round to="/things/new" need={{ siteAdmin: true }}>
+          New thing
+        </NewButton>
+      </TestProviders>,
+    )
+
+    expect(screen.getByRole('button', { name: 'New thing' })).toHaveAccessibleDescription(
+      'Sign in to do this.',
+    )
+  })
+
   it('links to the form for someone who can use it', () => {
     renderButtons(signedInWith([{ project: 'P1', study: 'S1', role: 'editor' }]))
 
