@@ -55,6 +55,10 @@ const unsavedButton =
 const dangerButton =
   'rounded-md border border-danger-line bg-danger-bg px-3 py-1.5 text-sm font-medium text-danger hover:opacity-85 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-60'
 
+// Less padding on phones, so the three columns fit without scrolling.
+const cell = `${tableCell} max-sm:px-2`
+const header = `${tableHeader} max-sm:px-2`
+
 // The name of a role, as shown: "Editor", for example.
 function roleLabel(role: Role) {
   return ROLE_OPTIONS.find((option) => option.value === role)?.label ?? role
@@ -86,11 +90,11 @@ function MemberRow({
   if (locked) {
     return (
       <tr>
-        <td className={tableCell}>
+        <td className={cell}>
           <PersonCell user={user} />
         </td>
-        <td className={tableCell}>{roleLabel(role)}</td>
-        <td className={tableCell}>
+        <td className={cell}>{roleLabel(role)}</td>
+        <td className={cell}>
           <DisabledButton
             icon={RemovePersonIcon}
             className={secondaryButton}
@@ -105,86 +109,59 @@ function MemberRow({
   }
 
   return (
-    <tr>
-      <td className={tableCell}>
-        <PersonCell user={user} />
-      </td>
-      <td className={tableCell}>
-        {/* Save goes under the role on narrow screens. */}
-        <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center">
-          <select
-            aria-label={`Role for ${who}`}
-            value={chosen}
-            disabled={busy}
-            onChange={(event) => {
-              setChosen(event.target.value as Role)
-            }}
-            className="rounded-md border border-line bg-panel px-2 py-1"
-          >
-            {ROLE_OPTIONS.map((option) => (
-              <option
-                key={option.value}
-                value={option.value}
-                disabled={option.value === 'admin' && adminLocked !== undefined}
-              >
-                {option.label}
-              </option>
-            ))}
-          </select>
-          {/* Gold while there's a change to save, so it isn't missed. */}
-          <button
-            type="button"
-            aria-label={`Save role for ${who}`}
-            aria-describedby={unsaved ? unsavedId : undefined}
-            disabled={busy || !unsaved}
-            onClick={() => {
-              onChange(chosen)
-            }}
-            className={`${unsaved ? unsavedButton : secondaryButton} inline-flex items-center gap-2`}
-          >
-            <SaveIcon aria-hidden="true" className="size-4 shrink-0" />
-            Save
-          </button>
-          {unsaved && (
-            <span id={unsavedId} className="sr-only">
-              Unsaved change
-            </span>
-          )}
-        </div>
-      </td>
-      <td className={tableCell}>
-        {confirming ? (
-          <div className="flex flex-col items-start gap-2">
-            {/* On one line where there's room (the column is only as wide as its content). */}
-            <p className="text-sm font-medium sm:whitespace-nowrap">Remove {who}&rsquo;s role?</p>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => {
-                  onChange(null)
-                }}
-                className={dangerButton}
-              >
-                Yes, remove
-              </button>
-              {/* Focus starts on Cancel, the safe choice. */}
-              <button
-                type="button"
-                autoFocus
-                onClick={() => {
-                  setConfirming(false)
-                }}
-                className={secondaryButton}
-              >
-                Cancel
-              </button>
-            </div>
+    <>
+      <tr>
+        <td className={cell}>
+          <PersonCell user={user} />
+        </td>
+        <td className={cell}>
+          {/* Save goes under the role on narrow screens. */}
+          <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center">
+            <select
+              aria-label={`Role for ${who}`}
+              value={chosen}
+              disabled={busy}
+              onChange={(event) => {
+                setChosen(event.target.value as Role)
+              }}
+              className="rounded-md border border-line bg-panel px-2 py-1"
+            >
+              {ROLE_OPTIONS.map((option) => (
+                <option
+                  key={option.value}
+                  value={option.value}
+                  disabled={option.value === 'admin' && adminLocked !== undefined}
+                >
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            {/* Gold while there's a change to save, so it isn't missed. */}
+            <button
+              type="button"
+              aria-label={`Save role for ${who}`}
+              aria-describedby={unsaved ? unsavedId : undefined}
+              disabled={busy || !unsaved}
+              onClick={() => {
+                onChange(chosen)
+              }}
+              className={`${unsaved ? unsavedButton : secondaryButton} inline-flex items-center gap-2`}
+            >
+              <SaveIcon aria-hidden="true" className="size-4 shrink-0" />
+              Save
+            </button>
+            {unsaved && (
+              <span id={unsavedId} className="sr-only">
+                Unsaved change
+              </span>
+            )}
           </div>
-        ) : (
+        </td>
+        <td className={cell}>
           <button
             type="button"
             aria-label={`Remove ${who}`}
+            aria-expanded={confirming}
             disabled={busy}
             onClick={() => {
               setConfirming(true)
@@ -195,9 +172,43 @@ function MemberRow({
             {/* Just the icon on narrow screens; the button's label still names who. */}
             <span className="hidden sm:inline">Remove</span>
           </button>
-        )}
-      </td>
-    </tr>
+        </td>
+      </tr>
+      {/* The question goes on a row of its own, across the table, so it never makes the table
+        wider than the screen. */}
+      {confirming && (
+        <tr>
+          <td colSpan={3} className={`${cell} bg-danger-bg`}>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+              <p className="text-sm font-medium text-danger">Remove {who}&rsquo;s role?</p>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => {
+                    onChange(null)
+                  }}
+                  className={dangerButton}
+                >
+                  Yes, remove
+                </button>
+                {/* Focus starts on Cancel, the safe choice. */}
+                <button
+                  type="button"
+                  autoFocus
+                  onClick={() => {
+                    setConfirming(false)
+                  }}
+                  className={secondaryButton}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </td>
+        </tr>
+      )}
+    </>
   )
 }
 
@@ -261,13 +272,13 @@ function Members({ place, adminLocked }: { place: Place; adminLocked?: string })
           <table className={table} aria-label="Members">
             <thead className={tableHead}>
               <tr>
-                <th scope="col" className={tableHeader}>
+                <th scope="col" className={header}>
                   Name and ORCID iD
                 </th>
-                <th scope="col" className={tableHeader}>
+                <th scope="col" className={header}>
                   Role
                 </th>
-                <th scope="col" className={`${tableHeader} w-px`}>
+                <th scope="col" className={`${header} w-px`}>
                   <span className="sr-only">Remove</span>
                 </th>
               </tr>
