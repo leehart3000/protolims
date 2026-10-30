@@ -6,7 +6,7 @@ import { PageTitle } from '../components/PageTitle'
 import { SectionHeading } from '../components/SectionHeading'
 import { SignOutButton } from '../components/SignOutButton'
 import { SiteAdminBadge } from '../components/SiteAdminBadge'
-import { AccountIcon, ExternalIcon, MembersIcon, SignInIcon } from '../icons'
+import { ProfileIcon, ExternalIcon, MembersIcon, SignInIcon } from '../icons'
 import { ROLE_OPTIONS } from '../members'
 import { signInHref } from '../signIn'
 import {
@@ -27,14 +27,14 @@ type Role = Me['roles'][number]
 // What a role lets someone do where they have it.
 function allows(role: Role) {
   if (role.role === 'viewer') {
-    return 'See its records.'
+    return 'You can see its records.'
   }
   if (role.role === 'editor') {
-    return 'See, add and change its records.'
+    return 'You can see, add and change its records.'
   }
   return role.study === null
-    ? 'See, add and change its records, manage its viewers and editors, and choose its study admins.'
-    : 'See, add and change its records, and manage its viewers and editors.'
+    ? 'You can see, add and change its records, manage its viewers and editors, and choose its study admins.'
+    : 'You can see, add and change its records, and manage its viewers and editors.'
 }
 
 function roleLabel(role: Role) {
@@ -119,8 +119,8 @@ function Roles({ me }: { me: Me }) {
   )
 }
 
-// The signed-in person's account: who they are, and what they can do here.
-export default function AccountPage() {
+// The signed-in person's profile: who they are, and what they can do here.
+export default function ProfilePage() {
   const { data: me } = useMe()
   const location = useLocation()
 
@@ -131,7 +131,7 @@ export default function AccountPage() {
   if (me.user === null) {
     return (
       <>
-        <PageTitle icon={AccountIcon}>Your account</PageTitle>
+        <PageTitle icon={ProfileIcon}>Your profile</PageTitle>
         <p className="mt-3 text-muted">You're not signed in.</p>
         <p className="mt-6">
           <a
@@ -149,7 +149,7 @@ export default function AccountPage() {
   const { user } = me
   return (
     <>
-      <PageTitle icon={AccountIcon}>Your account</PageTitle>
+      <PageTitle icon={ProfileIcon}>Your profile</PageTitle>
       <DetailList
         items={[
           ['Name', user.name ?? <span className="text-muted italic">Private on ORCID</span>],

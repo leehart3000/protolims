@@ -3,7 +3,7 @@ import { LogOut } from 'lucide-react'
 
 import { signOut } from '../api/queries'
 
-// Signing out, in the header (on wider screens) and on the account page. `className` styles
+// Signing out, in the header (on wider screens) and on the profile page. `className` styles
 // the button; `labelClassName` the word "Sign out" (to hide it on phones, say).
 export function SignOutButton({
   className,

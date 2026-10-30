@@ -24,7 +24,7 @@ import ProjectsPage from './pages/ProjectsPage'
 import StudiesPage from './pages/StudiesPage'
 import StudyDetailPage from './pages/StudyDetailPage'
 import UsersPage from './pages/UsersPage'
-import AccountPage from './pages/AccountPage'
+import ProfilePage from './pages/ProfilePage'
 import SubjectsPage from './pages/SubjectsPage'
 import SamplesPage from './pages/SamplesPage'
 import AssaysPage from './pages/AssaysPage'
@@ -142,7 +142,7 @@ export default function App() {
             <Route path="/assays" element={<AssaysPage />} />
             <Route path="/data-files" element={<DataFilesPage />} />
             <Route path="/users" element={<UsersPage />} />
-            <Route path="/account" element={<AccountPage />} />
+            <Route path="/profile" element={<ProfilePage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         )}

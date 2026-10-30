@@ -5,23 +5,23 @@ import { describe, expect, it, vi } from 'vitest'
 import type { components } from '../api/schema'
 import { TestProviders } from '../test/TestProviders'
 import { nobody, signedInWith, siteAdmin } from '../test/people'
-import AccountPage from './AccountPage'
+import ProfilePage from './ProfilePage'
 
 type Me = components['schemas']['Me']
 
 function renderPage(me: Me | 'fetch') {
   render(
-    <TestProviders route="/account" me={me}>
-      <AccountPage />
+    <TestProviders route="/profile" me={me}>
+      <ProfilePage />
     </TestProviders>,
   )
 }
 
-describe('AccountPage', () => {
+describe('ProfilePage', () => {
   it('shows who is signed in, with their ORCID iD', () => {
     renderPage(signedInWith([]))
 
-    expect(screen.getByRole('heading', { name: 'Your account' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Your profile' })).toBeInTheDocument()
     expect(screen.getByText('Site Admin')).toBeInTheDocument() // The test person's name.
     expect(
       screen.getByRole('link', { name: '0000-0001-5109-3700 (opens in a new tab)' }),
@@ -48,10 +48,10 @@ describe('AccountPage', () => {
 
     const rows = within(screen.getByRole('table', { name: 'Your roles' })).getAllByRole('row')
     expect(rows.slice(1).map((row) => row.textContent)).toEqual([
-      'Project P1AdminSee, add and change its records, manage its viewers and editors, and choose its study admins.',
-      'Project P2ViewerSee its records.',
-      'Study S1 in P2EditorSee, add and change its records.',
-      'Study S2 in P3AdminSee, add and change its records, and manage its viewers and editors.',
+      'Project P1AdminYou can see, add and change its records, manage its viewers and editors, and choose its study admins.',
+      'Project P2ViewerYou can see its records.',
+      'Study S1 in P2EditorYou can see, add and change its records.',
+      'Study S2 in P3AdminYou can see, add and change its records, and manage its viewers and editors.',
     ])
     expect(screen.getByRole('link', { name: 'P1' })).toHaveAttribute('href', '/projects/P1')
     expect(screen.getByRole('link', { name: 'S1' })).toHaveAttribute(
@@ -98,7 +98,7 @@ describe('AccountPage', () => {
     expect(await screen.findByText("You're not signed in.")).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Sign in with ORCID' })).toHaveAttribute(
       'href',
-      '/api/v1/auth/orcid/login?return_to=%2Faccount',
+      '/api/v1/auth/orcid/login?return_to=%2Fprofile',
     )
   })
 })

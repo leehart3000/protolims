@@ -73,13 +73,13 @@ describe('AccountMenu', () => {
     expect(requests).toContain('POST /api/v1/auth/logout')
   })
 
-  it('links the name to the account page', async () => {
+  it('links the name to the profile page', async () => {
     stubApi([jo])
     renderMenu()
 
     expect(await screen.findByRole('link', { name: 'Jo Bloggs' })).toHaveAttribute(
       'href',
-      '/account',
+      '/profile',
     )
   })
 
