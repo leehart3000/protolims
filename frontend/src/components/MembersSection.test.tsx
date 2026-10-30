@@ -129,7 +129,7 @@ describe('MembersSection', () => {
     expect(await screen.findByText('No one has a role here yet.')).toBeInTheDocument()
     await user.type(screen.getByLabelText('ORCID iD'), '0000-0002-1825-0097')
     await user.selectOptions(screen.getByLabelText('Role'), 'editor')
-    await user.click(screen.getByRole('button', { name: 'Add' }))
+    await user.click(screen.getByRole('button', { name: 'Add member' }))
 
     await vi.waitFor(() => {
       expect(changes).toEqual([`PUT ${studyMembers}/0000-0002-1825-0097 {"role":"editor"}`])
@@ -145,7 +145,7 @@ describe('MembersSection', () => {
     renderSection()
 
     await user.type(await screen.findByLabelText('ORCID iD'), '0000-0002-1825-0098')
-    await user.click(screen.getByRole('button', { name: 'Add' }))
+    await user.click(screen.getByRole('button', { name: 'Add member' }))
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
       "0000-0002-1825-0098 isn't a valid ORCID iD.",

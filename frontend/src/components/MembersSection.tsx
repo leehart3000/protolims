@@ -352,7 +352,7 @@ function Members({ place, adminLocked }: { place: Place; adminLocked?: string })
           className={`${primaryButton} inline-flex items-center gap-2 text-sm`}
         >
           <AddPersonIcon aria-hidden="true" className="size-4 shrink-0" />
-          Add
+          Add member
         </button>
       </form>
       <p className="mt-2 text-sm text-muted">
