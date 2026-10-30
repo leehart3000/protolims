@@ -8,6 +8,7 @@ import { AddPersonIcon, MembersIcon, RemovePersonIcon, SaveIcon } from '../icons
 import { changeRole, orcidPattern, type Place, type Role, ROLE_OPTIONS } from '../members'
 import { roleOn } from '../permissions'
 import {
+  dangerButton,
   errorBox,
   inputClass,
   primaryButton,
@@ -50,10 +51,6 @@ export function MembersSection(place: Place) {
 // on gold reads well in both themes.
 const unsavedButton =
   'rounded-md border border-gold bg-gold px-3 py-1.5 text-sm font-medium text-ink hover:bg-gold/85 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-60'
-
-// For a button that takes something away, such as someone's role.
-const dangerButton =
-  'rounded-md border border-danger-line bg-danger-bg px-3 py-1.5 text-sm font-medium text-danger hover:opacity-85 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-60'
 
 // Less padding on phones, so the three columns fit without scrolling.
 const cell = `${tableCell} max-sm:px-2`

@@ -33,3 +33,7 @@ export const secondaryButton =
 // Looks like a button, but only shows where to click: the whole row is the link.
 export const rowButton =
   'inline-flex items-center gap-1.5 whitespace-nowrap rounded-md border border-line bg-panel px-2.5 py-1 text-sm font-medium text-fg'
+
+// For a button that takes something away, such as someone's role or an API token.
+export const dangerButton =
+  'rounded-md border border-danger-line bg-danger-bg px-3 py-1.5 text-sm font-medium text-danger hover:opacity-85 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-60'

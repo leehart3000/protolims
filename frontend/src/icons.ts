@@ -7,6 +7,7 @@ export {
   ExternalLink as ExternalIcon,
   FileChartColumn as DataFileIcon,
   Folders as ProjectIcon,
+  KeyRound as TokenIcon,
   LogIn as SignInIcon,
   Microscope as AssayIcon,
   PencilLine as EditIcon,

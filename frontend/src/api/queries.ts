@@ -399,3 +399,12 @@ export async function fetchMyActivity(query: ActivityQuery) {
   }
   return data
 }
+
+// The signed-in person's API tokens, newest first (never the tokens themselves).
+export async function fetchApiTokens() {
+  const { data } = await api.GET('/api/v1/auth/me/tokens')
+  if (!data) {
+    throw new Error('Could not load your API tokens')
+  }
+  return data
+}

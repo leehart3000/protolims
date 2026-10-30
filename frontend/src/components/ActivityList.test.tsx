@@ -74,6 +74,8 @@ describe('ActivityList', () => {
       activity({ action: 'remove_input', entity_type: 'data_file', name: 'a.bam' }),
       activity({ action: 'create', name: null, project_code: null, study_code: null }),
       activity({ action: 'archive', entity_type: 'thing', name: 'X' }),
+      activity({ entity_type: 'api_token', name: 'Nightly', project_code: null, study_code: null }),
+      activity({ action: 'revoke', entity_type: 'api_token', name: null }),
     ])
     renderList()
 
@@ -89,18 +91,21 @@ describe('ActivityList', () => {
       'Removed an input file from data file a.bamS1 · P1',
       'Created a subject (no longer available)',
       'archive a thing (no longer available)',
+      'Created API token Nightly',
+      'Revoked an API token (no longer available)',
     ])
     expect(screen.getByRole('link', { name: 'P one' })).toHaveAttribute('href', '/projects/P1')
     expect(screen.getByRole('link', { name: 'S one' })).toHaveAttribute(
       'href',
       '/projects/P1/studies/S1',
     )
+    expect(screen.getByRole('link', { name: 'Nightly' })).toHaveAttribute('href', '/profile')
     expect(screen.getByRole('link', { name: 'T-1' })).toHaveAttribute(
       'href',
       '/samples/0192a5b0-0000-7000-8000-000000000005',
     )
     // Shown in the browser's time zone, so only the format is checked.
-    expect(screen.getAllByText(/^30 Oct 2026, \d\d:\d\d$/)).toHaveLength(11)
+    expect(screen.getAllByText(/^30 Oct 2026, \d\d:\d\d$/)).toHaveLength(13)
     expect(queries[0]?.get('offset')).toBe('0')
   })
 

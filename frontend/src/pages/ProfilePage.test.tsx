@@ -19,11 +19,16 @@ function renderPage(me: Me | 'fetch') {
 
 const noActivity = { items: [], total: 0 }
 
-// The list of their changes is tested in ActivityList.test.tsx; here it's empty.
+// Their API tokens and changes are tested in TokensSection.test.tsx and ActivityList.test.tsx;
+// here they have none.
+function noTokensOrActivity(path: string) {
+  return path === '/api/v1/auth/me/tokens' ? Response.json([]) : Response.json(noActivity)
+}
+
 beforeEach(() => {
   vi.stubGlobal(
     'fetch',
-    vi.fn(() => Promise.resolve(Response.json(noActivity))),
+    vi.fn((request: Request) => Promise.resolve(noTokensOrActivity(new URL(request.url).pathname))),
   )
 })
 
@@ -101,8 +106,8 @@ describe('ProfilePage', () => {
           signedIn = false
           return Promise.resolve(new Response(null, { status: 204 }))
         }
-        if (path === '/api/v1/auth/me/activity') {
-          return Promise.resolve(Response.json(noActivity))
+        if (path.startsWith('/api/v1/auth/me/')) {
+          return Promise.resolve(noTokensOrActivity(path))
         }
         return Promise.resolve(Response.json(signedIn ? siteAdmin : nobody))
       }),

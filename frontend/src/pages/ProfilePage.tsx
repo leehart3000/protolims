@@ -7,6 +7,7 @@ import { PageTitle } from '../components/PageTitle'
 import { SectionHeading } from '../components/SectionHeading'
 import { SignOutButton } from '../components/SignOutButton'
 import { SiteAdminBadge } from '../components/SiteAdminBadge'
+import { TokensSection } from '../components/TokensSection'
 import { EditIcon, ExternalIcon, MembersIcon, ProfileIcon, SignInIcon } from '../icons'
 import { formatDate } from '../format'
 import { ROLE_OPTIONS } from '../members'
@@ -191,6 +192,8 @@ export default function ProfilePage() {
         Your roles
       </SectionHeading>
       <Roles me={me} />
+
+      <TokensSection />
 
       <SectionHeading icon={EditIcon} className="mt-8">
         Your changes

@@ -39,6 +39,12 @@ const KINDS: Record<string, Kind> = {
   sample: { noun: 'sample', path: (item) => `/samples/${item.entity_id}` },
   assay: { noun: 'assay', path: (item) => `/assays/${item.entity_id}` },
   data_file: { noun: 'data file', path: (item) => `/data-files/${item.entity_id}` },
+  api_token: { noun: 'API token', path: () => '/profile' },
+}
+
+// "a" or "an", as in "an assay" or "an API token".
+function article(noun: string) {
+  return /^[aeio]/i.test(noun) ? 'an' : 'a'
 }
 
 // What was done, before naming what it was done to, as in "Created" (subject P-1).
@@ -49,6 +55,8 @@ function doing(item: Activity) {
       return 'Created'
     case 'update':
       return 'Changed'
+    case 'revoke':
+      return 'Revoked'
     case 'set_member':
       return `Gave ${person} the ${item.role ?? ''} role on`
     case 'remove_member':
@@ -79,7 +87,8 @@ function describe(item: Activity): ReactNode {
   if (kind === undefined || item.name === null) {
     return (
       <>
-        {doing(item)} a {noun} <span className="text-muted italic">(no longer available)</span>
+        {doing(item)} {article(noun)} {noun}{' '}
+        <span className="text-muted italic">(no longer available)</span>
       </>
     )
   }
