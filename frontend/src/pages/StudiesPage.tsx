@@ -180,7 +180,7 @@ export default function StudiesPage() {
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
         <div className="flex items-center gap-3">
           <PageTitle icon={StudyIcon}>Studies</PageTitle>
-          {projectCode && <NewStudyButton round projectCode={projectCode} />}
+          {projectCode && <NewStudyButton short projectCode={projectCode} />}
         </div>
         {projectCode && <AllStudiesLink />}
       </div>

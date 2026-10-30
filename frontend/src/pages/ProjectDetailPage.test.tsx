@@ -103,7 +103,7 @@ describe('ProjectDetailPage', () => {
       'href',
       '/projects/TCGA-BRCA/studies/TCGA-BRCA-RNASEQ',
     )
-    const newStudyLinks = screen.getAllByRole('link', { name: 'New study' })
+    const newStudyLinks = screen.getAllByRole('link', { name: /^(Add|New) study$/ })
     expect(newStudyLinks).toHaveLength(2)
     for (const link of newStudyLinks) {
       expect(link).toHaveAttribute('href', '/projects/TCGA-BRCA/studies/new')

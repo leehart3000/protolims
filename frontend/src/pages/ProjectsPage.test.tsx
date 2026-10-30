@@ -94,7 +94,7 @@ describe('ProjectsPage', () => {
     respondWith(Response.json({ items: [], total: 0 }))
     renderPage()
 
-    const links = screen.getAllByRole('link', { name: 'New project' })
+    const links = screen.getAllByRole('link', { name: /^(Add|New) project$/ })
     expect(links).toHaveLength(2)
     for (const link of links) {
       expect(link).toHaveAttribute('href', '/projects/new')

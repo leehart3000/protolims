@@ -131,7 +131,7 @@ describe('SampleDetailPage', () => {
       `/samples/${rna.id}`,
     )
 
-    const newDerivedLinks = screen.getAllByRole('link', { name: 'New derived sample' })
+    const newDerivedLinks = screen.getAllByRole('link', { name: /^(Add|New) derived sample$/ })
     expect(newDerivedLinks).toHaveLength(2)
     for (const link of newDerivedLinks) {
       expect(link).toHaveAttribute(
@@ -177,7 +177,7 @@ describe('SampleDetailPage', () => {
       `/samples/${tumour.id}`,
     )
 
-    for (const link of screen.getAllByRole('link', { name: 'New derived sample' })) {
+    for (const link of screen.getAllByRole('link', { name: /^(Add|New) derived sample$/ })) {
       expect(link).toHaveAttribute(
         'href',
         `/projects/TCGA-BRCA/studies/RNASEQ/samples/new?parent=${rna.id}`,

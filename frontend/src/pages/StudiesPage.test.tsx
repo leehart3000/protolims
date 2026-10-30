@@ -105,7 +105,7 @@ describe('StudiesPage', () => {
     )
     expect(screen.getByText('RNASEQ · TCGA-BRCA')).toBeInTheDocument()
     expect(screen.queryByRole('navigation', { name: 'Breadcrumb' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: 'New study' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /^(Add|New) study$/ })).not.toBeInTheDocument()
     expect(screen.queryByRole('link', { name: 'All studies' })).not.toBeInTheDocument()
   })
 
@@ -130,7 +130,7 @@ describe('StudiesPage', () => {
     for (const link of allStudiesLinks) {
       expect(link).toHaveAttribute('href', '/studies')
     }
-    const newStudyLinks = screen.getAllByRole('link', { name: 'New study' })
+    const newStudyLinks = screen.getAllByRole('link', { name: /^(Add|New) study$/ })
     expect(newStudyLinks).toHaveLength(2)
     for (const link of newStudyLinks) {
       expect(link).toHaveAttribute('href', '/projects/TCGA-BRCA/studies/new')

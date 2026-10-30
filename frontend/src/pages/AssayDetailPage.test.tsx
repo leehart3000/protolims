@@ -150,7 +150,7 @@ describe('AssayDetailPage', () => {
       `/data-files/${counts.id}`,
     )
     expect(dataFileQuery?.get('assay')).toBe(assayId)
-    const newFileLinks = screen.getAllByRole('link', { name: 'New data file' })
+    const newFileLinks = screen.getAllByRole('link', { name: /^(Add|New) data file$/ })
     expect(newFileLinks).toHaveLength(2)
     for (const link of newFileLinks) {
       expect(link).toHaveAttribute(

@@ -127,7 +127,7 @@ function StudyDetails({ projectCode, study }: { projectCode: string; study: Stud
 
       <div className="mt-10 flex flex-wrap items-center gap-x-3 gap-y-2">
         <SectionHeading icon={SubjectIcon}>Subjects</SectionHeading>
-        <NewButton round need={editing} to={`${studyPath}/subjects/new`}>
+        <NewButton short need={editing} to={`${studyPath}/subjects/new`}>
           New subject
         </NewButton>
       </div>
@@ -140,7 +140,7 @@ function StudyDetails({ projectCode, study }: { projectCode: string; study: Stud
 
       <div className="mt-10 flex flex-wrap items-center gap-x-3 gap-y-2">
         <SectionHeading icon={SampleIcon}>Samples</SectionHeading>
-        <NewButton round need={editing} to={`${studyPath}/samples/new`}>
+        <NewButton short need={editing} to={`${studyPath}/samples/new`}>
           New sample
         </NewButton>
       </div>
@@ -157,7 +157,7 @@ function StudyDetails({ projectCode, study }: { projectCode: string; study: Stud
 
       <div className="mt-10 flex flex-wrap items-center gap-x-3 gap-y-2">
         <SectionHeading icon={AssayIcon}>Assays</SectionHeading>
-        <NewButton round need={editing} to={`${studyPath}/assays/new`}>
+        <NewButton short need={editing} to={`${studyPath}/assays/new`}>
           New assay
         </NewButton>
       </div>
@@ -169,7 +169,7 @@ function StudyDetails({ projectCode, study }: { projectCode: string; study: Stud
       </p>
       <div className="mt-10 flex flex-wrap items-center gap-x-3 gap-y-2">
         <SectionHeading icon={DataFileIcon}>Data files</SectionHeading>
-        <NewButton round need={editing} to={`${studyPath}/data-files/new`}>
+        <NewButton short need={editing} to={`${studyPath}/data-files/new`}>
           New data file
         </NewButton>
       </div>

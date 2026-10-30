@@ -233,7 +233,7 @@ describe('StudyDetailPage', () => {
     )
     expect(screen.getByRole('cell', { name: 'Patient' })).toBeInTheDocument()
     expect(screen.getByText('Patient · Homo sapiens')).toBeInTheDocument()
-    const newSubjectLinks = screen.getAllByRole('link', { name: 'New subject' })
+    const newSubjectLinks = screen.getAllByRole('link', { name: /^(Add|New) subject$/ })
     expect(newSubjectLinks).toHaveLength(2)
     for (const link of newSubjectLinks) {
       expect(link).toHaveAttribute('href', '/projects/TCGA-BRCA/studies/RNASEQ/subjects/new')
@@ -245,7 +245,7 @@ describe('StudyDetailPage', () => {
     )
     expect(screen.getByRole('cell', { name: 'In storage' })).toBeInTheDocument()
     expect(screen.getByText('tissue · TCGA-A1-A0SB · In storage')).toBeInTheDocument()
-    const newSampleLinks = screen.getAllByRole('link', { name: 'New sample' })
+    const newSampleLinks = screen.getAllByRole('link', { name: /^(Add|New) sample$/ })
     expect(newSampleLinks).toHaveLength(2)
     for (const link of newSampleLinks) {
       expect(link).toHaveAttribute('href', '/projects/TCGA-BRCA/studies/RNASEQ/samples/new')
@@ -262,7 +262,7 @@ describe('StudyDetailPage', () => {
       ),
     ).toBeInTheDocument()
 
-    const newAssayLinks = screen.getAllByRole('link', { name: 'New assay' })
+    const newAssayLinks = screen.getAllByRole('link', { name: /^(Add|New) assay$/ })
     expect(newAssayLinks).toHaveLength(2)
     for (const link of newAssayLinks) {
       expect(link).toHaveAttribute('href', '/projects/TCGA-BRCA/studies/RNASEQ/assays/new')
@@ -275,7 +275,7 @@ describe('StudyDetailPage', () => {
     expect(screen.getByText('https://example.org/RNASEQ/counts.tsv')).toBeInTheDocument()
     expect(screen.getByText('Processed · TSV · 2.5 MB · 1 sample')).toBeInTheDocument()
 
-    const newDataFileLinks = screen.getAllByRole('link', { name: 'New data file' })
+    const newDataFileLinks = screen.getAllByRole('link', { name: /^(Add|New) data file$/ })
     expect(newDataFileLinks).toHaveLength(2)
     for (const link of newDataFileLinks) {
       expect(link).toHaveAttribute('href', '/projects/TCGA-BRCA/studies/RNASEQ/data-files/new')

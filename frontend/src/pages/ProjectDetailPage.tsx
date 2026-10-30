@@ -145,7 +145,7 @@ function ProjectDetails({ project }: { project: Project }) {
 
       <div className="mt-10 flex items-center gap-3">
         <SectionHeading icon={StudyIcon}>Studies</SectionHeading>
-        <NewStudyButton round projectCode={project.code} />
+        <NewStudyButton short projectCode={project.code} />
       </div>
       <StudyList projectCode={project.code} />
       <p className="mt-4">

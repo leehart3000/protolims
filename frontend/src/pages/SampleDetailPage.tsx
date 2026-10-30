@@ -165,7 +165,7 @@ function SampleDetails({ sample }: { sample: Sample }) {
 
       <div className="mt-10 flex flex-wrap items-center gap-x-3 gap-y-2">
         <SectionHeading icon={SampleIcon}>Derived samples</SectionHeading>
-        <NewButton round need={editing} to={derivedPath}>
+        <NewButton short need={editing} to={derivedPath}>
           New derived sample
         </NewButton>
       </div>

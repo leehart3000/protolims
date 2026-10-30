@@ -40,33 +40,31 @@ describe('NewButton', () => {
     expect(link.querySelector('svg')).toHaveAttribute('aria-hidden', 'true')
   })
 
-  it('can be a round button, named for screen readers and with a tooltip', () => {
+  it('can just say Add, beside a heading, with its full name for screen readers', () => {
     render(
       <TestProviders>
-        <NewButton round to="/things/new">
+        <NewButton short to="/things/new">
           New thing
-        </NewButton>
-        <NewButton round to="/things/new" need={{ siteAdmin: true }} align="start">
-          New other thing
         </NewButton>
       </TestProviders>,
     )
 
-    const link = screen.getByRole('link', { name: 'New thing' })
-    expect(link).toHaveAttribute('title', 'New thing')
+    const link = screen.getByRole('link', { name: 'Add thing' })
+    expect(link).toHaveTextContent('Add')
+    expect(link).toHaveAttribute('title', 'Add thing')
     expect(link).toHaveAttribute('href', '/things/new')
   })
 
-  it('can be a round button that is disabled, saying why', () => {
+  it('can say Add and be disabled, saying why', () => {
     render(
       <TestProviders me={nobody}>
-        <NewButton round to="/things/new" need={{ siteAdmin: true }}>
+        <NewButton short to="/things/new" need={{ siteAdmin: true }}>
           New thing
         </NewButton>
       </TestProviders>,
     )
 
-    expect(screen.getByRole('button', { name: 'New thing' })).toHaveAccessibleDescription(
+    expect(screen.getByRole('button', { name: 'Add thing' })).toHaveAccessibleDescription(
       'Sign in to do this.',
     )
   })

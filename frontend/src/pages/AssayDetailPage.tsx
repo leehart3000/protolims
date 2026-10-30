@@ -118,7 +118,7 @@ function AssayDetails({ assay }: { assay: Assay }) {
 
       <div className="mt-10 flex flex-wrap items-center gap-x-3 gap-y-2">
         <SectionHeading icon={DataFileIcon}>Data files</SectionHeading>
-        <NewButton round need={editing} to={newFilePath}>
+        <NewButton short need={editing} to={newFilePath}>
           New data file
         </NewButton>
       </div>

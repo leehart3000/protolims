@@ -128,7 +128,7 @@ export default function ProjectsPage() {
     <>
       <div className="flex items-center gap-3">
         <PageTitle icon={ProjectIcon}>Projects</PageTitle>
-        <NewButton round to="/projects/new" need={{ siteAdmin: true }}>
+        <NewButton short to="/projects/new" need={{ siteAdmin: true }}>
           New project
         </NewButton>
       </div>
