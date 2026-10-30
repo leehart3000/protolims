@@ -3,7 +3,7 @@
 import uuid
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from protolims_api.permissions import Role
 
@@ -82,3 +82,33 @@ class MemberRead(BaseModel):
 
     user: UserRead
     role: Role
+
+
+class ApiTokenCreate(BaseModel):
+    """A new personal API token: what it's for, and how many days it lasts."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    name: str = Field(min_length=1, max_length=100)
+    days: int = Field(default=90, ge=1, le=365)
+
+
+class ApiTokenRead(BaseModel):
+    """One of someone's API tokens (never the token itself, which isn't kept)."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    name: str
+    # Its first few characters, to tell it apart from the others.
+    hint: str
+    created_at: datetime
+    expires_at: datetime
+    # Brought up to date at most once an hour.
+    last_used_at: datetime | None
+
+
+class ApiTokenCreated(ApiTokenRead):
+    """A token just made, with the token itself: shown this once, then never again."""
+
+    token: str

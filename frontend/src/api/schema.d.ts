@@ -754,6 +754,51 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auth/me/tokens": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Tokens
+         * @description The signed-in person's API tokens, newest first, including any that have expired.
+         */
+        get: operations["list_tokens_api_v1_auth_me_tokens_get"];
+        put?: never;
+        /**
+         * Create Token
+         * @description Make a new API token. The reply includes the token itself: this is the only time it's
+         *     shown, so keep it somewhere safe straight away.
+         */
+        post: operations["create_token_api_v1_auth_me_tokens_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/me/tokens/{token_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Revoke Token
+         * @description Revoke one of the signed-in person's API tokens, so it can't be used again.
+         */
+        delete: operations["revoke_token_api_v1_auth_me_tokens__token_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/projects/{project_code}/members": {
         parameters: {
             query?: never;
@@ -961,6 +1006,75 @@ export interface components {
             person: string | null;
             /** Role */
             role: string | null;
+        };
+        /**
+         * ApiTokenCreate
+         * @description A new personal API token: what it's for, and how many days it lasts.
+         */
+        ApiTokenCreate: {
+            /** Name */
+            name: string;
+            /**
+             * Days
+             * @default 90
+             */
+            days: number;
+        };
+        /**
+         * ApiTokenCreated
+         * @description A token just made, with the token itself: shown this once, then never again.
+         */
+        ApiTokenCreated: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Hint */
+            hint: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /** Last Used At */
+            last_used_at: string | null;
+            /** Token */
+            token: string;
+        };
+        /**
+         * ApiTokenRead
+         * @description One of someone's API tokens (never the token itself, which isn't kept).
+         */
+        ApiTokenRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Hint */
+            hint: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /** Last Used At */
+            last_used_at: string | null;
         };
         /**
          * AssayCreate
@@ -2138,7 +2252,10 @@ export interface operations {
                 limit?: number;
                 offset?: number;
             };
-            header?: never;
+            header?: {
+                /** @description A personal API token, as Bearer <token> */
+                authorization?: string | null;
+            };
             path?: never;
             cookie?: {
                 protolims_session?: string | null;
@@ -2169,7 +2286,10 @@ export interface operations {
     create_project_api_v1_projects_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description A personal API token, as Bearer <token> */
+                authorization?: string | null;
+            };
             path?: never;
             cookie?: {
                 protolims_session?: string | null;
@@ -2204,7 +2324,10 @@ export interface operations {
     get_project_api_v1_projects__code__get: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description A personal API token, as Bearer <token> */
+                authorization?: string | null;
+            };
             path: {
                 code: string;
             };
@@ -2237,7 +2360,10 @@ export interface operations {
     update_project_api_v1_projects__code__patch: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description A personal API token, as Bearer <token> */
+                authorization?: string | null;
+            };
             path: {
                 code: string;
             };
@@ -2281,7 +2407,10 @@ export interface operations {
                 limit?: number;
                 offset?: number;
             };
-            header?: never;
+            header?: {
+                /** @description A personal API token, as Bearer <token> */
+                authorization?: string | null;
+            };
             path: {
                 project_code: string;
             };
@@ -2314,7 +2443,10 @@ export interface operations {
     create_study_api_v1_projects__project_code__studies_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description A personal API token, as Bearer <token> */
+                authorization?: string | null;
+            };
             path: {
                 project_code: string;
             };
@@ -2351,7 +2483,10 @@ export interface operations {
     get_study_api_v1_projects__project_code__studies__study_code__get: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description A personal API token, as Bearer <token> */
+                authorization?: string | null;
+            };
             path: {
                 project_code: string;
                 study_code: string;
@@ -2385,7 +2520,10 @@ export interface operations {
     update_study_api_v1_projects__project_code__studies__study_code__patch: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description A personal API token, as Bearer <token> */
+                authorization?: string | null;
+            };
             path: {
                 project_code: string;
                 study_code: string;
@@ -2432,7 +2570,10 @@ export interface operations {
                 limit?: number;
                 offset?: number;
             };
-            header?: never;
+            header?: {
+                /** @description A personal API token, as Bearer <token> */
+                authorization?: string | null;
+            };
             path?: never;
             cookie?: {
                 protolims_session?: string | null;
@@ -2470,7 +2611,10 @@ export interface operations {
                 limit?: number;
                 offset?: number;
             };
-            header?: never;
+            header?: {
+                /** @description A personal API token, as Bearer <token> */
+                authorization?: string | null;
+            };
             path: {
                 project_code: string;
                 study_code: string;
@@ -2504,7 +2648,10 @@ export interface operations {
     create_subject_api_v1_projects__project_code__studies__study_code__subjects_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description A personal API token, as Bearer <token> */
+                authorization?: string | null;
+            };
             path: {
                 project_code: string;
                 study_code: string;
@@ -2549,7 +2696,10 @@ export interface operations {
                 limit?: number;
                 offset?: number;
             };
-            header?: never;
+            header?: {
+                /** @description A personal API token, as Bearer <token> */
+                authorization?: string | null;
+            };
             path?: never;
             cookie?: {
                 protolims_session?: string | null;
@@ -2580,7 +2730,10 @@ export interface operations {
     get_subject_api_v1_subjects__subject_id__get: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description A personal API token, as Bearer <token> */
+                authorization?: string | null;
+            };
             path: {
                 subject_id: string;
             };
@@ -2613,7 +2766,10 @@ export interface operations {
     update_subject_api_v1_subjects__subject_id__patch: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description A personal API token, as Bearer <token> */
+                authorization?: string | null;
+            };
             path: {
                 subject_id: string;
             };
@@ -2661,7 +2817,10 @@ export interface operations {
                 limit?: number;
                 offset?: number;
             };
-            header?: never;
+            header?: {
+                /** @description A personal API token, as Bearer <token> */
+                authorization?: string | null;
+            };
             path: {
                 project_code: string;
                 study_code: string;
@@ -2695,7 +2854,10 @@ export interface operations {
     create_sample_api_v1_projects__project_code__studies__study_code__samples_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description A personal API token, as Bearer <token> */
+                authorization?: string | null;
+            };
             path: {
                 project_code: string;
                 study_code: string;
@@ -2740,7 +2902,10 @@ export interface operations {
                 limit?: number;
                 offset?: number;
             };
-            header?: never;
+            header?: {
+                /** @description A personal API token, as Bearer <token> */
+                authorization?: string | null;
+            };
             path?: never;
             cookie?: {
                 protolims_session?: string | null;
@@ -2771,7 +2936,10 @@ export interface operations {
     get_sample_api_v1_samples__sample_id__get: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description A personal API token, as Bearer <token> */
+                authorization?: string | null;
+            };
             path: {
                 sample_id: string;
             };
@@ -2804,7 +2972,10 @@ export interface operations {
     update_sample_api_v1_samples__sample_id__patch: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description A personal API token, as Bearer <token> */
+                authorization?: string | null;
+            };
             path: {
                 sample_id: string;
             };
@@ -2848,7 +3019,10 @@ export interface operations {
                 limit?: number;
                 offset?: number;
             };
-            header?: never;
+            header?: {
+                /** @description A personal API token, as Bearer <token> */
+                authorization?: string | null;
+            };
             path: {
                 project_code: string;
                 study_code: string;
@@ -2882,7 +3056,10 @@ export interface operations {
     create_assay_api_v1_projects__project_code__studies__study_code__assays_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description A personal API token, as Bearer <token> */
+                authorization?: string | null;
+            };
             path: {
                 project_code: string;
                 study_code: string;
@@ -2927,7 +3104,10 @@ export interface operations {
                 limit?: number;
                 offset?: number;
             };
-            header?: never;
+            header?: {
+                /** @description A personal API token, as Bearer <token> */
+                authorization?: string | null;
+            };
             path?: never;
             cookie?: {
                 protolims_session?: string | null;
@@ -2958,7 +3138,10 @@ export interface operations {
     get_assay_api_v1_assays__assay_id__get: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description A personal API token, as Bearer <token> */
+                authorization?: string | null;
+            };
             path: {
                 assay_id: string;
             };
@@ -2991,7 +3174,10 @@ export interface operations {
     update_assay_api_v1_assays__assay_id__patch: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description A personal API token, as Bearer <token> */
+                authorization?: string | null;
+            };
             path: {
                 assay_id: string;
             };
@@ -3035,7 +3221,10 @@ export interface operations {
                 limit?: number;
                 offset?: number;
             };
-            header?: never;
+            header?: {
+                /** @description A personal API token, as Bearer <token> */
+                authorization?: string | null;
+            };
             path: {
                 assay_id: string;
             };
@@ -3068,7 +3257,10 @@ export interface operations {
     link_sample_api_v1_assays__assay_id__samples__sample_id__put: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description A personal API token, as Bearer <token> */
+                authorization?: string | null;
+            };
             path: {
                 assay_id: string;
                 sample_id: string;
@@ -3106,7 +3298,10 @@ export interface operations {
     unlink_sample_api_v1_assays__assay_id__samples__sample_id__delete: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description A personal API token, as Bearer <token> */
+                authorization?: string | null;
+            };
             path: {
                 assay_id: string;
                 sample_id: string;
@@ -3138,7 +3333,10 @@ export interface operations {
     list_sample_assays_api_v1_samples__sample_id__assays_get: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description A personal API token, as Bearer <token> */
+                authorization?: string | null;
+            };
             path: {
                 sample_id: string;
             };
@@ -3182,7 +3380,10 @@ export interface operations {
                 limit?: number;
                 offset?: number;
             };
-            header?: never;
+            header?: {
+                /** @description A personal API token, as Bearer <token> */
+                authorization?: string | null;
+            };
             path: {
                 project_code: string;
                 study_code: string;
@@ -3216,7 +3417,10 @@ export interface operations {
     create_data_file_api_v1_projects__project_code__studies__study_code__data_files_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description A personal API token, as Bearer <token> */
+                authorization?: string | null;
+            };
             path: {
                 project_code: string;
                 study_code: string;
@@ -3263,7 +3467,10 @@ export interface operations {
                 limit?: number;
                 offset?: number;
             };
-            header?: never;
+            header?: {
+                /** @description A personal API token, as Bearer <token> */
+                authorization?: string | null;
+            };
             path?: never;
             cookie?: {
                 protolims_session?: string | null;
@@ -3294,7 +3501,10 @@ export interface operations {
     get_data_file_api_v1_data_files__data_file_id__get: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description A personal API token, as Bearer <token> */
+                authorization?: string | null;
+            };
             path: {
                 data_file_id: string;
             };
@@ -3327,7 +3537,10 @@ export interface operations {
     update_data_file_api_v1_data_files__data_file_id__patch: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description A personal API token, as Bearer <token> */
+                authorization?: string | null;
+            };
             path: {
                 data_file_id: string;
             };
@@ -3371,7 +3584,10 @@ export interface operations {
                 limit?: number;
                 offset?: number;
             };
-            header?: never;
+            header?: {
+                /** @description A personal API token, as Bearer <token> */
+                authorization?: string | null;
+            };
             path: {
                 data_file_id: string;
             };
@@ -3404,7 +3620,10 @@ export interface operations {
     link_data_file_sample_api_v1_data_files__data_file_id__samples__sample_id__put: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description A personal API token, as Bearer <token> */
+                authorization?: string | null;
+            };
             path: {
                 data_file_id: string;
                 sample_id: string;
@@ -3442,7 +3661,10 @@ export interface operations {
     unlink_data_file_sample_api_v1_data_files__data_file_id__samples__sample_id__delete: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description A personal API token, as Bearer <token> */
+                authorization?: string | null;
+            };
             path: {
                 data_file_id: string;
                 sample_id: string;
@@ -3474,7 +3696,10 @@ export interface operations {
     list_sample_data_files_api_v1_samples__sample_id__data_files_get: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description A personal API token, as Bearer <token> */
+                authorization?: string | null;
+            };
             path: {
                 sample_id: string;
             };
@@ -3507,7 +3732,10 @@ export interface operations {
     list_inputs_api_v1_data_files__data_file_id__inputs_get: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description A personal API token, as Bearer <token> */
+                authorization?: string | null;
+            };
             path: {
                 data_file_id: string;
             };
@@ -3540,7 +3768,10 @@ export interface operations {
     list_outputs_api_v1_data_files__data_file_id__outputs_get: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description A personal API token, as Bearer <token> */
+                authorization?: string | null;
+            };
             path: {
                 data_file_id: string;
             };
@@ -3573,7 +3804,10 @@ export interface operations {
     add_input_api_v1_data_files__data_file_id__inputs__input_id__put: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description A personal API token, as Bearer <token> */
+                authorization?: string | null;
+            };
             path: {
                 data_file_id: string;
                 input_id: string;
@@ -3607,7 +3841,10 @@ export interface operations {
     remove_input_api_v1_data_files__data_file_id__inputs__input_id__delete: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description A personal API token, as Bearer <token> */
+                authorization?: string | null;
+            };
             path: {
                 data_file_id: string;
                 input_id: string;
@@ -3639,7 +3876,10 @@ export interface operations {
     import_records_api_v1_projects__project_code__studies__study_code__import_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description A personal API token, as Bearer <token> */
+                authorization?: string | null;
+            };
             path: {
                 project_code: string;
                 study_code: string;
@@ -3740,7 +3980,10 @@ export interface operations {
     who_am_i_api_v1_auth_me_get: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description A personal API token, as Bearer <token> */
+                authorization?: string | null;
+            };
             path?: never;
             cookie?: {
                 protolims_session?: string | null;
@@ -3774,7 +4017,10 @@ export interface operations {
                 limit?: number;
                 offset?: number;
             };
-            header?: never;
+            header?: {
+                /** @description A personal API token, as Bearer <token> */
+                authorization?: string | null;
+            };
             path?: never;
             cookie?: {
                 protolims_session?: string | null;
@@ -3831,10 +4077,119 @@ export interface operations {
             };
         };
     };
+    list_tokens_api_v1_auth_me_tokens_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A personal API token, as Bearer <token> */
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: {
+                protolims_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiTokenRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_token_api_v1_auth_me_tokens_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A personal API token, as Bearer <token> */
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: {
+                protolims_session?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApiTokenCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiTokenCreated"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    revoke_token_api_v1_auth_me_tokens__token_id__delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A personal API token, as Bearer <token> */
+                authorization?: string | null;
+            };
+            path: {
+                token_id: string;
+            };
+            cookie?: {
+                protolims_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_project_members_api_v1_projects__project_code__members_get: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description A personal API token, as Bearer <token> */
+                authorization?: string | null;
+            };
             path: {
                 project_code: string;
             };
@@ -3867,7 +4222,10 @@ export interface operations {
     set_project_member_api_v1_projects__project_code__members__orcid_id__put: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description A personal API token, as Bearer <token> */
+                authorization?: string | null;
+            };
             path: {
                 project_code: string;
                 /** @description Their ORCID iD, e.g. 0000-0002-1825-0097 */
@@ -3906,7 +4264,10 @@ export interface operations {
     remove_project_member_api_v1_projects__project_code__members__orcid_id__delete: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description A personal API token, as Bearer <token> */
+                authorization?: string | null;
+            };
             path: {
                 project_code: string;
                 /** @description Their ORCID iD, e.g. 0000-0002-1825-0097 */
@@ -3939,7 +4300,10 @@ export interface operations {
     list_study_members_api_v1_projects__project_code__studies__study_code__members_get: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description A personal API token, as Bearer <token> */
+                authorization?: string | null;
+            };
             path: {
                 project_code: string;
                 study_code: string;
@@ -3973,7 +4337,10 @@ export interface operations {
     set_study_member_api_v1_projects__project_code__studies__study_code__members__orcid_id__put: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description A personal API token, as Bearer <token> */
+                authorization?: string | null;
+            };
             path: {
                 project_code: string;
                 study_code: string;
@@ -4013,7 +4380,10 @@ export interface operations {
     remove_study_member_api_v1_projects__project_code__studies__study_code__members__orcid_id__delete: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description A personal API token, as Bearer <token> */
+                authorization?: string | null;
+            };
             path: {
                 project_code: string;
                 study_code: string;
@@ -4054,7 +4424,10 @@ export interface operations {
                 limit?: number;
                 offset?: number;
             };
-            header?: never;
+            header?: {
+                /** @description A personal API token, as Bearer <token> */
+                authorization?: string | null;
+            };
             path?: never;
             cookie?: {
                 protolims_session?: string | null;
@@ -4085,7 +4458,10 @@ export interface operations {
     remove_user_api_v1_users__orcid_id__delete: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description A personal API token, as Bearer <token> */
+                authorization?: string | null;
+            };
             path: {
                 /** @description Their ORCID iD, e.g. 0000-0002-1825-0097 */
                 orcid_id: string;

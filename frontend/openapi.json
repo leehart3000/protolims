@@ -16,6 +16,24 @@
         "operationId": "create_project_api_v1_projects_post",
         "parameters": [
           {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "A personal API token, as Bearer <token>",
+              "title": "Authorization"
+            },
+            "description": "A personal API token, as Bearer <token>"
+          },
+          {
             "name": "protolims_session",
             "in": "cookie",
             "required": false,
@@ -136,6 +154,24 @@
             }
           },
           {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "A personal API token, as Bearer <token>",
+              "title": "Authorization"
+            },
+            "description": "A personal API token, as Bearer <token>"
+          },
+          {
             "name": "protolims_session",
             "in": "cookie",
             "required": false,
@@ -195,6 +231,24 @@
             }
           },
           {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "A personal API token, as Bearer <token>",
+              "title": "Authorization"
+            },
+            "description": "A personal API token, as Bearer <token>"
+          },
+          {
             "name": "protolims_session",
             "in": "cookie",
             "required": false,
@@ -250,6 +304,24 @@
               "type": "string",
               "title": "Code"
             }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "A personal API token, as Bearer <token>",
+              "title": "Authorization"
+            },
+            "description": "A personal API token, as Bearer <token>"
           },
           {
             "name": "protolims_session",
@@ -319,6 +391,24 @@
               "type": "string",
               "title": "Project Code"
             }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "A personal API token, as Bearer <token>",
+              "title": "Authorization"
+            },
+            "description": "A personal API token, as Bearer <token>"
           },
           {
             "name": "protolims_session",
@@ -450,6 +540,24 @@
             }
           },
           {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "A personal API token, as Bearer <token>",
+              "title": "Authorization"
+            },
+            "description": "A personal API token, as Bearer <token>"
+          },
+          {
             "name": "protolims_session",
             "in": "cookie",
             "required": false,
@@ -518,6 +626,24 @@
             }
           },
           {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "A personal API token, as Bearer <token>",
+              "title": "Authorization"
+            },
+            "description": "A personal API token, as Bearer <token>"
+          },
+          {
             "name": "protolims_session",
             "in": "cookie",
             "required": false,
@@ -582,6 +708,24 @@
               "type": "string",
               "title": "Study Code"
             }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "A personal API token, as Bearer <token>",
+              "title": "Authorization"
+            },
+            "description": "A personal API token, as Bearer <token>"
           },
           {
             "name": "protolims_session",
@@ -726,6 +870,24 @@
             }
           },
           {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "A personal API token, as Bearer <token>",
+              "title": "Authorization"
+            },
+            "description": "A personal API token, as Bearer <token>"
+          },
+          {
             "name": "protolims_session",
             "in": "cookie",
             "required": false,
@@ -792,6 +954,24 @@
               "type": "string",
               "title": "Study Code"
             }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "A personal API token, as Bearer <token>",
+              "title": "Authorization"
+            },
+            "description": "A personal API token, as Bearer <token>"
           },
           {
             "name": "protolims_session",
@@ -934,6 +1114,24 @@
             }
           },
           {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "A personal API token, as Bearer <token>",
+              "title": "Authorization"
+            },
+            "description": "A personal API token, as Bearer <token>"
+          },
+          {
             "name": "protolims_session",
             "in": "cookie",
             "required": false,
@@ -1048,6 +1246,24 @@
             }
           },
           {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "A personal API token, as Bearer <token>",
+              "title": "Authorization"
+            },
+            "description": "A personal API token, as Bearer <token>"
+          },
+          {
             "name": "protolims_session",
             "in": "cookie",
             "required": false,
@@ -1108,6 +1324,24 @@
             }
           },
           {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "A personal API token, as Bearer <token>",
+              "title": "Authorization"
+            },
+            "description": "A personal API token, as Bearer <token>"
+          },
+          {
             "name": "protolims_session",
             "in": "cookie",
             "required": false,
@@ -1164,6 +1398,24 @@
               "format": "uuid",
               "title": "Subject Id"
             }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "A personal API token, as Bearer <token>",
+              "title": "Authorization"
+            },
+            "description": "A personal API token, as Bearer <token>"
           },
           {
             "name": "protolims_session",
@@ -1242,6 +1494,24 @@
               "type": "string",
               "title": "Study Code"
             }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "A personal API token, as Bearer <token>",
+              "title": "Authorization"
+            },
+            "description": "A personal API token, as Bearer <token>"
           },
           {
             "name": "protolims_session",
@@ -1424,6 +1694,24 @@
             }
           },
           {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "A personal API token, as Bearer <token>",
+              "title": "Authorization"
+            },
+            "description": "A personal API token, as Bearer <token>"
+          },
+          {
             "name": "protolims_session",
             "in": "cookie",
             "required": false,
@@ -1540,6 +1828,24 @@
             }
           },
           {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "A personal API token, as Bearer <token>",
+              "title": "Authorization"
+            },
+            "description": "A personal API token, as Bearer <token>"
+          },
+          {
             "name": "protolims_session",
             "in": "cookie",
             "required": false,
@@ -1600,6 +1906,24 @@
             }
           },
           {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "A personal API token, as Bearer <token>",
+              "title": "Authorization"
+            },
+            "description": "A personal API token, as Bearer <token>"
+          },
+          {
             "name": "protolims_session",
             "in": "cookie",
             "required": false,
@@ -1656,6 +1980,24 @@
               "format": "uuid",
               "title": "Sample Id"
             }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "A personal API token, as Bearer <token>",
+              "title": "Authorization"
+            },
+            "description": "A personal API token, as Bearer <token>"
           },
           {
             "name": "protolims_session",
@@ -1734,6 +2076,24 @@
               "type": "string",
               "title": "Study Code"
             }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "A personal API token, as Bearer <token>",
+              "title": "Authorization"
+            },
+            "description": "A personal API token, as Bearer <token>"
           },
           {
             "name": "protolims_session",
@@ -1880,6 +2240,24 @@
             }
           },
           {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "A personal API token, as Bearer <token>",
+              "title": "Authorization"
+            },
+            "description": "A personal API token, as Bearer <token>"
+          },
+          {
             "name": "protolims_session",
             "in": "cookie",
             "required": false,
@@ -1998,6 +2376,24 @@
             }
           },
           {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "A personal API token, as Bearer <token>",
+              "title": "Authorization"
+            },
+            "description": "A personal API token, as Bearer <token>"
+          },
+          {
             "name": "protolims_session",
             "in": "cookie",
             "required": false,
@@ -2058,6 +2454,24 @@
             }
           },
           {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "A personal API token, as Bearer <token>",
+              "title": "Authorization"
+            },
+            "description": "A personal API token, as Bearer <token>"
+          },
+          {
             "name": "protolims_session",
             "in": "cookie",
             "required": false,
@@ -2114,6 +2528,24 @@
               "format": "uuid",
               "title": "Assay Id"
             }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "A personal API token, as Bearer <token>",
+              "title": "Authorization"
+            },
+            "description": "A personal API token, as Bearer <token>"
           },
           {
             "name": "protolims_session",
@@ -2246,6 +2678,24 @@
             }
           },
           {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "A personal API token, as Bearer <token>",
+              "title": "Authorization"
+            },
+            "description": "A personal API token, as Bearer <token>"
+          },
+          {
             "name": "protolims_session",
             "in": "cookie",
             "required": false,
@@ -2314,6 +2764,24 @@
               "format": "uuid",
               "title": "Sample Id"
             }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "A personal API token, as Bearer <token>",
+              "title": "Authorization"
+            },
+            "description": "A personal API token, as Bearer <token>"
           },
           {
             "name": "protolims_session",
@@ -2394,6 +2862,24 @@
             }
           },
           {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "A personal API token, as Bearer <token>",
+              "title": "Authorization"
+            },
+            "description": "A personal API token, as Bearer <token>"
+          },
+          {
             "name": "protolims_session",
             "in": "cookie",
             "required": false,
@@ -2445,6 +2931,24 @@
               "format": "uuid",
               "title": "Sample Id"
             }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "A personal API token, as Bearer <token>",
+              "title": "Authorization"
+            },
+            "description": "A personal API token, as Bearer <token>"
           },
           {
             "name": "protolims_session",
@@ -2517,6 +3021,24 @@
               "type": "string",
               "title": "Study Code"
             }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "A personal API token, as Bearer <token>",
+              "title": "Authorization"
+            },
+            "description": "A personal API token, as Bearer <token>"
           },
           {
             "name": "protolims_session",
@@ -2703,6 +3225,24 @@
             }
           },
           {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "A personal API token, as Bearer <token>",
+              "title": "Authorization"
+            },
+            "description": "A personal API token, as Bearer <token>"
+          },
+          {
             "name": "protolims_session",
             "in": "cookie",
             "required": false,
@@ -2842,6 +3382,24 @@
             }
           },
           {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "A personal API token, as Bearer <token>",
+              "title": "Authorization"
+            },
+            "description": "A personal API token, as Bearer <token>"
+          },
+          {
             "name": "protolims_session",
             "in": "cookie",
             "required": false,
@@ -2902,6 +3460,24 @@
             }
           },
           {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "A personal API token, as Bearer <token>",
+              "title": "Authorization"
+            },
+            "description": "A personal API token, as Bearer <token>"
+          },
+          {
             "name": "protolims_session",
             "in": "cookie",
             "required": false,
@@ -2958,6 +3534,24 @@
               "format": "uuid",
               "title": "Data File Id"
             }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "A personal API token, as Bearer <token>",
+              "title": "Authorization"
+            },
+            "description": "A personal API token, as Bearer <token>"
           },
           {
             "name": "protolims_session",
@@ -3090,6 +3684,24 @@
             }
           },
           {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "A personal API token, as Bearer <token>",
+              "title": "Authorization"
+            },
+            "description": "A personal API token, as Bearer <token>"
+          },
+          {
             "name": "protolims_session",
             "in": "cookie",
             "required": false,
@@ -3158,6 +3770,24 @@
               "format": "uuid",
               "title": "Sample Id"
             }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "A personal API token, as Bearer <token>",
+              "title": "Authorization"
+            },
+            "description": "A personal API token, as Bearer <token>"
           },
           {
             "name": "protolims_session",
@@ -3238,6 +3868,24 @@
             }
           },
           {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "A personal API token, as Bearer <token>",
+              "title": "Authorization"
+            },
+            "description": "A personal API token, as Bearer <token>"
+          },
+          {
             "name": "protolims_session",
             "in": "cookie",
             "required": false,
@@ -3289,6 +3937,24 @@
               "format": "uuid",
               "title": "Sample Id"
             }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "A personal API token, as Bearer <token>",
+              "title": "Authorization"
+            },
+            "description": "A personal API token, as Bearer <token>"
           },
           {
             "name": "protolims_session",
@@ -3355,6 +4021,24 @@
             }
           },
           {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "A personal API token, as Bearer <token>",
+              "title": "Authorization"
+            },
+            "description": "A personal API token, as Bearer <token>"
+          },
+          {
             "name": "protolims_session",
             "in": "cookie",
             "required": false,
@@ -3417,6 +4101,24 @@
               "format": "uuid",
               "title": "Data File Id"
             }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "A personal API token, as Bearer <token>",
+              "title": "Authorization"
+            },
+            "description": "A personal API token, as Bearer <token>"
           },
           {
             "name": "protolims_session",
@@ -3493,6 +4195,24 @@
             }
           },
           {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "A personal API token, as Bearer <token>",
+              "title": "Authorization"
+            },
+            "description": "A personal API token, as Bearer <token>"
+          },
+          {
             "name": "protolims_session",
             "in": "cookie",
             "required": false,
@@ -3561,6 +4281,24 @@
             }
           },
           {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "A personal API token, as Bearer <token>",
+              "title": "Authorization"
+            },
+            "description": "A personal API token, as Bearer <token>"
+          },
+          {
             "name": "protolims_session",
             "in": "cookie",
             "required": false,
@@ -3620,6 +4358,24 @@
               "type": "string",
               "title": "Study Code"
             }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "A personal API token, as Bearer <token>",
+              "title": "Authorization"
+            },
+            "description": "A personal API token, as Bearer <token>"
           },
           {
             "name": "protolims_session",
@@ -3818,6 +4574,24 @@
         "operationId": "who_am_i_api_v1_auth_me_get",
         "parameters": [
           {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "A personal API token, as Bearer <token>",
+              "title": "Authorization"
+            },
+            "description": "A personal API token, as Bearer <token>"
+          },
+          {
             "name": "protolims_session",
             "in": "cookie",
             "required": false,
@@ -3889,6 +4663,24 @@
               "default": 0,
               "title": "Offset"
             }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "A personal API token, as Bearer <token>",
+              "title": "Authorization"
+            },
+            "description": "A personal API token, as Bearer <token>"
           },
           {
             "name": "protolims_session",
@@ -3974,6 +4766,225 @@
         }
       }
     },
+    "/api/v1/auth/me/tokens": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "List Tokens",
+        "description": "The signed-in person's API tokens, newest first, including any that have expired.",
+        "operationId": "list_tokens_api_v1_auth_me_tokens_get",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "A personal API token, as Bearer <token>",
+              "title": "Authorization"
+            },
+            "description": "A personal API token, as Bearer <token>"
+          },
+          {
+            "name": "protolims_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Protolims Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ApiTokenRead"
+                  },
+                  "title": "Response List Tokens Api V1 Auth Me Tokens Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Create Token",
+        "description": "Make a new API token. The reply includes the token itself: this is the only time it's\nshown, so keep it somewhere safe straight away.",
+        "operationId": "create_token_api_v1_auth_me_tokens_post",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "A personal API token, as Bearer <token>",
+              "title": "Authorization"
+            },
+            "description": "A personal API token, as Bearer <token>"
+          },
+          {
+            "name": "protolims_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Protolims Session"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApiTokenCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiTokenCreated"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/me/tokens/{token_id}": {
+      "delete": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Revoke Token",
+        "description": "Revoke one of the signed-in person's API tokens, so it can't be used again.",
+        "operationId": "revoke_token_api_v1_auth_me_tokens__token_id__delete",
+        "parameters": [
+          {
+            "name": "token_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Token Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "A personal API token, as Bearer <token>",
+              "title": "Authorization"
+            },
+            "description": "A personal API token, as Bearer <token>"
+          },
+          {
+            "name": "protolims_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Protolims Session"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/projects/{project_code}/members": {
       "get": {
         "tags": [
@@ -3991,6 +5002,24 @@
               "type": "string",
               "title": "Project Code"
             }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "A personal API token, as Bearer <token>",
+              "title": "Authorization"
+            },
+            "description": "A personal API token, as Bearer <token>"
           },
           {
             "name": "protolims_session",
@@ -4065,6 +5094,24 @@
               "title": "Orcid Id"
             },
             "description": "Their ORCID iD, e.g. 0000-0002-1825-0097"
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "A personal API token, as Bearer <token>",
+              "title": "Authorization"
+            },
+            "description": "A personal API token, as Bearer <token>"
           },
           {
             "name": "protolims_session",
@@ -4145,6 +5192,24 @@
             "description": "Their ORCID iD, e.g. 0000-0002-1825-0097"
           },
           {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "A personal API token, as Bearer <token>",
+              "title": "Authorization"
+            },
+            "description": "A personal API token, as Bearer <token>"
+          },
+          {
             "name": "protolims_session",
             "in": "cookie",
             "required": false,
@@ -4204,6 +5269,24 @@
               "type": "string",
               "title": "Study Code"
             }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "A personal API token, as Bearer <token>",
+              "title": "Authorization"
+            },
+            "description": "A personal API token, as Bearer <token>"
           },
           {
             "name": "protolims_session",
@@ -4287,6 +5370,24 @@
               "title": "Orcid Id"
             },
             "description": "Their ORCID iD, e.g. 0000-0002-1825-0097"
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "A personal API token, as Bearer <token>",
+              "title": "Authorization"
+            },
+            "description": "A personal API token, as Bearer <token>"
           },
           {
             "name": "protolims_session",
@@ -4374,6 +5475,24 @@
               "title": "Orcid Id"
             },
             "description": "Their ORCID iD, e.g. 0000-0002-1825-0097"
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "A personal API token, as Bearer <token>",
+              "title": "Authorization"
+            },
+            "description": "A personal API token, as Bearer <token>"
           },
           {
             "name": "protolims_session",
@@ -4481,6 +5600,24 @@
             }
           },
           {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "A personal API token, as Bearer <token>",
+              "title": "Authorization"
+            },
+            "description": "A personal API token, as Bearer <token>"
+          },
+          {
             "name": "protolims_session",
             "in": "cookie",
             "required": false,
@@ -4540,6 +5677,24 @@
               "title": "Orcid Id"
             },
             "description": "Their ORCID iD, e.g. 0000-0002-1825-0097"
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "A personal API token, as Bearer <token>",
+              "title": "Authorization"
+            },
+            "description": "A personal API token, as Bearer <token>"
           },
           {
             "name": "protolims_session",
@@ -4720,6 +5875,135 @@
         ],
         "title": "ActivityRead",
         "description": "One change someone made, with what it was made to, as it is now."
+      },
+      "ApiTokenCreate": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "days": {
+            "type": "integer",
+            "maximum": 365.0,
+            "minimum": 1.0,
+            "title": "Days",
+            "default": 90
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "ApiTokenCreate",
+        "description": "A new personal API token: what it's for, and how many days it lasts."
+      },
+      "ApiTokenCreated": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "hint": {
+            "type": "string",
+            "title": "Hint"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Expires At"
+          },
+          "last_used_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Used At"
+          },
+          "token": {
+            "type": "string",
+            "title": "Token"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "hint",
+          "created_at",
+          "expires_at",
+          "last_used_at",
+          "token"
+        ],
+        "title": "ApiTokenCreated",
+        "description": "A token just made, with the token itself: shown this once, then never again."
+      },
+      "ApiTokenRead": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "hint": {
+            "type": "string",
+            "title": "Hint"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Expires At"
+          },
+          "last_used_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Used At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "hint",
+          "created_at",
+          "expires_at",
+          "last_used_at"
+        ],
+        "title": "ApiTokenRead",
+        "description": "One of someone's API tokens (never the token itself, which isn't kept)."
       },
       "AssayCreate": {
         "properties": {

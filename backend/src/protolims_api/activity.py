@@ -9,6 +9,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from protolims_api.models import (
+    ApiToken,
     Assay,
     AuditEvent,
     DataFile,
@@ -30,7 +31,7 @@ STUDY_RECORDS: dict[str, Any] = {
 }
 
 # What a change was made to, as it is now: its name, project code and study code.
-Description = tuple[str, str, str | None]
+Description = tuple[str, str | None, str | None]
 
 
 async def describe(
@@ -59,6 +60,16 @@ async def describe(
         )
         for study_id, title, project_code, study_code in studies:
             found[("study", study_id)] = (title, project_code, study_code)
+
+    if ids["api_token"]:
+        assert actor.user is not None  # Only someone signed in has activity.
+        tokens = await session.execute(
+            select(ApiToken.id, ApiToken.name).where(
+                ApiToken.id.in_(ids["api_token"]), ApiToken.user_id == actor.user.id
+            )
+        )
+        for token_id, name in tokens:
+            found[("api_token", token_id)] = (name, None, None)
 
     for entity_type, model in STUDY_RECORDS.items():
         if not ids[entity_type]:

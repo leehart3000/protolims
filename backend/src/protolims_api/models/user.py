@@ -1,4 +1,4 @@
-"""People who sign in, their sessions, and sign-ins in progress."""
+"""People who sign in, their sessions and API tokens, and sign-ins in progress."""
 
 import uuid
 from datetime import datetime
@@ -40,6 +40,27 @@ class UserSession(UUIDPrimaryKeyMixin, Base):
     )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class ApiToken(UUIDPrimaryKeyMixin, Base):
+    """A personal API token, for scripts (such as imports) to act as the person who made it,
+    with the same permissions. Like a session, only a hash of it is stored; deleting the row
+    revokes it."""
+
+    __tablename__ = "api_token"
+
+    token_hash: Mapped[str] = mapped_column(Text, unique=True)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("app_user.id", ondelete="CASCADE"), index=True
+    )
+    # What it's for, chosen by its owner, e.g. "GDC imports".
+    name: Mapped[str] = mapped_column(Text)
+    # The first few characters of the token, so its owner can tell which one is which.
+    hint: Mapped[str] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    # Updated at most once an hour, so using it doesn't mean a write for every request.
+    last_used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 class SignInAttempt(Base):

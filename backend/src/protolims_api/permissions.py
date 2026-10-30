@@ -5,6 +5,11 @@ roles). A project role covers all of that project's studies; a study role covers
 study; someone's role on a study is the higher of the two. Site administrators (a setting,
 by ORCID iD) act as admin everywhere, and can create projects.
 
+Signing in: a browser has a session cookie (see routers/auth.py); a script sends a personal
+API token instead, as "Authorization: Bearer <token>", and acts as the person who made it, with
+the same permissions. A token that isn't valid answers 401, rather than being ignored, so a
+script finds out at once.
+
 Who can see what: when public reading is on (PROTOLIMS_PUBLIC_READ), everyone can see
 everything. When it's off, nothing can be seen without signing in; then people see the studies
 they have a role on (through the project or the study itself), and the projects those studies
@@ -15,16 +20,17 @@ when they try to change it. Something they can see but not change answers 403 Fo
 import hashlib
 import uuid
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Annotated, Literal
 
-from fastapi import Cookie, Depends, HTTPException, status
+from fastapi import Cookie, Depends, Header, HTTPException, status
 from sqlalchemy import ColumnElement, or_, select, true
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from protolims_api.config import get_settings
 from protolims_api.db import SessionDep
 from protolims_api.models import (
+    ApiToken,
     AppUser,
     Project,
     ProjectMember,
@@ -34,6 +40,11 @@ from protolims_api.models import (
 )
 
 SESSION_COOKIE = "protolims_session"
+
+# Every API token starts with this, so one is easy to recognise (in a leaked file, say).
+TOKEN_PREFIX = "plt_"
+# How often a token's last_used_at is brought up to date, at most.
+TOKEN_USE_RECORDED_EVERY = timedelta(hours=1)
 
 Role = Literal["viewer", "editor", "admin"]
 RANKS: dict[str, int] = {"viewer": 1, "editor": 2, "admin": 3}
@@ -57,12 +68,37 @@ async def current_user(session: AsyncSession, token: str | None) -> AppUser | No
     )
 
 
+async def token_user(session: AsyncSession, token: str) -> AppUser:
+    """Who an API token belongs to. Answers 401 if it isn't a current token."""
+    now = datetime.now(UTC)
+    row = (
+        await session.execute(
+            select(AppUser, ApiToken)
+            .join(ApiToken, ApiToken.user_id == AppUser.id)
+            .where(ApiToken.token_hash == hash_token(token), ApiToken.expires_at > now)
+        )
+    ).one_or_none()
+    if row is None:
+        raise HTTPException(
+            status.HTTP_401_UNAUTHORIZED,
+            "This API token isn't valid: it may have expired or been revoked",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    user, api_token = row
+    if api_token.last_used_at is None or now - api_token.last_used_at > TOKEN_USE_RECORDED_EVERY:
+        api_token.last_used_at = now
+        await session.commit()
+    return user
+
+
 @dataclass(frozen=True)
 class Actor:
     """Who is making a request: a signed-in user, or nobody."""
 
     user: AppUser | None
     site_admin: bool
+    # Whether they're using an API token, rather than a browser session.
+    by_token: bool = False
 
     @property
     def label(self) -> str | None:
@@ -74,12 +110,20 @@ class Actor:
 async def get_actor(
     session: SessionDep,
     session_token: Annotated[str | None, Cookie(alias=SESSION_COOKIE)] = None,
+    authorization: Annotated[
+        str | None, Header(description="A personal API token, as Bearer <token>")
+    ] = None,
 ) -> Actor:
-    user = await current_user(session, session_token)
+    scheme, _, token = (authorization or "").partition(" ")
+    by_token = scheme.lower() == "bearer" and token != ""
+    if by_token:
+        user: AppUser | None = await token_user(session, token.strip())
+    else:
+        user = await current_user(session, session_token)
     site_admin = (
         user is not None and user.provider == "orcid" and user.subject in get_settings().site_admins
     )
-    return Actor(user=user, site_admin=site_admin)
+    return Actor(user=user, site_admin=site_admin, by_token=by_token)
 
 
 ActorDep = Annotated[Actor, Depends(get_actor)]
