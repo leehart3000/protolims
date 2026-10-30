@@ -94,6 +94,9 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build
+        env:
+          # Shown as a badge in the header, so staging is never mistaken for production.
+          VITE_APP_ENVIRONMENT: Staging
         run: pnpm build
 
       - name: Deploy to Cloudflare

@@ -155,7 +155,8 @@ function MemberRow({
       <td className={tableCell}>
         {confirming ? (
           <div className="flex flex-col items-start gap-2">
-            <p className="text-sm font-medium">Remove {who}&rsquo;s role?</p>
+            {/* On one line where there's room (the column is only as wide as its content). */}
+            <p className="text-sm font-medium sm:whitespace-nowrap">Remove {who}&rsquo;s role?</p>
             <div className="flex gap-2">
               <button
                 type="button"

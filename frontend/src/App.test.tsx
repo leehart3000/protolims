@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { cleanup, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -93,6 +93,17 @@ describe('App', () => {
     renderApp()
 
     expect(await screen.findByRole('link', { name: 'Users' })).toHaveAttribute('href', '/users')
+  })
+
+  it('marks the staging site, but not the real one', () => {
+    vi.stubEnv('VITE_APP_ENVIRONMENT', 'Staging')
+    renderApp()
+    expect(screen.getByText('Staging')).toBeInTheDocument()
+    cleanup()
+
+    vi.stubEnv('VITE_APP_ENVIRONMENT', '')
+    renderApp()
+    expect(screen.queryByText('Staging')).not.toBeInTheDocument()
   })
 
   it('shows a not-found page for unknown addresses', () => {

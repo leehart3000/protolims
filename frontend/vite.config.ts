@@ -38,6 +38,10 @@ function buildInfo() {
 const build = buildInfo()
 process.env.VITE_APP_VERSION = build.version
 process.env.VITE_APP_COMMIT = build.commit
+// Which site this build is for, shown as a badge in the header so it's never mistaken for the
+// real one: "Staging" (set by the staging deploy), "Local" on the development server, and
+// nothing for production (or in CI checks and tests, unless a test sets it).
+process.env.VITE_APP_ENVIRONMENT ??= process.env.CI || process.env.VITEST ? '' : 'Local'
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],

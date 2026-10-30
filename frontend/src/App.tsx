@@ -1,6 +1,7 @@
 import { Link, NavLink, Route, Routes } from 'react-router'
 
 import AccountMenu from './components/AccountMenu'
+import { EnvironmentBadge } from './components/EnvironmentBadge'
 import ThemeToggle from './components/ThemeToggle'
 import { MembersIcon, ProjectIcon, StudyIcon } from './icons'
 import { useMe } from './useMe'
@@ -52,6 +53,7 @@ export default function App() {
               Proto<span className="font-bold text-primary">LIMS</span>
             </span>
           </Link>
+          <EnvironmentBadge />
           <nav
             aria-label="Main"
             className="order-last -mx-2 flex w-full gap-1 sm:order-none sm:mx-0 sm:w-auto sm:flex-1"
