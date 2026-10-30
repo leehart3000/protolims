@@ -1,10 +1,4 @@
-import {
-  ChevronFirst,
-  ChevronLast,
-  type LucideIcon,
-  SquareArrowLeft,
-  SquareArrowRight,
-} from 'lucide-react'
+import { ChevronFirst, ChevronLast, ChevronLeft, ChevronRight, type LucideIcon } from 'lucide-react'
 
 import { secondaryButton } from '../styles'
 import { PAGE_SIZES } from '../useListControls'
@@ -122,7 +116,7 @@ export function Pagination({
               />
               <PageButton
                 label="Previous"
-                icon={SquareArrowLeft}
+                icon={ChevronLeft}
                 disabled={offset === 0}
                 onClick={() => {
                   onChange(Math.max(0, offset - limit))
@@ -130,7 +124,7 @@ export function Pagination({
               />
               <PageButton
                 label="Next"
-                icon={SquareArrowRight}
+                icon={ChevronRight}
                 iconAfter
                 disabled={offset >= lastOffset}
                 onClick={() => {
