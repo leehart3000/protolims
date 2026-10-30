@@ -71,7 +71,7 @@ export default function App() {
           <Link to="/" className="flex items-center gap-2.5">
             <img src="/brand/protolims-mark.svg" alt="" className="size-8 dark:hidden" />
             <img src="/brand/protolims-mark-dark.svg" alt="" className="hidden size-8 dark:block" />
-            <span className="font-brand text-xl tracking-tight sm:text-2xl">
+            <span className="font-brand text-2xl tracking-tight sm:text-3xl">
               Proto<span className="font-bold text-primary">LIMS</span>
             </span>
           </Link>

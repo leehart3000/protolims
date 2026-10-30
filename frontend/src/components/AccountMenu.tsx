@@ -9,7 +9,7 @@ import { useMe } from '../useMe'
 import { SiteAdminBadge } from './SiteAdminBadge'
 
 const headerButton =
-  'inline-flex items-center gap-2 rounded-md px-2.5 py-2 text-sm font-medium text-muted hover:bg-line/60 hover:text-fg disabled:opacity-60'
+  'inline-flex items-center gap-2 rounded-md px-2.5 py-2 text-sm font-medium text-muted hover:bg-gold/15 hover:text-fg dark:hover:text-gold disabled:opacity-60'
 
 // Signing in and out, in the header. Signing in leaves the site for ORCID, which sends the
 // browser back to the same page afterwards.

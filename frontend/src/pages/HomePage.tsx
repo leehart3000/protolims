@@ -72,26 +72,27 @@ const KINDS: {
   },
 ]
 
-// A card linking to one kind of record's page, with how many there are, as in "213 Subjects"
-// (wrapping only if it must). Until the count arrives (or if it can't be loaded), a dash stands
-// in for it.
+// A card linking to one kind of record's page, with how many there are, as in "213 Subjects".
+// On narrow screens the name may go on a line of its own, but never splits, and every card in
+// a row stays the same height. Until the count arrives (or if it can't be loaded), a dash
+// stands in for it.
 function KindCard({ kind }: { kind: (typeof KINDS)[number] }) {
   const { label, one, to, icon: Icon, queryKey, count } = kind
   // Under the kind's own key, so saving a record of this kind refreshes the count too.
   const query = useQuery({ queryKey: [queryKey, { count: true }], queryFn: count })
 
   return (
-    <li>
+    <li className="flex">
       <Link
         to={to}
-        className="flex items-center gap-3 rounded-lg border border-line bg-panel p-4 text-lg font-semibold hover:border-gold hover:bg-gold/15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link"
+        className="flex flex-1 items-start gap-3 rounded-lg border border-line bg-panel p-4 font-medium hover:border-gold hover:bg-gold/15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link sm:text-lg"
       >
         <Icon aria-hidden="true" className="size-6 shrink-0 text-primary" />
         <span>
-          <span className="tabular-nums">
+          <span className="whitespace-nowrap tabular-nums">
             {query.data === undefined ? '–' : query.data.total.toLocaleString('en-GB')}
           </span>{' '}
-          {query.data?.total === 1 ? one : label}
+          <span className="whitespace-nowrap">{query.data?.total === 1 ? one : label}</span>
         </span>
       </Link>
     </li>
