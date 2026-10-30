@@ -10,19 +10,24 @@ sent:
 "fetch" reads the GDC's public API (no account needed) and saves an import request to a JSON
 file. "send" sends that file to ProtoLIMS: as a dry run, unless given --apply.
 
-"send" goes to your local ProtoLIMS unless given --target staging. Staging is behind
-Cloudflare Access, so the script reads the import service token from Secret Manager, using
-your own gcloud login. Production isn't a target: the token doesn't work there.
+"send" goes to your local ProtoLIMS unless given --target staging or --target production.
+It sends your personal API token (made on your profile page), so the import is recorded as
+you and needs the same permissions as on the website: editor of the study. Locally, the token
+comes from the PROTOLIMS_API_TOKEN environment variable; for staging and production, from
+Secret Manager, read with your own gcloud login, as is the Cloudflare Access service token
+that gets past Access. See docs/importing.md.
 
 Only open-access data is used, and only the patient details the demo needs.
 """
 
 import argparse
 import json
+import os
 import subprocess
 import sys
 import urllib.error
 import urllib.request
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -36,11 +41,27 @@ ASSAY = "RNA-Seq gene counts"
 # Kept beside the repository, never in it, so no data is committed by accident.
 IMPORTS = Path(__file__).resolve().parents[3] / "protolims_resources" / "imports"
 DEFAULT_FILE = IMPORTS / "gdc-tcga-brca.json"
-# Where "send" can send to, and whether it needs the Cloudflare Access service token.
+
+
+@dataclass(frozen=True)
+class Target:
+    """Somewhere "send" can send to."""
+
+    api: str
+    # The Secret Manager secret holding your API token for it (None: PROTOLIMS_API_TOKEN).
+    token_secret: str | None
+    # Whether it's behind Cloudflare Access, so needs the import service token too.
+    behind_access: bool
+
+
 TARGETS = {
-    "local": ("http://127.0.0.1:8000/api/v1", False),
-    "staging": ("https://staging.protolims.org/api/v1", True),
+    "local": Target("http://127.0.0.1:8000/api/v1", None, False),
+    "staging": Target("https://staging.protolims.org/api/v1", "import-api-token-staging", True),
+    # Behind Access until launch; the import service token gets past it only once production's
+    # Access application allows it (Step 79).
+    "production": Target("https://protolims.org/api/v1", "import-api-token-production", True),
 }
+TOKEN_VARIABLE = "PROTOLIMS_API_TOKEN"
 GCP_PROJECT = "protolims"
 DAYS_PER_YEAR = 365.25
 
@@ -280,19 +301,51 @@ def access_headers() -> dict[str, str]:
     }
 
 
-def send(path: Path, target: str, project: str, study: str, *, apply: bool) -> None:
+def api_token(target: Target) -> str:
+    """Your personal API token for the target."""
+    if target.token_secret is not None:
+        return secret(target.token_secret)
+    token = os.environ.get(TOKEN_VARIABLE, "").strip()
+    if not token:
+        sys.exit(
+            f"No API token: make one on your profile page, then set {TOKEN_VARIABLE} to it "
+            "(see docs/importing.md)."
+        )
+    return token
+
+
+# What to say when ProtoLIMS turns the request away, by status.
+REFUSALS = {
+    401: "ProtoLIMS didn't accept your API token: it may have expired or been revoked. Make a "
+    "new one on your profile page, and store it again (see docs/importing.md).",
+    403: "Your API token works, but you can't import into this study: you need to be an "
+    "editor of it.",
+}
+
+
+def send(path: Path, target_name: str, project: str, study: str, *, apply: bool) -> None:
     """Send a saved import request to ProtoLIMS: a dry run unless apply is true."""
     request = json.loads(path.read_text())
     request["dry_run"] = not apply
     ImportRequest.model_validate(request)
-    api, needs_token = TARGETS[target]
-    print(f"Sending {path.name} to {target} ({api}), {'to save' if apply else 'as a dry run'}.")
-    headers = access_headers() if needs_token else None
-    url = f"{api}/projects/{project}/studies/{study}/import"
+    target = TARGETS[target_name]
+    print(
+        f"Sending {path.name} to {target_name} ({target.api}), "
+        f"{'to save' if apply else 'as a dry run'}."
+    )
+    headers = {"Authorization": f"Bearer {api_token(target)}"}
+    if target.behind_access:
+        headers |= access_headers()
+    url = f"{target.api}/projects/{project}/studies/{study}/import"
     status, reply = post_json(url, request, headers)
     if status in (301, 302, 303, 307, 308):
-        sys.exit("Cloudflare Access turned the request away. Is the service token right?")
+        sys.exit(
+            "Cloudflare Access turned the request away. Is the service token right, and is it "
+            "allowed on this site?"
+        )
     print(json.dumps(reply, indent=2))
+    if status in REFUSALS:
+        sys.exit(REFUSALS[status])
     if status != 200:
         sys.exit(f"Nothing was imported (ProtoLIMS replied {status}).")
     if apply:

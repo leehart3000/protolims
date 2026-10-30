@@ -26,8 +26,31 @@ page (`/api/docs`), under **import**.
 POST /api/v1/projects/{project_code}/studies/{study_code}/import
 ```
 
+Importing needs the **editor** role on the study (or admin, or site administrator),
+as for changing it on the website. Imported records are recorded as created by
+you.
+
 For a one-off import, use **Try it out** on the API docs page while signed in.
-For a real dataset, use an import script (below).
+For a real dataset, use an import script (below), with a personal API token.
+
+## Personal API tokens
+
+A script signs in as you with a personal API token, sent with each request as
+`Authorization: Bearer plt_…`. It can do exactly what you can do, no more.
+
+- **Make one** on your profile page (click your name, top right): say what it's
+  for and how long it lasts (at most a year). It's shown **once**, so copy it
+  straight away.
+- **Each site has its own tokens.** A token made on staging works only on
+  staging.
+- **Keep it secret,** like a password: never in a file in the repository, an
+  email or a chat. Put it straight into a password manager or Secret Manager
+  (below).
+- **Revoke it** on your profile page when it's no longer needed, or if it might
+  have been seen by anyone else. Tokens can only be made and revoked on the
+  website, never with a token.
+- Your profile shows when each token was last used (to within an hour), and
+  making and revoking tokens are in your list of changes.
 
 ## Importing from the GDC (TCGA-BRCA)
 
@@ -60,13 +83,48 @@ uv run --directory backend python scripts/import_gdc.py send --study RNASEQ --ap
 
 - Without `--apply`, it's a dry run: nothing is saved.
 - `--file FILE` sends a file other than the default.
-- `--target local` (the default) sends to `http://127.0.0.1:8000`.
-- `--target staging` sends to `https://staging.protolims.org`, through Cloudflare
-  Access. The script reads the "ProtoLIMS imports" service token from Secret
-  Manager (`import-cf-access-client-id` and `import-cf-access-client-secret`)
-  using your own `gcloud` login, so the token is never written to a file. The
-  token only works on staging.
-- Production isn't a target yet.
+- `--project CODE` sends to a project other than TCGA-BRCA.
+- If ProtoLIMS refuses the token (401) or you aren't an editor of the study
+  (403), the script says so, and nothing is imported.
+
+Where it sends to, and where your token comes from:
+
+- `--target local` (the default) sends to `http://127.0.0.1:8000`. The token
+  comes from the `PROTOLIMS_API_TOKEN` environment variable. Make a token on
+  your local site, copy it, then, in the terminal you'll run the script from:
+
+  ```sh
+  export PROTOLIMS_API_TOKEN="$(pbpaste)"
+  pbcopy < /dev/null
+  ```
+
+  It lasts until that terminal is closed.
+
+- `--target staging` sends to `https://staging.protolims.org`. The token comes
+  from Secret Manager, as `import-api-token-staging`, read with your own
+  `gcloud` login, so it's never written to a file. Make a token on the staging
+  site, copy it, then store it (the first time):
+
+  ```sh
+  pbpaste | gcloud secrets create import-api-token-staging --data-file=- --replication-policy=user-managed --locations=europe-west2 --project=protolims
+  pbcopy < /dev/null
+  ```
+
+  or, to replace it with a new token later:
+
+  ```sh
+  pbpaste | gcloud secrets versions add import-api-token-staging --data-file=- --project=protolims
+  pbcopy < /dev/null
+  ```
+
+  Staging is also behind Cloudflare Access, so the script reads the "ProtoLIMS
+  imports" service token from Secret Manager too
+  (`import-cf-access-client-id` and `import-cf-access-client-secret`).
+
+- `--target production` sends to `https://protolims.org`, with the token in
+  `import-api-token-production`, stored the same way. Until launch, production
+  is behind Cloudflare Access, and the import service token isn't allowed
+  there yet, so this stops with "Cloudflare Access turned the request away".
 
 ## What a request looks like
 
@@ -117,8 +175,9 @@ uv run --directory backend python scripts/import_gdc.py send --study RNASEQ --ap
 }
 ```
 
-- `source` says who or what is importing. It's recorded in the audit trail,
-  and each new record's creator is shown as `import: <source>`.
+- `source` says where the data came from. Each new record is created by you
+  (the person whose token or session sent it), and the `source` is kept in
+  each new record's audit trail entry.
 - **References use names**, not IDs: a sample's `subject` and `parent`, and the
   `samples` of an assay or file. A file's `assay` is a name too, but its
   `inputs` (the files it was made from) are **locations**, because file names
