@@ -25,12 +25,14 @@ from pydantic import BaseModel
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from protolims_api.activity import activity_page
 from protolims_api.config import Settings, get_settings
 from protolims_api.db import SessionDep
 from protolims_api.models import AppUser, SignInAttempt, UserSession
-from protolims_api.permissions import SESSION_COOKIE, ActorDep, hash_token
+from protolims_api.permissions import SESSION_COOKIE, ActorDep, hash_token, refuse
 from protolims_api.roles import roles_of_users
-from protolims_api.schemas.user import RoleRead, UserRead
+from protolims_api.schemas.common import Page
+from protolims_api.schemas.user import ActivityRead, RoleRead, SignedInUser
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -48,7 +50,7 @@ transport: httpx.AsyncBaseTransport | None = None
 class Me(BaseModel):
     """Who is signed in on this browser (null if nobody), and what this server allows."""
 
-    user: UserRead | None
+    user: SignedInUser | None
     # Whether they're a site administrator.
     site_admin: bool
     # Whether people who aren't signed in can read everything here.
@@ -266,11 +268,26 @@ async def who_am_i(session: SessionDep, actor: ActorDep) -> Me:
     allows."""
     user = actor.user
     return Me(
-        user=None if user is None else UserRead.model_validate(user),
+        user=None if user is None else SignedInUser.model_validate(user),
         site_admin=actor.site_admin,
         public_read=get_settings().public_read,
         roles=[] if user is None else (await roles_of_users(session, [user.id]))[user.id],
     )
+
+
+@router.get("/me/activity")
+async def my_activity(
+    session: SessionDep,
+    actor: ActorDep,
+    limit: Annotated[int, Query(ge=1, le=500)] = 50,
+    offset: Annotated[int, Query(ge=0)] = 0,
+) -> Page[ActivityRead]:
+    """The changes the signed-in person has made, newest first, a page at a time, with the
+    total number. Each names what it was made to, unless that has since been removed or is
+    somewhere they can no longer see."""
+    if actor.user is None:
+        raise refuse(actor)
+    return await activity_page(session, actor, limit, offset)
 
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT, response_class=Response)

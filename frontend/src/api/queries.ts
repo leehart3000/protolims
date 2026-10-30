@@ -388,3 +388,14 @@ export async function fetchAllDataFilePage(query: AllQuery<'/api/v1/data-files'>
   }
   return data
 }
+
+type ActivityQuery = NonNullable<paths['/api/v1/auth/me/activity']['get']['parameters']['query']>
+
+// One page of the changes the signed-in person has made, newest first, with the total number.
+export async function fetchMyActivity(query: ActivityQuery) {
+  const { data } = await api.GET('/api/v1/auth/me/activity', { params: { query } })
+  if (!data) {
+    throw new Error('Could not load your changes')
+  }
+  return data
+}

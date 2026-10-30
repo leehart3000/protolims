@@ -2,6 +2,7 @@
 
 import time
 from collections.abc import Callable
+from datetime import datetime
 from typing import Any
 from urllib.parse import parse_qs, urlsplit
 
@@ -138,11 +139,16 @@ def test_signing_in_with_orcid(
     assert "HttpOnly" in session_cookie
     assert "SameSite=lax" in session_cookie
     assert any(c.startswith("protolims_sign_in=") for c in cookies)
-    assert me(client) | {"id": None} == {
+    user = me(client)
+    assert user["created_at"] is not None
+    assert user["last_signed_in_at"] is not None
+    assert user | {"id": None, "created_at": None, "last_signed_in_at": None} == {
         "id": None,
         "provider": "orcid",
         "subject": ORCID_ID,
         "name": "Josiah Carberry",
+        "created_at": None,
+        "last_signed_in_at": None,
     }
 
     token_request = parse_qs(requests[0].content.decode())
@@ -166,7 +172,10 @@ def test_signing_in_again_keeps_the_same_user_and_updates_their_name(
     first = me(client)
     sign_in(client, monkeypatch, given_name="Jo", family_name=None)
 
-    assert me(client) == first | {"name": "Jo"}
+    again = me(client)
+    assert again == first | {"name": "Jo", "last_signed_in_at": again["last_signed_in_at"]}
+    times = [datetime.fromisoformat(user["last_signed_in_at"]) for user in (first, again)]
+    assert times[0] < times[1]
     assert (count(database, "app_user"), count(database, "user_session")) == (1, 2)
 
 

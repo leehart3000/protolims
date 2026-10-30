@@ -10,13 +10,15 @@ type Me = components['schemas']['Me']
 
 const nobody: Me = { user: null, site_admin: false, public_read: true, roles: [] }
 
-type User = components['schemas']['UserRead']
+type User = components['schemas']['SignedInUser']
 
 const joUser: User = {
   id: '0192a5b0-0000-7000-8000-000000000009',
   provider: 'orcid',
   subject: '0009-0009-7608-4486',
   name: 'Jo Bloggs',
+  created_at: '2026-10-29T10:47:31Z',
+  last_signed_in_at: '2026-10-30T09:15:00Z',
 }
 
 const jo: Me = { user: joUser, site_admin: false, public_read: true, roles: [] }

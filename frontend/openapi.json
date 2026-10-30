@@ -3858,6 +3858,79 @@
         }
       }
     },
+    "/api/v1/auth/me/activity": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "My Activity",
+        "description": "The changes the signed-in person has made, newest first, a page at a time, with the\ntotal number. Each names what it was made to, unless that has since been removed or is\nsomewhere they can no longer see.",
+        "operationId": "my_activity_api_v1_auth_me_activity_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          },
+          {
+            "name": "protolims_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Protolims Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_ActivityRead_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/auth/logout": {
       "post": {
         "tags": [
@@ -4557,6 +4630,97 @@
   },
   "components": {
     "schemas": {
+      "ActivityRead": {
+        "properties": {
+          "occurred_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Occurred At"
+          },
+          "action": {
+            "type": "string",
+            "title": "Action"
+          },
+          "entity_type": {
+            "type": "string",
+            "title": "Entity Type"
+          },
+          "entity_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Entity Id"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "project_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Project Code"
+          },
+          "study_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Study Code"
+          },
+          "person": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Person"
+          },
+          "role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Role"
+          }
+        },
+        "type": "object",
+        "required": [
+          "occurred_at",
+          "action",
+          "entity_type",
+          "entity_id",
+          "name",
+          "project_code",
+          "study_code",
+          "person",
+          "role"
+        ],
+        "title": "ActivityRead",
+        "description": "One change someone made, with what it was made to, as it is now."
+      },
       "AssayCreate": {
         "properties": {
           "name": {
@@ -5875,7 +6039,7 @@
           "user": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/UserRead"
+                "$ref": "#/components/schemas/SignedInUser"
               },
               {
                 "type": "null"
@@ -5950,6 +6114,27 @@
         ],
         "title": "MemberRole",
         "description": "The role to give someone."
+      },
+      "Page_ActivityRead_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ActivityRead"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total"
+        ],
+        "title": "Page[ActivityRead]"
       },
       "Page_AssayRead_": {
         "properties": {
@@ -7010,6 +7195,62 @@
         "type": "object",
         "title": "SampleUpdate",
         "description": "Changes to a sample. Only the fields sent are changed; sending null clears a field.\n\nThe study can't be changed: a sample stays in the study it was created in."
+      },
+      "SignedInUser": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "provider": {
+            "type": "string",
+            "title": "Provider"
+          },
+          "subject": {
+            "type": "string",
+            "title": "Subject"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "last_signed_in_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Signed In At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "provider",
+          "subject",
+          "name",
+          "created_at",
+          "last_signed_in_at"
+        ],
+        "title": "SignedInUser",
+        "description": "The person signed in on this browser, with when they joined and last signed in."
       },
       "StudyCreate": {
         "properties": {

@@ -1,12 +1,14 @@
 import { Link, useLocation } from 'react-router'
 
 import type { components } from '../api/schema'
+import { ActivityList } from '../components/ActivityList'
 import { DetailList } from '../components/DetailList'
 import { PageTitle } from '../components/PageTitle'
 import { SectionHeading } from '../components/SectionHeading'
 import { SignOutButton } from '../components/SignOutButton'
 import { SiteAdminBadge } from '../components/SiteAdminBadge'
-import { ProfileIcon, ExternalIcon, MembersIcon, SignInIcon } from '../icons'
+import { EditIcon, ExternalIcon, MembersIcon, ProfileIcon, SignInIcon } from '../icons'
+import { formatDate } from '../format'
 import { ROLE_OPTIONS } from '../members'
 import { signInHref } from '../signIn'
 import {
@@ -166,6 +168,11 @@ export default function ProfilePage() {
               <ExternalIcon aria-hidden="true" className="size-3.5 shrink-0" />
             </a>,
           ],
+          ['On ProtoLIMS since', formatDate(user.created_at)],
+          [
+            'Last signed in',
+            user.last_signed_in_at === null ? null : formatDate(user.last_signed_in_at),
+          ],
           [
             'Site admin',
             me.site_admin ? (
@@ -184,6 +191,11 @@ export default function ProfilePage() {
         Your roles
       </SectionHeading>
       <Roles me={me} />
+
+      <SectionHeading icon={EditIcon} className="mt-8">
+        Your changes
+      </SectionHeading>
+      <ActivityList />
 
       <div className="mt-8 flex flex-wrap items-center gap-3">
         <SignOutButton className={`${secondaryButton} inline-flex items-center gap-2`} />

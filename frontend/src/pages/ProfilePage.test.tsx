@@ -1,6 +1,6 @@
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { components } from '../api/schema'
 import { TestProviders } from '../test/TestProviders'
@@ -17,8 +17,18 @@ function renderPage(me: Me | 'fetch') {
   )
 }
 
+const noActivity = { items: [], total: 0 }
+
+// The list of their changes is tested in ActivityList.test.tsx; here it's empty.
+beforeEach(() => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(() => Promise.resolve(Response.json(noActivity))),
+  )
+})
+
 describe('ProfilePage', () => {
-  it('shows who is signed in, with their ORCID iD', () => {
+  it('shows who is signed in, with their ORCID iD, and when they joined', async () => {
     renderPage(signedInWith([]))
 
     expect(screen.getByRole('heading', { name: 'Your profile' })).toBeInTheDocument()
@@ -27,6 +37,9 @@ describe('ProfilePage', () => {
       screen.getByRole('link', { name: '0000-0001-5109-3700 (opens in a new tab)' }),
     ).toHaveAttribute('href', 'https://orcid.org/0000-0001-5109-3700')
     expect(screen.queryByText('Site admin:')).not.toBeInTheDocument()
+    expect(screen.getByText('29 October 2026')).toBeInTheDocument()
+    expect(screen.getByText('30 October 2026')).toBeInTheDocument()
+    expect(await screen.findByText("You haven't made any changes yet.")).toBeInTheDocument()
   })
 
   it('says when the name is private on ORCID', () => {
@@ -83,9 +96,13 @@ describe('ProfilePage', () => {
     vi.stubGlobal(
       'fetch',
       vi.fn((request: Request) => {
-        if (new URL(request.url).pathname === '/api/v1/auth/logout') {
+        const path = new URL(request.url).pathname
+        if (path === '/api/v1/auth/logout') {
           signedIn = false
           return Promise.resolve(new Response(null, { status: 204 }))
+        }
+        if (path === '/api/v1/auth/me/activity') {
+          return Promise.resolve(Response.json(noActivity))
         }
         return Promise.resolve(Response.json(signedIn ? siteAdmin : nobody))
       }),

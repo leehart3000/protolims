@@ -20,6 +20,35 @@ class UserRead(BaseModel):
     name: str | None
 
 
+class SignedInUser(UserRead):
+    """The person signed in on this browser, with when they joined and last signed in."""
+
+    # When they first signed in, or were added by their ORCID iD, if that came first.
+    created_at: datetime
+    last_signed_in_at: datetime | None
+
+
+class ActivityRead(BaseModel):
+    """One change someone made, with what it was made to, as it is now."""
+
+    occurred_at: datetime
+    # What was done, e.g. "create", "update" or "set_member" (as in the audit trail).
+    action: str
+    # What it was done to: "project", "study", "subject", "sample", "assay", "data_file" or
+    # "user", and its ID.
+    entity_type: str
+    entity_id: uuid.UUID
+    # Its name (a study's title), and the codes of its project and study, as they are now. All
+    # null if it has since been removed, or is somewhere the person can no longer see.
+    name: str | None
+    project_code: str | None
+    study_code: str | None
+    # For a change to someone's role: whose (by ORCID iD), and their role after it (null if it
+    # was taken away). For removing someone: their ORCID iD.
+    person: str | None
+    role: str | None
+
+
 class RoleRead(BaseModel):
     """One of someone's roles: on a whole project (study is null), or on one study in it."""
 

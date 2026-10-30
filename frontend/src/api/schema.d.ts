@@ -712,6 +712,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auth/me/activity": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * My Activity
+         * @description The changes the signed-in person has made, newest first, a page at a time, with the
+         *     total number. Each names what it was made to, unless that has since been removed or is
+         *     somewhere they can no longer see.
+         */
+        get: operations["my_activity_api_v1_auth_me_activity_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/logout": {
         parameters: {
             query?: never;
@@ -910,6 +932,36 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /**
+         * ActivityRead
+         * @description One change someone made, with what it was made to, as it is now.
+         */
+        ActivityRead: {
+            /**
+             * Occurred At
+             * Format: date-time
+             */
+            occurred_at: string;
+            /** Action */
+            action: string;
+            /** Entity Type */
+            entity_type: string;
+            /**
+             * Entity Id
+             * Format: uuid
+             */
+            entity_id: string;
+            /** Name */
+            name: string | null;
+            /** Project Code */
+            project_code: string | null;
+            /** Study Code */
+            study_code: string | null;
+            /** Person */
+            person: string | null;
+            /** Role */
+            role: string | null;
+        };
         /**
          * AssayCreate
          * @description Data needed to create an assay.
@@ -1382,7 +1434,7 @@ export interface components {
          * @description Who is signed in on this browser (null if nobody), and what this server allows.
          */
         Me: {
-            user: components["schemas"]["UserRead"] | null;
+            user: components["schemas"]["SignedInUser"] | null;
             /** Site Admin */
             site_admin: boolean;
             /** Public Read */
@@ -1412,6 +1464,13 @@ export interface components {
              * @enum {string}
              */
             role: "viewer" | "editor" | "admin";
+        };
+        /** Page[ActivityRead] */
+        Page_ActivityRead_: {
+            /** Items */
+            items: components["schemas"]["ActivityRead"][];
+            /** Total */
+            total: number;
         };
         /** Page[AssayRead] */
         Page_AssayRead_: {
@@ -1765,6 +1824,30 @@ export interface components {
             factor_values?: {
                 [key: string]: unknown;
             } | null;
+        };
+        /**
+         * SignedInUser
+         * @description The person signed in on this browser, with when they joined and last signed in.
+         */
+        SignedInUser: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Provider */
+            provider: string;
+            /** Subject */
+            subject: string;
+            /** Name */
+            name: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Last Signed In At */
+            last_signed_in_at: string | null;
         };
         /**
          * StudyCreate
@@ -3672,6 +3755,40 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Me"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    my_activity_api_v1_auth_me_activity_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: {
+                protolims_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_ActivityRead_"];
                 };
             };
             /** @description Validation Error */

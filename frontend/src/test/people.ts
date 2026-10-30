@@ -9,6 +9,8 @@ export const siteAdmin: Me = {
     provider: 'orcid',
     subject: '0000-0001-5109-3700',
     name: 'Site Admin',
+    created_at: '2026-10-29T10:47:31Z',
+    last_signed_in_at: '2026-10-30T09:15:00Z',
   },
   site_admin: true,
   public_read: true,
