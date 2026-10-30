@@ -1,27 +1,21 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { LogOut, UserRound } from 'lucide-react'
-import { useLocation } from 'react-router'
+import { Link, useLocation } from 'react-router'
 
-import { signOut } from '../api/queries'
-import { SignInIcon } from '../icons'
+import { AccountIcon, SignInIcon } from '../icons'
 import { signInHref } from '../signIn'
 import { useMe } from '../useMe'
+import { SignOutButton } from './SignOutButton'
 import { SiteAdminBadge } from './SiteAdminBadge'
 
 const headerButton =
   'inline-flex items-center gap-2 rounded-md px-2.5 py-2 text-sm font-medium text-muted hover:bg-gold/15 hover:text-fg dark:hover:text-gold disabled:opacity-60'
 
 // Signing in and out, in the header. Signing in leaves the site for ORCID, which sends the
-// browser back to the same page afterwards.
+// browser back to the same page afterwards. Once signed in, the name links to the account page.
+// On phones, only its icon shows, and signing out is done from the account page, so the header
+// fits on one line.
 export default function AccountMenu() {
   const { data: me } = useMe()
   const location = useLocation()
-  const queryClient = useQueryClient()
-  const signingOut = useMutation({
-    mutationFn: signOut,
-    // What can be seen and done may have changed, so fetch everything shown again.
-    onSuccess: () => queryClient.invalidateQueries(),
-  })
 
   if (!me) {
     return null
@@ -45,30 +39,15 @@ export default function AccountMenu() {
   const name = me.user.name ?? me.user.subject
   return (
     <div className="flex items-center gap-1">
-      {signingOut.isError && (
-        <p role="alert" className="text-sm font-medium text-danger">
-          Could not sign out
-        </p>
-      )}
-      <p className="hidden items-center gap-1.5 text-sm sm:flex">
-        <UserRound aria-hidden="true" className="size-4 shrink-0 text-muted" />
-        <span className="sr-only">Signed in as </span>
-        <span className="max-w-40 truncate" title={name}>
-          {name}
-        </span>
+      <Link to="/account" title="Your account" className={headerButton}>
+        <AccountIcon aria-hidden="true" className="size-5 shrink-0" />
+        <span className="max-w-40 truncate max-sm:sr-only">{name}</span>
         {me.site_admin && <SiteAdminBadge />}
-      </p>
-      <button
-        type="button"
-        onClick={() => {
-          signingOut.mutate()
-        }}
-        disabled={signingOut.isPending}
-        className={headerButton}
-      >
-        <LogOut aria-hidden="true" className="size-5" />
-        <span className="sr-only sm:not-sr-only">Sign out</span>
-      </button>
+      </Link>
+      <SignOutButton
+        className={`${headerButton} max-sm:hidden`}
+        labelClassName="sr-only sm:not-sr-only"
+      />
     </div>
   )
 }

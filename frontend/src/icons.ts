@@ -14,6 +14,7 @@ export {
   Save as SaveIcon,
   ShieldCheck as SiteAdminIcon,
   SquareMenu as DetailsIcon,
+  UserRound as AccountIcon,
   UserRoundPlus as AddPersonIcon,
   UserRoundX as RemovePersonIcon,
   UsersRound as MembersIcon,

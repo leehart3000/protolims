@@ -73,6 +73,16 @@ describe('AccountMenu', () => {
     expect(requests).toContain('POST /api/v1/auth/logout')
   })
 
+  it('links the name to the account page', async () => {
+    stubApi([jo])
+    renderMenu()
+
+    expect(await screen.findByRole('link', { name: 'Jo Bloggs' })).toHaveAttribute(
+      'href',
+      '/account',
+    )
+  })
+
   it('marks a site administrator with a badge', async () => {
     stubApi([{ ...jo, site_admin: true }])
     renderMenu()
