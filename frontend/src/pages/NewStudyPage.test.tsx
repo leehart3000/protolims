@@ -4,6 +4,7 @@ import { Route, Routes } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 
 import type { components } from '../api/schema'
+import { signedInWith } from '../test/people'
 import { TestProviders } from '../test/TestProviders'
 import NewStudyPage from './NewStudyPage'
 
@@ -174,5 +175,96 @@ describe('NewStudyPage', () => {
     await fillInAndSubmit(user)
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Could not create the study.')
+  })
+})
+
+describe('NewStudyPage, from the list of all studies', () => {
+  const other: Project = {
+    ...project,
+    id: '0192a5b0-0000-7000-8000-000000000009',
+    code: 'OTHER',
+    name: 'Other project',
+  }
+
+  // Lists projects (GET), and creates the study (POST). Returns the paths posted to.
+  function stubApi(
+    projects: () => Response = () => Response.json({ items: [project, other], total: 2 }),
+  ) {
+    const posted: string[] = []
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((request: Request) => {
+        if (request.method === 'GET') {
+          return Promise.resolve(projects())
+        }
+        posted.push(new URL(request.url).pathname)
+        return Promise.resolve(Response.json(created, { status: 201 }))
+      }),
+    )
+    return posted
+  }
+
+  function renderNewStudy(
+    me = signedInWith([{ project: 'TCGA-BRCA', study: null, role: 'admin' }]),
+  ) {
+    render(
+      <TestProviders route="/studies/new" me={me}>
+        <Routes>
+          <Route path="/studies/new" element={<NewStudyPage />} />
+          <Route path="/projects/:code/studies/:studyCode" element={<h1>Study page</h1>} />
+        </Routes>
+      </TestProviders>,
+    )
+  }
+
+  it('offers the projects the person is an admin of, and creates the study in the one chosen', async () => {
+    const posted = stubApi()
+    const user = userEvent.setup()
+    renderNewStudy()
+
+    const picker = await screen.findByLabelText('Project')
+    expect(
+      within(picker)
+        .getAllByRole('option')
+        .map((option) => option.textContent),
+    ).toEqual(['Choose…', 'TCGA Breast Invasive Carcinoma (TCGA-BRCA)'])
+    expect(
+      within(screen.getByRole('navigation', { name: 'Breadcrumb' })).getByRole('link', {
+        name: 'Studies',
+      }),
+    ).toHaveAttribute('href', '/studies')
+    await user.selectOptions(picker, 'TCGA-BRCA')
+    await fillInAndSubmit(user)
+
+    expect(await screen.findByRole('heading', { name: 'Study page' })).toBeInTheDocument()
+    expect(posted).toEqual(['/api/v1/projects/TCGA-BRCA/studies'])
+  })
+
+  it('asks for a project before creating the study', async () => {
+    const posted = stubApi()
+    const user = userEvent.setup()
+    renderNewStudy()
+
+    await screen.findByLabelText('Project')
+    await fillInAndSubmit(user)
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Please choose the project the study belongs to.',
+    )
+    expect(posted).toEqual([])
+  })
+
+  it('says when the person is not an admin of any project', async () => {
+    stubApi()
+    renderNewStudy(signedInWith([]))
+
+    expect(await screen.findByText(/aren’t an admin of any project/)).toBeInTheDocument()
+  })
+
+  it('says when the projects cannot be loaded', async () => {
+    stubApi(() => Response.json({ detail: 'Error' }, { status: 500 }))
+    renderNewStudy()
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Could not load projects.')
   })
 })

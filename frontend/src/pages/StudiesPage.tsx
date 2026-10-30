@@ -4,6 +4,7 @@ import { Link, useSearchParams } from 'react-router'
 import { type AllStudySort, fetchAllStudyPage, fetchProject } from '../api/queries'
 import { Breadcrumbs } from '../components/Breadcrumbs'
 import { DetailList } from '../components/DetailList'
+import { NewButton } from '../components/NewButton'
 import { NewStudyButton } from '../components/NewStudyButton'
 import { PagedTable } from '../components/PagedTable'
 import { PageTitle } from '../components/PageTitle'
@@ -180,17 +181,29 @@ export default function StudiesPage() {
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
         <div className="flex items-center gap-3">
           <PageTitle icon={StudyIcon}>Studies</PageTitle>
-          {projectCode && <NewStudyButton short projectCode={projectCode} />}
+          {projectCode ? (
+            <NewStudyButton short projectCode={projectCode} />
+          ) : (
+            <NewButton short to="/studies/new" need={{ anyProjectAdmin: true }}>
+              New study
+            </NewButton>
+          )}
         </div>
         {projectCode && <AllStudiesLink />}
       </div>
       {projectCode && <ProjectSummary projectCode={projectCode} />}
       <StudyList key={projectCode ?? ''} projectCode={projectCode} />
-      {projectCode && (
+      {projectCode ? (
         <div className="mt-4 flex items-center gap-4">
           <NewStudyButton projectCode={projectCode} align="start" />
           <AllStudiesLink />
         </div>
+      ) : (
+        <p className="mt-4">
+          <NewButton align="start" to="/studies/new" need={{ anyProjectAdmin: true }}>
+            New study
+          </NewButton>
+        </p>
       )}
     </>
   )

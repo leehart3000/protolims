@@ -1,15 +1,19 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 
 import { api } from '../api/client'
-import { fetchProject } from '../api/queries'
+import { fetchProject, fetchProjectPage } from '../api/queries'
 import type { components } from '../api/schema'
 import { Breadcrumbs } from '../components/Breadcrumbs'
 import { DetailList } from '../components/DetailList'
+import { SelectField } from '../components/FormFields'
 import { PageTitle } from '../components/PageTitle'
 import { StudyForm } from '../components/StudyForm'
 import { DuplicateCodeError, refusal } from '../forms'
 import { NewIcon, StudyIcon } from '../icons'
+import { roleOn } from '../permissions'
+import { useMe } from '../useMe'
 
 type StudyCreate = components['schemas']['StudyCreate']
 
@@ -35,17 +39,80 @@ async function createStudy(projectCode: string, body: StudyCreate) {
   throw refusal(response.status, 'Could not create the study. Please try again later.')
 }
 
+// The projects someone can add a study to: those they're an admin of.
+function ProjectPicker({
+  value,
+  onChange,
+}: {
+  value: string
+  onChange: (projectCode: string) => void
+}) {
+  const { data: me } = useMe()
+  const projects = useQuery({
+    queryKey: ['projects', { sort: 'code', limit: 500 }],
+    queryFn: () => fetchProjectPage({ sort: 'code', limit: 500, offset: 0 }),
+  })
+
+  if (projects.isPending || me === undefined) {
+    return <p className="mt-6 text-muted">Loading projects…</p>
+  }
+  if (projects.isError) {
+    return (
+      <p role="alert" className="mt-6 text-danger">
+        Could not load projects. Please try again later.
+      </p>
+    )
+  }
+  const allowed = projects.data.items.filter((project) => roleOn(me, project.code) === 'admin')
+  if (allowed.length === 0) {
+    return (
+      <p className="mt-6 text-muted">
+        You aren&rsquo;t an admin of any project, so you can&rsquo;t add a study. A project&rsquo;s
+        admins can.
+      </p>
+    )
+  }
+  return (
+    <div className="mt-6 max-w-2xl">
+      <SelectField
+        label="Project"
+        name="project"
+        hint="The project the study belongs to. It can't be changed later."
+        options={allowed.map((project) => ({
+          value: project.code,
+          label: `${project.name} (${project.code})`,
+        }))}
+        value={value}
+        required
+        onChange={(event) => {
+          onChange(event.target.value)
+        }}
+      />
+    </div>
+  )
+}
+
+// A new study: in the project it was opened from (/projects/:code/studies/new), or, from the
+// list of all studies (/studies/new), in a project chosen here.
 export default function NewStudyPage() {
-  const { code: projectCode = '' } = useParams()
+  const { code } = useParams()
+  const [chosen, setChosen] = useState('')
+  const projectCode = code ?? chosen
   const projectPath = `/projects/${encodeURIComponent(projectCode)}`
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const project = useQuery({
     queryKey: ['projects', projectCode],
     queryFn: () => fetchProject(projectCode),
+    enabled: code !== undefined,
   })
   const mutation = useMutation({
-    mutationFn: (body: StudyCreate) => createStudy(projectCode, body),
+    mutationFn: (body: StudyCreate) => {
+      if (projectCode === '') {
+        throw new Error('Please choose the project the study belongs to.')
+      }
+      return createStudy(projectCode, body)
+    },
     onSuccess: async (study) => {
       await queryClient.invalidateQueries({ queryKey: ['projects', projectCode, 'studies'] })
       await queryClient.invalidateQueries({ queryKey: ['studies'] })
@@ -56,19 +123,33 @@ export default function NewStudyPage() {
   return (
     <>
       <Breadcrumbs
-        items={[
-          { label: 'Projects', to: '/projects' },
-          { label: projectCode, to: projectPath, mono: true },
-          { label: 'New study' },
-        ]}
+        items={
+          code === undefined
+            ? [{ label: 'Studies', to: '/studies' }, { label: 'New study' }]
+            : [
+                { label: 'Projects', to: '/projects' },
+                { label: code, to: projectPath, mono: true },
+                { label: 'New study' },
+              ]
+        }
       />
       <PageTitle icon={StudyIcon}>New study</PageTitle>
-      <DetailList
-        items={[
-          ['Project', project.data?.name ?? null],
-          ['Project code', <span className="font-mono">{projectCode}</span>],
-        ]}
-      />
+      {code === undefined ? (
+        <ProjectPicker
+          value={chosen}
+          onChange={(next) => {
+            setChosen(next)
+            mutation.reset()
+          }}
+        />
+      ) : (
+        <DetailList
+          items={[
+            ['Project', project.data?.name ?? null],
+            ['Project code', <span className="font-mono">{code}</span>],
+          ]}
+        />
+      )}
 
       <StudyForm
         initial={{ code: '', title: '', description: null, design_factors: [] }}
@@ -76,7 +157,7 @@ export default function NewStudyPage() {
         submitLabel="Create study"
         submitIcon={NewIcon}
         pendingLabel="Creating…"
-        cancelTo={projectPath}
+        cancelTo={code === undefined ? '/studies' : projectPath}
         isPending={mutation.isPending}
         error={mutation.error}
         onEdit={mutation.reset}

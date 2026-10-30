@@ -6,10 +6,18 @@ export type Role = components['schemas']['RoleRead']['role']
 
 const RANKS: Record<Role, number> = { viewer: 1, editor: 2, admin: 3 }
 
-// What something needs: being a site administrator, or a role on a project (with no study),
-// or on a study in it.
+// What something needs: being a site administrator; being an admin of at least one project
+// (to add a study to one of them); or a role on a project (with no study), or on a study in it.
 export type Need =
-  { siteAdmin: true } | { role: 'editor' | 'admin'; project: string; study?: string }
+  | { siteAdmin: true }
+  | { anyProjectAdmin: true }
+  | { role: 'editor' | 'admin'; project: string; study?: string }
+
+// Whether someone can add studies to at least one project: they're an admin of one, or a site
+// administrator.
+export function adminOfAnyProject(me: Me): boolean {
+  return me.site_admin || me.roles.some((held) => held.study === null && held.role === 'admin')
+}
 
 // Adding or changing a study's records needs an editor role there.
 export function editorOf(project: string, study: string): Need {
@@ -39,6 +47,9 @@ export function refusalReason(me: Me, need: Need): string | null {
   }
   if ('siteAdmin' in need) {
     return me.site_admin ? null : 'Only site administrators can do this.'
+  }
+  if ('anyProjectAdmin' in need) {
+    return adminOfAnyProject(me) ? null : "Only a project's admins can add studies to it."
   }
   const role = roleOn(me, need.project, need.study)
   if (role !== null && RANKS[role] >= RANKS[need.role]) {

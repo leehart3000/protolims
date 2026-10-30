@@ -120,6 +120,7 @@ export default function App() {
             <Route path="/data-files/:dataFileId" element={<DataFileDetailPage />} />
             <Route path="/data-files/:dataFileId/edit" element={<EditDataFilePage />} />
             <Route path="/studies" element={<StudiesPage />} />
+            <Route path="/studies/new" element={<NewStudyPage />} />
             <Route path="/users" element={<UsersPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>

@@ -37,6 +37,17 @@ describe('refusalReason', () => {
     expect(refusalReason(siteAdmin, { role: 'admin', project: 'P1' })).toBeNull()
   })
 
+  it('lets admins of any project add studies', () => {
+    const projectAdmin = signedInWith([{ project: 'P1', study: null, role: 'admin' }])
+    const studyAdmin = signedInWith([{ project: 'P1', study: 'S1', role: 'admin' }])
+
+    expect(refusalReason(projectAdmin, { anyProjectAdmin: true })).toBeNull()
+    expect(refusalReason(siteAdmin, { anyProjectAdmin: true })).toBeNull()
+    expect(refusalReason(studyAdmin, { anyProjectAdmin: true })).toBe(
+      "Only a project's admins can add studies to it.",
+    )
+  })
+
   it('says who can do it', () => {
     const editor = signedInWith([{ project: 'P1', study: null, role: 'editor' }])
 
