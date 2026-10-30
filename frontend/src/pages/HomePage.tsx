@@ -72,8 +72,9 @@ const KINDS: {
   },
 ]
 
-// A card linking to one kind of record's page, with how many there are. Until the count
-// arrives (or if it can't be loaded), a dash stands in for it.
+// A card linking to one kind of record's page, with how many there are, as in "213 Subjects"
+// (wrapping only if it must). Until the count arrives (or if it can't be loaded), a dash stands
+// in for it.
 function KindCard({ kind }: { kind: (typeof KINDS)[number] }) {
   const { label, one, to, icon: Icon, queryKey, count } = kind
   // Under the kind's own key, so saving a record of this kind refreshes the count too.
@@ -83,16 +84,14 @@ function KindCard({ kind }: { kind: (typeof KINDS)[number] }) {
     <li>
       <Link
         to={to}
-        className="flex items-center gap-3 rounded-lg border border-line bg-panel p-4 hover:border-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link"
+        className="flex items-center gap-3 rounded-lg border border-line bg-panel p-4 text-lg font-semibold hover:border-gold hover:bg-gold/15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link"
       >
-        <Icon aria-hidden="true" className="size-7 shrink-0 text-primary" />
+        <Icon aria-hidden="true" className="size-6 shrink-0 text-primary" />
         <span>
-          <span className="block text-2xl font-bold tabular-nums">
+          <span className="tabular-nums">
             {query.data === undefined ? '–' : query.data.total.toLocaleString('en-GB')}
           </span>{' '}
-          <span className="block text-sm font-medium text-muted">
-            {query.data?.total === 1 ? one : label}
-          </span>
+          {query.data?.total === 1 ? one : label}
         </span>
       </Link>
     </li>

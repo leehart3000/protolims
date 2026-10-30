@@ -56,7 +56,7 @@ const NAV_LINKS: { to: string; label: string; icon: LucideIcon; siteAdminOnly?: 
 ]
 
 function navLinkClass({ isActive }: { isActive: boolean }) {
-  return `-mb-px flex items-center gap-1.5 border-b-2 px-2.5 py-2.5 text-sm font-medium md:px-3 ${isActive ? 'border-primary text-primary' : 'border-transparent text-muted hover:text-fg'}`
+  return `-mb-px flex items-center gap-1.5 border-b-2 px-2.5 py-2.5 text-sm font-medium md:px-3 ${isActive ? 'border-primary text-primary' : 'border-transparent text-muted hover:border-gold hover:text-fg dark:hover:text-gold'}`
 }
 
 export default function App() {
@@ -67,12 +67,11 @@ export default function App() {
   return (
     <div className="flex min-h-screen flex-col">
       <header className="border-b border-line bg-panel">
-        <div className="mx-auto flex h-14 max-w-6xl items-center gap-4 px-4 sm:h-16 sm:gap-6">
+        <div className="mx-auto flex h-14 max-w-6xl items-center gap-3 px-4 sm:h-16 sm:gap-6">
           <Link to="/" className="flex items-center gap-2.5">
             <img src="/brand/protolims-mark.svg" alt="" className="size-8 dark:hidden" />
             <img src="/brand/protolims-mark-dark.svg" alt="" className="hidden size-8 dark:block" />
-            {/* On narrow screens only the mark shows; the name stays readable by screen readers. */}
-            <span className="sr-only font-brand text-2xl tracking-tight sm:not-sr-only">
+            <span className="font-brand text-xl tracking-tight sm:text-2xl">
               Proto<span className="font-bold text-primary">LIMS</span>
             </span>
           </Link>

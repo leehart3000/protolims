@@ -3,10 +3,10 @@
 export {
   CirclePlus as NewIcon,
   ClipboardList as StudyIcon,
+  Egg as SubjectIcon,
   ExternalLink as ExternalIcon,
   FileChartColumn as DataFileIcon,
   Folders as ProjectIcon,
-  IdCard as SubjectIcon,
   LogIn as SignInIcon,
   Microscope as AssayIcon,
   PencilLine as EditIcon,

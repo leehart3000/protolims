@@ -35,7 +35,8 @@ export default function AccountMenu() {
         className={headerButton}
       >
         <SignInIcon aria-hidden="true" className="size-5" />
-        Sign in
+        {/* On the narrowest phones only the icon shows, so the header fits on one line. */}
+        <span className="max-[25rem]:sr-only">Sign in</span>
       </a>
     )
   }
