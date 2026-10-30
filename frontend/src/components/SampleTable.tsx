@@ -14,6 +14,7 @@ import {
 } from '../styles'
 import { SortHeader } from './SortHeader'
 import { RowArrow } from './RowArrow'
+import { StudyCell, StudyHeader, StudyLine } from './StudyColumn'
 
 type Sample = components['schemas']['SampleRead']
 type SampleColumn = Exclude<SampleSort, `-${string}`>
@@ -25,17 +26,20 @@ function summary(sample: Sample) {
     .join(' · ')
 }
 
-// Given a sort order and a way to change it, the column headings sort the table.
+// Given a sort order and a way to change it, the column headings sort the table. With
+// showStudy, each sample's study and project are shown too.
 export function SampleTable({
   samples,
   label,
   sort,
   onSort,
+  showStudy = false,
 }: {
   samples: Sample[]
   label: string
   sort?: SampleSort
   onSort?: (sort: SampleSort) => void
+  showStudy?: boolean
 }) {
   function heading(label: string, column: SampleColumn, className: string) {
     if (sort === undefined || onSort === undefined) {
@@ -66,6 +70,7 @@ export function SampleTable({
             {heading('Material', 'material_type', `${tableHeader} hidden w-px sm:table-cell`)}
             {heading('Subject', 'subject', `${tableHeader} hidden sm:table-cell`)}
             {heading('Status', 'status', `${tableHeader} hidden w-px sm:table-cell`)}
+            {showStudy && <StudyHeader />}
             <th scope="col" className={`${tableHeader} w-px`}>
               <span className="sr-only">Open</span>
             </th>
@@ -79,6 +84,7 @@ export function SampleTable({
                   {sample.name}
                 </Link>
                 <div className="mt-1 text-sm text-muted sm:hidden">{summary(sample)}</div>
+                {showStudy && <StudyLine record={sample} />}
               </td>
               <td className={`${tableCell} hidden whitespace-nowrap sm:table-cell`}>
                 {sample.material_type}
@@ -89,6 +95,7 @@ export function SampleTable({
               <td className={`${tableCell} hidden whitespace-nowrap sm:table-cell`}>
                 {sampleStatusLabel(sample.status)}
               </td>
+              {showStudy && <StudyCell record={sample} />}
               <RowArrow />
             </tr>
           ))}

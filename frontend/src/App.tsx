@@ -1,9 +1,18 @@
+import type { LucideIcon } from 'lucide-react'
 import { Link, NavLink, Route, Routes } from 'react-router'
 
 import AccountMenu from './components/AccountMenu'
 import { EnvironmentBadge } from './components/EnvironmentBadge'
 import ThemeToggle from './components/ThemeToggle'
-import { MembersIcon, ProjectIcon, StudyIcon } from './icons'
+import {
+  AssayIcon,
+  DataFileIcon,
+  MembersIcon,
+  ProjectIcon,
+  SampleIcon,
+  StudyIcon,
+  SubjectIcon,
+} from './icons'
 import { useMe } from './useMe'
 import HomePage from './pages/HomePage'
 import NewProjectPage from './pages/NewProjectPage'
@@ -15,6 +24,10 @@ import ProjectsPage from './pages/ProjectsPage'
 import StudiesPage from './pages/StudiesPage'
 import StudyDetailPage from './pages/StudyDetailPage'
 import UsersPage from './pages/UsersPage'
+import SubjectsPage from './pages/SubjectsPage'
+import SamplesPage from './pages/SamplesPage'
+import AssaysPage from './pages/AssaysPage'
+import DataFilesPage from './pages/DataFilesPage'
 import NewSubjectPage from './pages/NewSubjectPage'
 import SubjectDetailPage from './pages/SubjectDetailPage'
 import SampleDetailPage from './pages/SampleDetailPage'
@@ -30,8 +43,20 @@ import DataFileDetailPage from './pages/DataFileDetailPage'
 import EditDataFilePage from './pages/EditDataFilePage'
 import NewDataFilePage from './pages/NewDataFilePage'
 
+// The main links: a row of tabs under the header on every screen. On narrow screens they show
+// only their icons, so there's room for them all; their names stay readable by screen readers.
+const NAV_LINKS: { to: string; label: string; icon: LucideIcon; siteAdminOnly?: boolean }[] = [
+  { to: '/projects', label: 'Projects', icon: ProjectIcon },
+  { to: '/studies', label: 'Studies', icon: StudyIcon },
+  { to: '/subjects', label: 'Subjects', icon: SubjectIcon },
+  { to: '/samples', label: 'Samples', icon: SampleIcon },
+  { to: '/assays', label: 'Assays', icon: AssayIcon },
+  { to: '/data-files', label: 'Data files', icon: DataFileIcon },
+  { to: '/users', label: 'Users', icon: MembersIcon, siteAdminOnly: true },
+]
+
 function navLinkClass({ isActive }: { isActive: boolean }) {
-  return `flex items-center gap-1.5 rounded-md px-2 py-1.5 text-sm font-medium ${isActive ? 'text-primary' : 'text-muted hover:text-fg'}`
+  return `-mb-px flex items-center gap-1.5 border-b-2 px-2.5 py-2.5 text-sm font-medium md:px-3 ${isActive ? 'border-primary text-primary' : 'border-transparent text-muted hover:text-fg'}`
 }
 
 export default function App() {
@@ -42,9 +67,7 @@ export default function App() {
   return (
     <div className="flex min-h-screen flex-col">
       <header className="border-b border-line bg-panel">
-        {/* On narrow screens the links go on a second row, so the header never runs off the
-            side of the page. */}
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-4 px-4 py-2 sm:h-16 sm:flex-nowrap sm:gap-6 sm:py-0">
+        <div className="mx-auto flex h-14 max-w-6xl items-center gap-4 px-4 sm:h-16 sm:gap-6">
           <Link to="/" className="flex items-center gap-2.5">
             <img src="/brand/protolims-mark.svg" alt="" className="size-8 dark:hidden" />
             <img src="/brand/protolims-mark-dark.svg" alt="" className="hidden size-8 dark:block" />
@@ -54,34 +77,25 @@ export default function App() {
             </span>
           </Link>
           <EnvironmentBadge />
-          <nav
-            aria-label="Main"
-            className="order-last -mx-2 flex w-full gap-1 sm:order-none sm:mx-0 sm:w-auto sm:flex-1"
-          >
-            {!mustSignIn && (
-              <>
-                <NavLink to="/projects" className={navLinkClass}>
-                  <ProjectIcon aria-hidden="true" className="size-4 shrink-0" />
-                  Projects
-                </NavLink>
-                <NavLink to="/studies" className={navLinkClass}>
-                  <StudyIcon aria-hidden="true" className="size-4 shrink-0" />
-                  Studies
-                </NavLink>
-                {me?.site_admin && (
-                  <NavLink to="/users" className={navLinkClass}>
-                    <MembersIcon aria-hidden="true" className="size-4 shrink-0" />
-                    Users
-                  </NavLink>
-                )}
-              </>
-            )}
-          </nav>
-          <div className="ml-auto flex items-center gap-1 sm:ml-0">
+          <div className="ml-auto flex items-center gap-1">
             <AccountMenu />
             <ThemeToggle />
           </div>
         </div>
+        {!mustSignIn && (
+          <nav aria-label="Main" className="border-t border-line">
+            <div className="mx-auto flex max-w-6xl justify-between px-2 md:justify-start md:gap-1">
+              {NAV_LINKS.filter((link) => !link.siteAdminOnly || me?.site_admin).map(
+                ({ to, label, icon: Icon }) => (
+                  <NavLink key={to} to={to} className={navLinkClass}>
+                    <Icon aria-hidden="true" className="size-5 shrink-0 md:size-4" />
+                    <span className="max-md:sr-only">{label}</span>
+                  </NavLink>
+                ),
+              )}
+            </div>
+          </nav>
+        )}
       </header>
 
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 pt-6 pb-10">
@@ -123,6 +137,10 @@ export default function App() {
             <Route path="/data-files/:dataFileId/edit" element={<EditDataFilePage />} />
             <Route path="/studies" element={<StudiesPage />} />
             <Route path="/studies/new" element={<NewStudyPage />} />
+            <Route path="/subjects" element={<SubjectsPage />} />
+            <Route path="/samples" element={<SamplesPage />} />
+            <Route path="/assays" element={<AssaysPage />} />
+            <Route path="/data-files" element={<DataFilesPage />} />
             <Route path="/users" element={<UsersPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>

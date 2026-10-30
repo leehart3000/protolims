@@ -15,6 +15,7 @@ import {
 } from '../styles'
 import { RowArrow } from './RowArrow'
 import { SortHeader } from './SortHeader'
+import { StudyCell, StudyHeader, StudyLine } from './StudyColumn'
 
 type DataFile = components['schemas']['DataFileRead']
 type DataFileColumn = Exclude<DataFileSort, `-${string}`>
@@ -36,14 +37,17 @@ function summary(file: DataFile) {
 }
 
 // Files often share names, so each file's location is shown under its name on every screen.
+// With showStudy, each file's study and project are shown too.
 export function DataFileTable({
   files,
   sort,
   onSort,
+  showStudy = false,
 }: {
   files: DataFile[]
   sort: DataFileSort
   onSort: (sort: DataFileSort) => void
+  showStudy?: boolean
 }) {
   function heading(label: string, column: DataFileColumn, className: string) {
     return (
@@ -70,6 +74,7 @@ export function DataFileTable({
             <th scope="col" className={`${tableHeader} hidden w-px text-right sm:table-cell`}>
               Samples
             </th>
+            {showStudy && <StudyHeader />}
             <th scope="col" className={`${tableHeader} w-px`}>
               <span className="sr-only">Open</span>
             </th>
@@ -85,6 +90,7 @@ export function DataFileTable({
                 </Link>
                 <div className="mt-1 break-all font-mono text-xs text-muted">{file.uri}</div>
                 <div className="mt-1 text-sm text-muted sm:hidden">{summary(file)}</div>
+                {showStudy && <StudyLine record={file} />}
               </td>
               <td className={`${tableCell} hidden whitespace-nowrap sm:table-cell`}>
                 {dataFileLevelLabel(file.level)}
@@ -100,6 +106,7 @@ export function DataFileTable({
               <td className={`${tableCell} hidden text-right tabular-nums sm:table-cell`}>
                 {String(file.sample_count)}
               </td>
+              {showStudy && <StudyCell record={file} />}
               <RowArrow />
             </tr>
           ))}

@@ -13,6 +13,7 @@ import {
 } from '../styles'
 import { RowArrow } from './RowArrow'
 import { SortHeader } from './SortHeader'
+import { StudyCell, StudyHeader, StudyLine } from './StudyColumn'
 
 type Assay = components['schemas']['AssayRead']
 type AssayColumn = Exclude<AssaySort, `-${string}`>
@@ -33,14 +34,17 @@ function summary(assay: Assay) {
     .join(' · ')
 }
 
+// With showStudy, each assay's study and project are shown too.
 export function AssayTable({
   assays,
   sort,
   onSort,
+  showStudy = false,
 }: {
   assays: Assay[]
   sort: AssaySort
   onSort: (sort: AssaySort) => void
+  showStudy?: boolean
 }) {
   function heading(label: string, column: AssayColumn, className: string) {
     return (
@@ -67,6 +71,7 @@ export function AssayTable({
             <th scope="col" className={`${tableHeader} hidden w-px text-right sm:table-cell`}>
               Samples
             </th>
+            {showStudy && <StudyHeader />}
             <th scope="col" className={`${tableHeader} w-px`}>
               <span className="sr-only">Open</span>
             </th>
@@ -80,6 +85,7 @@ export function AssayTable({
                   {assay.name}
                 </Link>
                 <div className="mt-1 text-sm text-muted sm:hidden">{summary(assay)}</div>
+                {showStudy && <StudyLine record={assay} />}
               </td>
               <td className={`${tableCell} hidden sm:table-cell`}>{assay.measurement_type}</td>
               <td className={`${tableCell} hidden sm:table-cell`}>{assay.technology_type}</td>
@@ -87,6 +93,7 @@ export function AssayTable({
               <td className={`${tableCell} hidden text-right tabular-nums sm:table-cell`}>
                 {String(assay.sample_count)}
               </td>
+              {showStudy && <StudyCell record={assay} />}
               <RowArrow />
             </tr>
           ))}

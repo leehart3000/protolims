@@ -349,3 +349,42 @@ export async function fetchMembers(projectCode: string, studyCode?: string) {
   }
   return data
 }
+
+type AllQuery<
+  P extends '/api/v1/subjects' | '/api/v1/samples' | '/api/v1/assays' | '/api/v1/data-files',
+> = NonNullable<paths[P]['get']['parameters']['query']>
+
+// One page of every subject, sample, assay or data file in the studies someone can see, across
+// all projects, with the total number that match.
+
+export async function fetchAllSubjectPage(query: AllQuery<'/api/v1/subjects'>) {
+  const { data } = await api.GET('/api/v1/subjects', { params: { query } })
+  if (!data) {
+    throw new Error('Could not load subjects')
+  }
+  return data
+}
+
+export async function fetchAllSamplePage(query: AllQuery<'/api/v1/samples'>) {
+  const { data } = await api.GET('/api/v1/samples', { params: { query } })
+  if (!data) {
+    throw new Error('Could not load samples')
+  }
+  return data
+}
+
+export async function fetchAllAssayPage(query: AllQuery<'/api/v1/assays'>) {
+  const { data } = await api.GET('/api/v1/assays', { params: { query } })
+  if (!data) {
+    throw new Error('Could not load assays')
+  }
+  return data
+}
+
+export async function fetchAllDataFilePage(query: AllQuery<'/api/v1/data-files'>) {
+  const { data } = await api.GET('/api/v1/data-files', { params: { query } })
+  if (!data) {
+    throw new Error('Could not load data files')
+  }
+  return data
+}

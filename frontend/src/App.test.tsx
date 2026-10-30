@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -65,6 +65,29 @@ describe('App', () => {
     await user.click(screen.getByRole('link', { name: 'Studies' }))
 
     expect(screen.getByRole('heading', { name: 'Studies' })).toBeInTheDocument()
+  })
+
+  it('links to every kind of record from the main navigation, by name', async () => {
+    const user = userEvent.setup()
+    renderApp()
+
+    const nav = screen.getByRole('navigation', { name: 'Main' })
+    for (const [name, href] of [
+      ['Subjects', '/subjects'],
+      ['Samples', '/samples'],
+      ['Assays', '/assays'],
+      ['Data files', '/data-files'],
+    ] as const) {
+      expect(within(nav).getByRole('link', { name })).toHaveAttribute('href', href)
+    }
+
+    await user.click(within(nav).getByRole('link', { name: 'Data files' }))
+
+    expect(screen.getByRole('heading', { name: 'Data files' })).toBeInTheDocument()
+    expect(within(nav).getByRole('link', { name: 'Data files' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    )
   })
 
   it('offers to sign in when nobody is signed in', async () => {
