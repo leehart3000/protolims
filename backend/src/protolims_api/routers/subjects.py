@@ -11,6 +11,7 @@ from typing import Annotated, Any, Literal
 from fastapi import APIRouter, HTTPException, Query, status
 from sqlalchemy import ColumnElement, func, or_, select
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import InstrumentedAttribute
 
 from protolims_api.audit import record_event
@@ -130,7 +131,37 @@ async def list_subjects(
 ) -> Page[SubjectRead]:
     """List a study's subjects a page at a time, with the total number that match."""
     study = await get_study_or_404(session, project_code, study_code, actor)
-    conditions: list[ColumnElement[bool]] = [Subject.study_id == study.id]
+    return await subject_page(session, [Subject.study_id == study.id], q, sort, limit, offset)
+
+
+@router.get("/subjects")
+async def list_all_subjects(
+    session: SessionDep,
+    actor: ActorDep,
+    q: Annotated[
+        str | None,
+        Query(max_length=200, description="Search subject names and external IDs, ignoring case"),
+    ] = None,
+    sort: Annotated[
+        SubjectSort, Query(description="The column to sort by; a leading - reverses the order")
+    ] = "name",
+    limit: Annotated[int, Query(ge=1, le=500)] = 50,
+    offset: Annotated[int, Query(ge=0)] = 0,
+) -> Page[SubjectRead]:
+    """List the subjects in the studies the actor can see, across all projects, a page at a
+    time, with the total number that match."""
+    return await subject_page(session, [visible_studies(actor)], q, sort, limit, offset)
+
+
+async def subject_page(
+    session: AsyncSession,
+    conditions: list[ColumnElement[bool]],
+    q: str | None,
+    sort: SubjectSort,
+    limit: int,
+    offset: int,
+) -> Page[SubjectRead]:
+    """One page of the subjects that match the conditions (on Subject or Study) and search."""
     if q:
         conditions.append(
             or_(
@@ -138,20 +169,27 @@ async def list_subjects(
                 Subject.external_id.icontains(q, autoescape=True),
             )
         )
-    count_query = select(func.count()).select_from(Subject).where(*conditions)
+    count_query = (
+        select(func.count())
+        .select_from(Subject)
+        .join(Study, Subject.study_id == Study.id)
+        .where(*conditions)
+    )
     total = (await session.execute(count_query)).scalar_one()
 
     column = SUBJECT_SORT_COLUMNS[sort.removeprefix("-")]
     order = column.desc() if sort.startswith("-") else column.asc()
-    result = await session.scalars(
-        select(Subject)
-        .where(*conditions)
+    result = await session.execute(
+        SUBJECT_QUERY.where(*conditions)
         .order_by(order.nulls_last(), Subject.name, Subject.id)
         .limit(limit)
         .offset(offset)
     )
     return Page[SubjectRead](
-        items=[subject_read(subject, project_code, study_code) for subject in result],
+        items=[
+            subject_read(subject, project_code, study_code)
+            for subject, project_code, study_code in result
+        ],
         total=total,
     )
 

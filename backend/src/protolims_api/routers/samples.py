@@ -201,6 +201,37 @@ async def list_samples(
         conditions.append(Sample.subject_id == subject)
     if parent is not None:
         conditions.append(Sample.parent_sample_id == parent)
+    return await sample_page(session, conditions, q, sort, limit, offset)
+
+
+@router.get("/samples")
+async def list_all_samples(
+    session: SessionDep,
+    actor: ActorDep,
+    q: Annotated[
+        str | None,
+        Query(max_length=200, description="Search sample names and external IDs, ignoring case"),
+    ] = None,
+    sort: Annotated[
+        SampleSort, Query(description="The column to sort by; a leading - reverses the order")
+    ] = "name",
+    limit: Annotated[int, Query(ge=1, le=500)] = 50,
+    offset: Annotated[int, Query(ge=0)] = 0,
+) -> Page[SampleRead]:
+    """List the samples in the studies the actor can see, across all projects, a page at a
+    time, with the total number that match."""
+    return await sample_page(session, [visible_studies(actor)], q, sort, limit, offset)
+
+
+async def sample_page(
+    session: AsyncSession,
+    conditions: list[ColumnElement[bool]],
+    q: str | None,
+    sort: SampleSort,
+    limit: int,
+    offset: int,
+) -> Page[SampleRead]:
+    """One page of the samples that match the conditions (on Sample or Study) and search."""
     if q:
         conditions.append(
             or_(
@@ -208,7 +239,12 @@ async def list_samples(
                 Sample.external_id.icontains(q, autoescape=True),
             )
         )
-    count_query = select(func.count()).select_from(Sample).where(*conditions)
+    count_query = (
+        select(func.count())
+        .select_from(Sample)
+        .join(Study, Sample.study_id == Study.id)
+        .where(*conditions)
+    )
     total = (await session.execute(count_query)).scalar_one()
 
     column = SAMPLE_SORT_COLUMNS[sort.removeprefix("-")]
@@ -221,8 +257,8 @@ async def list_samples(
     )
     return Page[SampleRead](
         items=[
-            sample_read(sample, row_project_code, row_study_code, subject_name, parent_name)
-            for sample, row_project_code, row_study_code, subject_name, parent_name in result
+            sample_read(sample, project_code, study_code, subject_name, parent_name)
+            for sample, project_code, study_code, subject_name, parent_name in result
         ],
         total=total,
     )

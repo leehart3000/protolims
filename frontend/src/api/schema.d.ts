@@ -153,6 +153,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/subjects": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List All Subjects
+         * @description List the subjects in the studies the actor can see, across all projects, a page at a
+         *     time, with the total number that match.
+         */
+        get: operations["list_all_subjects_api_v1_subjects_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/subjects/{subject_id}": {
         parameters: {
             query?: never;
@@ -201,6 +222,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/samples": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List All Samples
+         * @description List the samples in the studies the actor can see, across all projects, a page at a
+         *     time, with the total number that match.
+         */
+        get: operations["list_all_samples_api_v1_samples_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/samples/{sample_id}": {
         parameters: {
             query?: never;
@@ -243,6 +285,27 @@ export interface paths {
          * @description Create an assay within a study. Assay names are unique within their study.
          */
         post: operations["create_assay_api_v1_projects__project_code__studies__study_code__assays_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/assays": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List All Assays
+         * @description List the assays in the studies the actor can see, across all projects, a page at a
+         *     time, with the total number that match.
+         */
+        get: operations["list_all_assays_api_v1_assays_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -357,6 +420,27 @@ export interface paths {
          * @description Record a data file in a study. A URI can be recorded only once in each study.
          */
         post: operations["create_data_file_api_v1_projects__project_code__studies__study_code__data_files_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/data-files": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List All Data Files
+         * @description List the data files in the studies the actor can see, across all projects, a page at a
+         *     time, with the total number that match.
+         */
+        get: operations["list_all_data_files_api_v1_data_files_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -769,10 +853,12 @@ export interface paths {
         post?: never;
         /**
          * Remove User
-         * @description Remove someone from the list of users. Only site administrators can, and only for someone
-         *     with no roles who isn't a site administrator, so nobody loses access this way: remove their
-         *     roles first. Any sessions they have end. Records that name them keep their ORCID iD, and if
-         *     they sign in again, they're added back with no roles.
+         * @description Remove someone who was added by their ORCID iD but has never signed in, and has no
+         *     roles: someone added by mistake, for example. Only site administrators can.
+         *
+         *     People who have signed in are kept, so their names stay with what they've done; taking away
+         *     their roles is enough to take away their access. Site administrators, set in the server's
+         *     settings, can't be removed, and nobody loses access this way: their roles go first.
          */
         delete: operations["remove_user_api_v1_users__orcid_id__delete"];
         options?: never;
@@ -2370,6 +2456,44 @@ export interface operations {
             };
         };
     };
+    list_all_subjects_api_v1_subjects_get: {
+        parameters: {
+            query?: {
+                /** @description Search subject names and external IDs, ignoring case */
+                q?: string | null;
+                /** @description The column to sort by; a leading - reverses the order */
+                sort?: "name" | "-name" | "subject_type" | "-subject_type" | "species" | "-species" | "created_at" | "-created_at";
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: {
+                protolims_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_SubjectRead_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_subject_api_v1_subjects__subject_id__get: {
         parameters: {
             query?: never;
@@ -2523,6 +2647,44 @@ export interface operations {
             };
         };
     };
+    list_all_samples_api_v1_samples_get: {
+        parameters: {
+            query?: {
+                /** @description Search sample names and external IDs, ignoring case */
+                q?: string | null;
+                /** @description The column to sort by; a leading - reverses the order */
+                sort?: "name" | "-name" | "material_type" | "-material_type" | "subject" | "-subject" | "status" | "-status" | "created_at" | "-created_at";
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: {
+                protolims_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_SampleRead_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_sample_api_v1_samples__sample_id__get: {
         parameters: {
             query?: never;
@@ -2659,6 +2821,44 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AssayRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_all_assays_api_v1_assays_get: {
+        parameters: {
+            query?: {
+                /** @description Search assay names and external IDs, ignoring case */
+                q?: string | null;
+                /** @description The column to sort by; a leading - reverses the order */
+                sort?: "name" | "-name" | "measurement_type" | "-measurement_type" | "technology_type" | "-technology_type" | "platform" | "-platform" | "performed_at" | "-performed_at" | "created_at" | "-created_at";
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: {
+                protolims_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_AssayRead_"];
                 };
             };
             /** @description Validation Error */
@@ -2955,6 +3155,46 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DataFileRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_all_data_files_api_v1_data_files_get: {
+        parameters: {
+            query?: {
+                /** @description Only list files at this level */
+                level?: ("raw" | "processed" | "analysis") | null;
+                /** @description Search file names, external IDs and URIs, ignoring case */
+                q?: string | null;
+                /** @description The column to sort by; a leading - reverses the order */
+                sort?: "name" | "-name" | "level" | "-level" | "format" | "-format" | "size_bytes" | "-size_bytes" | "created_at" | "-created_at";
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: {
+                protolims_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_DataFileRead_"];
                 };
             };
             /** @description Validation Error */

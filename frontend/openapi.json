@@ -974,6 +974,120 @@
         }
       }
     },
+    "/api/v1/subjects": {
+      "get": {
+        "tags": [
+          "subjects"
+        ],
+        "summary": "List All Subjects",
+        "description": "List the subjects in the studies the actor can see, across all projects, a page at a\ntime, with the total number that match.",
+        "operationId": "list_all_subjects_api_v1_subjects_get",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 200
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Search subject names and external IDs, ignoring case",
+              "title": "Q"
+            },
+            "description": "Search subject names and external IDs, ignoring case"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "name",
+                "-name",
+                "subject_type",
+                "-subject_type",
+                "species",
+                "-species",
+                "created_at",
+                "-created_at"
+              ],
+              "type": "string",
+              "description": "The column to sort by; a leading - reverses the order",
+              "default": "name",
+              "title": "Sort"
+            },
+            "description": "The column to sort by; a leading - reverses the order"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          },
+          {
+            "name": "protolims_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Protolims Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_SubjectRead_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/subjects/{subject_id}": {
       "get": {
         "tags": [
@@ -1350,6 +1464,122 @@
         }
       }
     },
+    "/api/v1/samples": {
+      "get": {
+        "tags": [
+          "samples"
+        ],
+        "summary": "List All Samples",
+        "description": "List the samples in the studies the actor can see, across all projects, a page at a\ntime, with the total number that match.",
+        "operationId": "list_all_samples_api_v1_samples_get",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 200
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Search sample names and external IDs, ignoring case",
+              "title": "Q"
+            },
+            "description": "Search sample names and external IDs, ignoring case"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "name",
+                "-name",
+                "material_type",
+                "-material_type",
+                "subject",
+                "-subject",
+                "status",
+                "-status",
+                "created_at",
+                "-created_at"
+              ],
+              "type": "string",
+              "description": "The column to sort by; a leading - reverses the order",
+              "default": "name",
+              "title": "Sort"
+            },
+            "description": "The column to sort by; a leading - reverses the order"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          },
+          {
+            "name": "protolims_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Protolims Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_SampleRead_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/samples/{sample_id}": {
       "get": {
         "tags": [
@@ -1581,6 +1811,124 @@
               "title": "Study Code"
             }
           },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 200
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Search assay names and external IDs, ignoring case",
+              "title": "Q"
+            },
+            "description": "Search assay names and external IDs, ignoring case"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "name",
+                "-name",
+                "measurement_type",
+                "-measurement_type",
+                "technology_type",
+                "-technology_type",
+                "platform",
+                "-platform",
+                "performed_at",
+                "-performed_at",
+                "created_at",
+                "-created_at"
+              ],
+              "type": "string",
+              "description": "The column to sort by; a leading - reverses the order",
+              "default": "name",
+              "title": "Sort"
+            },
+            "description": "The column to sort by; a leading - reverses the order"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          },
+          {
+            "name": "protolims_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Protolims Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_AssayRead_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/assays": {
+      "get": {
+        "tags": [
+          "assays"
+        ],
+        "summary": "List All Assays",
+        "description": "List the assays in the studies the actor can see, across all projects, a page at a\ntime, with the total number that match.",
+        "operationId": "list_all_assays_api_v1_assays_get",
+        "parameters": [
           {
             "name": "q",
             "in": "query",
@@ -2265,6 +2613,145 @@
             },
             "description": "Only list files from this assay"
           },
+          {
+            "name": "level",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "raw",
+                    "processed",
+                    "analysis"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only list files at this level",
+              "title": "Level"
+            },
+            "description": "Only list files at this level"
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 200
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Search file names, external IDs and URIs, ignoring case",
+              "title": "Q"
+            },
+            "description": "Search file names, external IDs and URIs, ignoring case"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "name",
+                "-name",
+                "level",
+                "-level",
+                "format",
+                "-format",
+                "size_bytes",
+                "-size_bytes",
+                "created_at",
+                "-created_at"
+              ],
+              "type": "string",
+              "description": "The column to sort by; a leading - reverses the order",
+              "default": "name",
+              "title": "Sort"
+            },
+            "description": "The column to sort by; a leading - reverses the order"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          },
+          {
+            "name": "protolims_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Protolims Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_DataFileRead_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/data-files": {
+      "get": {
+        "tags": [
+          "data files"
+        ],
+        "summary": "List All Data Files",
+        "description": "List the data files in the studies the actor can see, across all projects, a page at a\ntime, with the total number that match.",
+        "operationId": "list_all_data_files_api_v1_data_files_get",
+        "parameters": [
           {
             "name": "level",
             "in": "query",
@@ -3967,7 +4454,7 @@
           "users"
         ],
         "summary": "Remove User",
-        "description": "Remove someone from the list of users. Only site administrators can, and only for someone\nwith no roles who isn't a site administrator, so nobody loses access this way: remove their\nroles first. Any sessions they have end. Records that name them keep their ORCID iD, and if\nthey sign in again, they're added back with no roles.",
+        "description": "Remove someone who was added by their ORCID iD but has never signed in, and has no\nroles: someone added by mistake, for example. Only site administrators can.\n\nPeople who have signed in are kept, so their names stay with what they've done; taking away\ntheir roles is enough to take away their access. Site administrators, set in the server's\nsettings, can't be removed, and nobody loses access this way: their roles go first.",
         "operationId": "remove_user_api_v1_users__orcid_id__delete",
         "parameters": [
           {

@@ -186,7 +186,37 @@ async def list_assays(
 ) -> Page[AssayRead]:
     """List a study's assays a page at a time, with the total number that match."""
     study = await get_study_or_404(session, project_code, study_code, actor)
-    conditions: list[ColumnElement[bool]] = [Assay.study_id == study.id]
+    return await assay_page(session, [Assay.study_id == study.id], q, sort, limit, offset)
+
+
+@router.get("/assays")
+async def list_all_assays(
+    session: SessionDep,
+    actor: ActorDep,
+    q: Annotated[
+        str | None,
+        Query(max_length=200, description="Search assay names and external IDs, ignoring case"),
+    ] = None,
+    sort: Annotated[
+        AssaySort, Query(description="The column to sort by; a leading - reverses the order")
+    ] = "name",
+    limit: Annotated[int, Query(ge=1, le=500)] = 50,
+    offset: Annotated[int, Query(ge=0)] = 0,
+) -> Page[AssayRead]:
+    """List the assays in the studies the actor can see, across all projects, a page at a
+    time, with the total number that match."""
+    return await assay_page(session, [visible_studies(actor)], q, sort, limit, offset)
+
+
+async def assay_page(
+    session: AsyncSession,
+    conditions: list[ColumnElement[bool]],
+    q: str | None,
+    sort: AssaySort,
+    limit: int,
+    offset: int,
+) -> Page[AssayRead]:
+    """One page of the assays that match the conditions (on Assay or Study) and search."""
     if q:
         conditions.append(
             or_(
@@ -194,7 +224,12 @@ async def list_assays(
                 Assay.external_id.icontains(q, autoescape=True),
             )
         )
-    count_query = select(func.count()).select_from(Assay).where(*conditions)
+    count_query = (
+        select(func.count())
+        .select_from(Assay)
+        .join(Study, Assay.study_id == Study.id)
+        .where(*conditions)
+    )
     total = (await session.execute(count_query)).scalar_one()
 
     column = ASSAY_SORT_COLUMNS[sort.removeprefix("-")]
@@ -207,8 +242,8 @@ async def list_assays(
     )
     return Page[AssayRead](
         items=[
-            assay_read(assay, row_project_code, row_study_code, sample_count)
-            for assay, row_project_code, row_study_code, sample_count in result
+            assay_read(assay, project_code, study_code, sample_count)
+            for assay, project_code, study_code, sample_count in result
         ],
         total=total,
     )

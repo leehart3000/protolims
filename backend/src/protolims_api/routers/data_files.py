@@ -220,6 +220,47 @@ async def list_data_files(
         conditions.append(DataFile.assay_id == assay)
     if level is not None:
         conditions.append(DataFile.level == level)
+    return await data_file_page(session, conditions, q, sort, limit, offset)
+
+
+@router.get("/data-files")
+async def list_all_data_files(
+    session: SessionDep,
+    actor: ActorDep,
+    level: Annotated[DataFileLevel | None, Query(description="Only list files at this level")] = (
+        None
+    ),
+    q: Annotated[
+        str | None,
+        Query(
+            max_length=200,
+            description="Search file names, external IDs and URIs, ignoring case",
+        ),
+    ] = None,
+    sort: Annotated[
+        DataFileSort, Query(description="The column to sort by; a leading - reverses the order")
+    ] = "name",
+    limit: Annotated[int, Query(ge=1, le=500)] = 50,
+    offset: Annotated[int, Query(ge=0)] = 0,
+) -> Page[DataFileRead]:
+    """List the data files in the studies the actor can see, across all projects, a page at a
+    time, with the total number that match."""
+    conditions: list[ColumnElement[bool]] = [visible_studies(actor)]
+    if level is not None:
+        conditions.append(DataFile.level == level)
+    return await data_file_page(session, conditions, q, sort, limit, offset)
+
+
+async def data_file_page(
+    session: AsyncSession,
+    conditions: list[ColumnElement[bool]],
+    q: str | None,
+    sort: DataFileSort,
+    limit: int,
+    offset: int,
+) -> Page[DataFileRead]:
+    """One page of the data files that match the conditions (on DataFile or Study) and
+    search."""
     if q:
         conditions.append(
             or_(
@@ -228,7 +269,12 @@ async def list_data_files(
                 DataFile.uri.icontains(q, autoescape=True),
             )
         )
-    count_query = select(func.count()).select_from(DataFile).where(*conditions)
+    count_query = (
+        select(func.count())
+        .select_from(DataFile)
+        .join(Study, DataFile.study_id == Study.id)
+        .where(*conditions)
+    )
     total = (await session.execute(count_query)).scalar_one()
 
     column = DATA_FILE_SORT_COLUMNS[sort.removeprefix("-")]
@@ -241,8 +287,8 @@ async def list_data_files(
     )
     return Page[DataFileRead](
         items=[
-            data_file_read(data_file, row_project, row_study, assay_name, sample_count)
-            for data_file, row_project, row_study, assay_name, sample_count in result
+            data_file_read(data_file, project_code, study_code, assay_name, sample_count)
+            for data_file, project_code, study_code, assay_name, sample_count in result
         ],
         total=total,
     )
