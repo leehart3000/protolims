@@ -17,6 +17,8 @@ import type { SubjectType } from '../labels'
 import { errorBox } from '../styles'
 import type { SubjectDetails } from '../subjects'
 import { SaveIcon, SubjectIcon } from '../icons'
+import { Permitted } from '../components/Permitted'
+import { editorOf } from '../permissions'
 
 type Subject = components['schemas']['SubjectRead']
 type SubjectUpdate = components['schemas']['SubjectUpdate']
@@ -94,19 +96,21 @@ function EditSubject({ subject }: { subject: Subject }) {
         {subject.name}
       </PageTitle>
 
-      <SubjectForm
-        initial={initial}
-        submitLabel="Save changes"
-        submitIcon={SaveIcon}
-        pendingLabel="Saving…"
-        cancelTo={subjectPath}
-        isPending={mutation.isPending}
-        error={mutation.error}
-        onEdit={mutation.reset}
-        onSubmit={(values) => {
-          mutation.mutate(values)
-        }}
-      />
+      <Permitted need={editorOf(projectCode, studyCode)}>
+        <SubjectForm
+          initial={initial}
+          submitLabel="Save changes"
+          submitIcon={SaveIcon}
+          pendingLabel="Saving…"
+          cancelTo={subjectPath}
+          isPending={mutation.isPending}
+          error={mutation.error}
+          onEdit={mutation.reset}
+          onSubmit={(values) => {
+            mutation.mutate(values)
+          }}
+        />
+      </Permitted>
     </>
   )
 }

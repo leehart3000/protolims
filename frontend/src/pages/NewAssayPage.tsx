@@ -16,6 +16,8 @@ import {
   isExternalIdConflict,
   refusal,
 } from '../forms'
+import { Permitted } from '../components/Permitted'
+import { editorOf } from '../permissions'
 
 type AssayCreate = components['schemas']['AssayCreate']
 
@@ -82,26 +84,28 @@ export default function NewAssayPage() {
         ]}
       />
 
-      <AssayForm
-        initial={{
-          name: '',
-          measurement_type: '',
-          technology_type: '',
-          platform: null,
-          performed_on: null,
-          external_id: null,
-        }}
-        submitLabel="Create assay"
-        submitIcon={NewIcon}
-        pendingLabel="Creating…"
-        cancelTo={studyPath}
-        isPending={mutation.isPending}
-        error={mutation.error}
-        onEdit={mutation.reset}
-        onSubmit={({ performed_on, ...values }) => {
-          mutation.mutate({ ...values, performed_at: performedAt(performed_on) })
-        }}
-      />
+      <Permitted need={editorOf(projectCode, studyCode)}>
+        <AssayForm
+          initial={{
+            name: '',
+            measurement_type: '',
+            technology_type: '',
+            platform: null,
+            performed_on: null,
+            external_id: null,
+          }}
+          submitLabel="Create assay"
+          submitIcon={NewIcon}
+          pendingLabel="Creating…"
+          cancelTo={studyPath}
+          isPending={mutation.isPending}
+          error={mutation.error}
+          onEdit={mutation.reset}
+          onSubmit={({ performed_on, ...values }) => {
+            mutation.mutate({ ...values, performed_at: performedAt(performed_on) })
+          }}
+        />
+      </Permitted>
     </>
   )
 }

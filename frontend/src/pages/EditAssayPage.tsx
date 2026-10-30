@@ -16,6 +16,8 @@ import {
 } from '../forms'
 import { errorBox } from '../styles'
 import { AssayIcon, SaveIcon } from '../icons'
+import { Permitted } from '../components/Permitted'
+import { editorOf } from '../permissions'
 
 type Assay = components['schemas']['AssayRead']
 type AssayUpdate = components['schemas']['AssayUpdate']
@@ -104,19 +106,21 @@ function EditAssay({ assay }: { assay: Assay }) {
         {assay.name}
       </PageTitle>
 
-      <AssayForm
-        initial={initial}
-        submitLabel="Save changes"
-        submitIcon={SaveIcon}
-        pendingLabel="Saving…"
-        cancelTo={assayPath}
-        isPending={mutation.isPending}
-        error={mutation.error}
-        onEdit={mutation.reset}
-        onSubmit={(values) => {
-          mutation.mutate(values)
-        }}
-      />
+      <Permitted need={editorOf(projectCode, studyCode)}>
+        <AssayForm
+          initial={initial}
+          submitLabel="Save changes"
+          submitIcon={SaveIcon}
+          pendingLabel="Saving…"
+          cancelTo={assayPath}
+          isPending={mutation.isPending}
+          error={mutation.error}
+          onEdit={mutation.reset}
+          onSubmit={(values) => {
+            mutation.mutate(values)
+          }}
+        />
+      </Permitted>
     </>
   )
 }

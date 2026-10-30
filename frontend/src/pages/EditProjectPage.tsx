@@ -11,6 +11,7 @@ import type { ProjectDetails } from '../projects'
 import { refusal } from '../forms'
 import { errorBox } from '../styles'
 import { ProjectIcon, SaveIcon } from '../icons'
+import { Permitted } from '../components/Permitted'
 
 type Project = components['schemas']['ProjectRead']
 type ProjectUpdate = components['schemas']['ProjectUpdate']
@@ -75,20 +76,22 @@ function EditProject({ project }: { project: Project }) {
         {project.name}
       </PageTitle>
 
-      <ProjectForm
-        initial={initial}
-        withCode={false}
-        submitLabel="Save changes"
-        submitIcon={SaveIcon}
-        pendingLabel="Saving…"
-        cancelTo={projectPath}
-        isPending={mutation.isPending}
-        error={mutation.error}
-        onEdit={mutation.reset}
-        onSubmit={(values) => {
-          mutation.mutate(values)
-        }}
-      />
+      <Permitted need={{ role: 'admin', project: project.code }}>
+        <ProjectForm
+          initial={initial}
+          withCode={false}
+          submitLabel="Save changes"
+          submitIcon={SaveIcon}
+          pendingLabel="Saving…"
+          cancelTo={projectPath}
+          isPending={mutation.isPending}
+          error={mutation.error}
+          onEdit={mutation.reset}
+          onSubmit={(values) => {
+            mutation.mutate(values)
+          }}
+        />
+      </Permitted>
     </>
   )
 }

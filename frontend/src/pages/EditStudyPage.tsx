@@ -11,6 +11,8 @@ import type { StudyDetails } from '../studies'
 import { refusal } from '../forms'
 import { errorBox } from '../styles'
 import { SaveIcon, StudyIcon } from '../icons'
+import { Permitted } from '../components/Permitted'
+import { editorOf } from '../permissions'
 
 type Study = components['schemas']['StudyRead']
 type StudyUpdate = components['schemas']['StudyUpdate']
@@ -74,25 +76,27 @@ function EditStudy({ projectCode, study }: { projectCode: string; study: Study }
         {study.title}
       </PageTitle>
 
-      <StudyForm
-        initial={{
-          code: study.code,
-          title: study.title,
-          description: study.description,
-          design_factors: study.design_factors,
-        }}
-        withCode={false}
-        submitLabel="Save changes"
-        submitIcon={SaveIcon}
-        pendingLabel="Saving…"
-        cancelTo={studyPath}
-        isPending={mutation.isPending}
-        error={mutation.error}
-        onEdit={mutation.reset}
-        onSubmit={(values) => {
-          mutation.mutate(values)
-        }}
-      />
+      <Permitted need={editorOf(projectCode, study.code)}>
+        <StudyForm
+          initial={{
+            code: study.code,
+            title: study.title,
+            description: study.description,
+            design_factors: study.design_factors,
+          }}
+          withCode={false}
+          submitLabel="Save changes"
+          submitIcon={SaveIcon}
+          pendingLabel="Saving…"
+          cancelTo={studyPath}
+          isPending={mutation.isPending}
+          error={mutation.error}
+          onEdit={mutation.reset}
+          onSubmit={(values) => {
+            mutation.mutate(values)
+          }}
+        />
+      </Permitted>
     </>
   )
 }

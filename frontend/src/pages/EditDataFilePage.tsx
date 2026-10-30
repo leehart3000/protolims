@@ -16,6 +16,8 @@ import type { DataFileLevel } from '../labels'
 import { errorBox } from '../styles'
 import { DuplicateExternalIdError, isExternalIdConflict, refusal } from '../forms'
 import { DataFileIcon, SaveIcon } from '../icons'
+import { Permitted } from '../components/Permitted'
+import { editorOf } from '../permissions'
 
 type DataFile = components['schemas']['DataFileRead']
 type DataFileUpdate = components['schemas']['DataFileUpdate']
@@ -111,20 +113,22 @@ function EditDataFile({ file }: { file: DataFile }) {
           Could not load the study's assays. Please try again later.
         </p>
       ) : assays.data ? (
-        <DataFileForm
-          assays={assays.data}
-          initial={initial}
-          submitLabel="Save changes"
-          submitIcon={SaveIcon}
-          pendingLabel="Saving…"
-          cancelTo={filePath}
-          isPending={mutation.isPending}
-          error={mutation.error}
-          onEdit={mutation.reset}
-          onSubmit={(values) => {
-            mutation.mutate(values)
-          }}
-        />
+        <Permitted need={editorOf(projectCode, studyCode)}>
+          <DataFileForm
+            assays={assays.data}
+            initial={initial}
+            submitLabel="Save changes"
+            submitIcon={SaveIcon}
+            pendingLabel="Saving…"
+            cancelTo={filePath}
+            isPending={mutation.isPending}
+            error={mutation.error}
+            onEdit={mutation.reset}
+            onSubmit={(values) => {
+              mutation.mutate(values)
+            }}
+          />
+        </Permitted>
       ) : (
         <p className="mt-6 text-muted">Loading…</p>
       )}

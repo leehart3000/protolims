@@ -14,6 +14,7 @@ import { DuplicateCodeError, refusal } from '../forms'
 import { NewIcon, StudyIcon } from '../icons'
 import { roleOn } from '../permissions'
 import { useMe } from '../useMe'
+import { Permitted } from '../components/Permitted'
 
 type StudyCreate = components['schemas']['StudyCreate']
 
@@ -66,9 +67,10 @@ function ProjectPicker({
   const allowed = projects.data.items.filter((project) => roleOn(me, project.code) === 'admin')
   if (allowed.length === 0) {
     return (
+      // Only possible for a site administrator before any project exists: anyone else who
+      // reaches the picker is an admin of at least one project.
       <p className="mt-6 text-muted">
-        You aren&rsquo;t an admin of any project, so you can&rsquo;t add a study. A project&rsquo;s
-        admins can.
+        There are no projects to add a study to yet. Create a project first.
       </p>
     )
   }
@@ -134,37 +136,41 @@ export default function NewStudyPage() {
         }
       />
       <PageTitle icon={StudyIcon}>New study</PageTitle>
-      {code === undefined ? (
-        <ProjectPicker
-          value={chosen}
-          onChange={(next) => {
-            setChosen(next)
-            mutation.reset()
+      <Permitted
+        need={code === undefined ? { anyProjectAdmin: true } : { role: 'admin', project: code }}
+      >
+        {code === undefined ? (
+          <ProjectPicker
+            value={chosen}
+            onChange={(next) => {
+              setChosen(next)
+              mutation.reset()
+            }}
+          />
+        ) : (
+          <DetailList
+            items={[
+              ['Project', project.data?.name ?? null],
+              ['Project code', <span className="font-mono">{code}</span>],
+            ]}
+          />
+        )}
+
+        <StudyForm
+          initial={{ code: '', title: '', description: null, design_factors: [] }}
+          withCode
+          submitLabel="Create study"
+          submitIcon={NewIcon}
+          pendingLabel="Creating…"
+          cancelTo={code === undefined ? '/studies' : projectPath}
+          isPending={mutation.isPending}
+          error={mutation.error}
+          onEdit={mutation.reset}
+          onSubmit={(values) => {
+            mutation.mutate(values)
           }}
         />
-      ) : (
-        <DetailList
-          items={[
-            ['Project', project.data?.name ?? null],
-            ['Project code', <span className="font-mono">{code}</span>],
-          ]}
-        />
-      )}
-
-      <StudyForm
-        initial={{ code: '', title: '', description: null, design_factors: [] }}
-        withCode
-        submitLabel="Create study"
-        submitIcon={NewIcon}
-        pendingLabel="Creating…"
-        cancelTo={code === undefined ? '/studies' : projectPath}
-        isPending={mutation.isPending}
-        error={mutation.error}
-        onEdit={mutation.reset}
-        onSubmit={(values) => {
-          mutation.mutate(values)
-        }}
-      />
+      </Permitted>
     </>
   )
 }

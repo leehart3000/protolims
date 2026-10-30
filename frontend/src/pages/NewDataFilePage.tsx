@@ -12,6 +12,8 @@ import { DuplicateLocationError, invalidDetailsMessage } from '../dataFiles'
 import { errorBox } from '../styles'
 import { DuplicateExternalIdError, isExternalIdConflict, refusal } from '../forms'
 import { DataFileIcon, NewIcon } from '../icons'
+import { Permitted } from '../components/Permitted'
+import { editorOf } from '../permissions'
 
 type Assay = components['schemas']['AssayRead']
 type DataFileCreate = components['schemas']['DataFileCreate']
@@ -131,12 +133,14 @@ export default function NewDataFilePage() {
           Could not load the study's assays. Please try again later.
         </p>
       ) : assays.data ? (
-        <NewDataFileForm
-          projectCode={projectCode}
-          studyCode={studyCode}
-          assays={assays.data}
-          initialAssayId={searchParams.get('assay')}
-        />
+        <Permitted need={editorOf(projectCode, studyCode)}>
+          <NewDataFileForm
+            projectCode={projectCode}
+            studyCode={studyCode}
+            assays={assays.data}
+            initialAssayId={searchParams.get('assay')}
+          />
+        </Permitted>
       ) : (
         <p className="mt-6 text-muted">Loading…</p>
       )}

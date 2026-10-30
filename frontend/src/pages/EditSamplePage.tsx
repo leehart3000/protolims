@@ -17,6 +17,8 @@ import {
 import { collectedAt, type SampleFormValues } from '../samples'
 import { errorBox } from '../styles'
 import { SampleIcon, SaveIcon } from '../icons'
+import { Permitted } from '../components/Permitted'
+import { editorOf } from '../permissions'
 
 type Sample = components['schemas']['SampleRead']
 type SampleUpdate = components['schemas']['SampleUpdate']
@@ -147,22 +149,24 @@ function EditSample({ sample }: { sample: Sample }) {
           Could not load the study's subjects and samples. Please try again later.
         </p>
       ) : subjects.data && samples.data ? (
-        <SampleForm
-          subjects={subjects.data}
-          samples={possibleParents(sample, samples.data)}
-          parentHint="This sample and the samples derived from it aren't listed, as a sample can't be derived from itself."
-          initial={initial}
-          submitLabel="Save changes"
-          submitIcon={SaveIcon}
-          pendingLabel="Saving…"
-          cancelTo={samplePath}
-          isPending={mutation.isPending}
-          error={mutation.error}
-          onEdit={mutation.reset}
-          onSubmit={(values) => {
-            mutation.mutate(values)
-          }}
-        />
+        <Permitted need={editorOf(projectCode, studyCode)}>
+          <SampleForm
+            subjects={subjects.data}
+            samples={possibleParents(sample, samples.data)}
+            parentHint="This sample and the samples derived from it aren't listed, as a sample can't be derived from itself."
+            initial={initial}
+            submitLabel="Save changes"
+            submitIcon={SaveIcon}
+            pendingLabel="Saving…"
+            cancelTo={samplePath}
+            isPending={mutation.isPending}
+            error={mutation.error}
+            onEdit={mutation.reset}
+            onSubmit={(values) => {
+              mutation.mutate(values)
+            }}
+          />
+        </Permitted>
       ) : (
         <p className="mt-6 text-muted">Loading…</p>
       )}

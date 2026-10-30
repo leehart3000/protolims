@@ -17,6 +17,8 @@ import {
 import { collectedAt } from '../samples'
 import { errorBox } from '../styles'
 import { NewIcon, SampleIcon } from '../icons'
+import { Permitted } from '../components/Permitted'
+import { editorOf } from '../permissions'
 
 type SampleCreate = components['schemas']['SampleCreate']
 type Sample = components['schemas']['SampleRead']
@@ -142,13 +144,15 @@ export default function NewSamplePage() {
           Could not load the study's subjects and samples. Please try again later.
         </p>
       ) : subjects.data && samples.data ? (
-        <NewSampleForm
-          projectCode={projectCode}
-          studyCode={studyCode}
-          subjects={subjects.data}
-          samples={samples.data}
-          initialParentId={searchParams.get('parent')}
-        />
+        <Permitted need={editorOf(projectCode, studyCode)}>
+          <NewSampleForm
+            projectCode={projectCode}
+            studyCode={studyCode}
+            subjects={subjects.data}
+            samples={samples.data}
+            initialParentId={searchParams.get('parent')}
+          />
+        </Permitted>
       ) : (
         <p className="mt-6 text-muted">Loading…</p>
       )}

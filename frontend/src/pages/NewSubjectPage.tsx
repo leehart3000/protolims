@@ -15,6 +15,8 @@ import {
   isExternalIdConflict,
   refusal,
 } from '../forms'
+import { Permitted } from '../components/Permitted'
+import { editorOf } from '../permissions'
 
 type SubjectCreate = components['schemas']['SubjectCreate']
 
@@ -83,19 +85,21 @@ export default function NewSubjectPage() {
         ]}
       />
 
-      <SubjectForm
-        initial={{ name: '', subject_type: '', species: null, external_id: null }}
-        submitLabel="Create subject"
-        submitIcon={NewIcon}
-        pendingLabel="Creating…"
-        cancelTo={studyPath}
-        isPending={mutation.isPending}
-        error={mutation.error}
-        onEdit={mutation.reset}
-        onSubmit={(values) => {
-          mutation.mutate(values)
-        }}
-      />
+      <Permitted need={editorOf(projectCode, studyCode)}>
+        <SubjectForm
+          initial={{ name: '', subject_type: '', species: null, external_id: null }}
+          submitLabel="Create subject"
+          submitIcon={NewIcon}
+          pendingLabel="Creating…"
+          cancelTo={studyPath}
+          isPending={mutation.isPending}
+          error={mutation.error}
+          onEdit={mutation.reset}
+          onSubmit={(values) => {
+            mutation.mutate(values)
+          }}
+        />
+      </Permitted>
     </>
   )
 }

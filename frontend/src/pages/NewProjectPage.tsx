@@ -8,6 +8,7 @@ import { PageTitle } from '../components/PageTitle'
 import { ProjectForm } from '../components/ProjectForm'
 import { DuplicateCodeError, refusal } from '../forms'
 import { NewIcon, ProjectIcon } from '../icons'
+import { Permitted } from '../components/Permitted'
 
 type ProjectCreate = components['schemas']['ProjectCreate']
 
@@ -41,27 +42,29 @@ export default function NewProjectPage() {
       <Breadcrumbs items={[{ label: 'Projects', to: '/projects' }, { label: 'New project' }]} />
       <PageTitle icon={ProjectIcon}>New project</PageTitle>
 
-      <ProjectForm
-        initial={{
-          code: '',
-          name: '',
-          description: null,
-          source_repository: null,
-          licence: null,
-          citation: null,
-        }}
-        withCode
-        submitLabel="Create project"
-        submitIcon={NewIcon}
-        pendingLabel="Creating…"
-        cancelTo="/projects"
-        isPending={mutation.isPending}
-        error={mutation.error}
-        onEdit={mutation.reset}
-        onSubmit={(values) => {
-          mutation.mutate(values)
-        }}
-      />
+      <Permitted need={{ siteAdmin: true }}>
+        <ProjectForm
+          initial={{
+            code: '',
+            name: '',
+            description: null,
+            source_repository: null,
+            licence: null,
+            citation: null,
+          }}
+          withCode
+          submitLabel="Create project"
+          submitIcon={NewIcon}
+          pendingLabel="Creating…"
+          cancelTo="/projects"
+          isPending={mutation.isPending}
+          error={mutation.error}
+          onEdit={mutation.reset}
+          onSubmit={(values) => {
+            mutation.mutate(values)
+          }}
+        />
+      </Permitted>
     </>
   )
 }

@@ -4,7 +4,7 @@ import { Route, Routes } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 
 import type { components } from '../api/schema'
-import { signedInWith } from '../test/people'
+import { signedInWith, siteAdmin } from '../test/people'
 import { TestProviders } from '../test/TestProviders'
 import NewStudyPage from './NewStudyPage'
 
@@ -254,11 +254,25 @@ describe('NewStudyPage, from the list of all studies', () => {
     expect(posted).toEqual([])
   })
 
-  it('says when the person is not an admin of any project', async () => {
+  it('says why someone who is not an admin of any project cannot add a study', async () => {
     stubApi()
     renderNewStudy(signedInWith([]))
 
-    expect(await screen.findByText(/aren’t an admin of any project/)).toBeInTheDocument()
+    expect(
+      await screen.findByText("Only a project's admins can add studies to it."),
+    ).toBeInTheDocument()
+    expect(screen.queryByLabelText('Project')).not.toBeInTheDocument()
+  })
+
+  it('says when there are no projects yet', async () => {
+    stubApi(() => Response.json({ items: [], total: 0 }))
+    renderNewStudy(siteAdmin)
+
+    expect(
+      await screen.findByText(
+        'There are no projects to add a study to yet. Create a project first.',
+      ),
+    ).toBeInTheDocument()
   })
 
   it('says when the projects cannot be loaded', async () => {
