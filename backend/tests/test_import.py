@@ -291,6 +291,64 @@ def test_problems_are_all_reported_and_nothing_is_saved(client: TestClient) -> N
     assert names(client, study, "samples") == []
 
 
+def test_derived_samples_take_their_parents_subject(client: TestClient) -> None:
+    study = create_study(client)
+    run_import(client, study, subjects=[PATIENT], samples=[TUMOUR])
+
+    # From an existing parent, and through a new one.
+    response = run_import(
+        client,
+        study,
+        samples=[
+            RNA,
+            {"name": "LIB-1", "parent": "T-01-RNA", "material_type": "library"},
+        ],
+    )
+    assert response.status_code == 200, response.json()
+    samples = by_name(client, study, "samples")
+    assert [samples[name]["subject_name"] for name in ("T-01", "T-01-RNA", "LIB-1")] == ["P-01"] * 3
+
+
+def test_a_derived_sample_cant_have_another_subject(client: TestClient) -> None:
+    study = create_study(client)
+    other = {"name": "P-02", "subject_type": "patient"}
+    run_import(client, study, subjects=[PATIENT, other], samples=[TUMOUR])
+
+    rule = "a derived sample's subject is its parent sample's, so it can't be 'P-02'"
+    response = run_import(
+        client,
+        study,
+        samples=[
+            # The same subject as its parent's is fine.
+            {"name": "OK", "subject": "P-01", "parent": "T-01", "material_type": "RNA"},
+            {"name": "A", "subject": "P-02", "parent": "T-01", "material_type": "RNA"},
+            # Through new parents too: B's parent is new, at the top with subject P-01.
+            {"name": "TOP", "subject": "P-01", "material_type": "tissue"},
+            {"name": "MID", "parent": "TOP", "material_type": "RNA"},
+            {"name": "B", "subject": "P-02", "parent": "MID", "material_type": "RNA"},
+            # Under a parent with a missing parent, or in a loop: reported for those reasons.
+            {"name": "C", "subject": "P-02", "parent": "ORPHAN", "material_type": "RNA"},
+            {"name": "ORPHAN", "parent": "Missing", "material_type": "RNA"},
+            {"name": "D", "subject": "P-02", "parent": "E", "material_type": "RNA"},
+            {"name": "E", "parent": "F", "material_type": "RNA"},
+            {"name": "F", "parent": "E", "material_type": "RNA"},
+        ],
+    )
+
+    assert response.status_code == 422
+    problems = response.json()["detail"]["problems"]
+    loop = "it would be derived from itself, directly or through other samples"
+    assert problems == [
+        "sample 'ORPHAN': there's no sample called 'Missing' in the study or the import",
+        f"sample 'A': {rule} (leave its subject out)",
+        f"sample 'B': {rule} (leave its subject out)",
+        f"sample 'C': {rule} (leave its subject out)",
+        f"sample 'D': {rule} (leave its subject out)",
+        f"sample 'E': {loop}",
+        f"sample 'F': {loop}",
+    ]
+
+
 def test_an_import_is_limited_in_size(client: TestClient) -> None:
     study = create_study(client)
     subjects = [{"name": f"P-{n}", "subject_type": "patient"} for n in range(5001)]

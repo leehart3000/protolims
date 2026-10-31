@@ -183,7 +183,7 @@ describe('NewSamplePage', () => {
     })
   })
 
-  it('fills in the subject from the chosen parent sample', async () => {
+  it('takes the subject from the chosen parent sample', async () => {
     stubApi()
     const user = userEvent.setup()
     renderPage()
@@ -194,10 +194,14 @@ describe('NewSamplePage', () => {
 
     await user.selectOptions(parent, tumour.id)
     expect(subject).toHaveValue(patient.id)
+    // A derived sample always has its parent's subject, so it can't be chosen.
+    expect(subject).toBeDisabled()
+    expect(subject).toHaveAccessibleDescription("The same as the sample it's derived from.")
 
     await user.selectOptions(parent, '')
     expect(parent).toHaveValue('')
     expect(subject).toHaveValue(patient.id)
+    expect(subject).toBeEnabled()
   })
 
   it('shows that the sample is being created', async () => {

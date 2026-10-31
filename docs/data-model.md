@@ -162,7 +162,10 @@ An append-only `audit_event` table records who changed what, and when.
 - **Cell lines** are Subjects with `subject_type = cell_line`; reference IDs
   (e.g. Cellosaurus) go in `attributes`.
 - **Sample lineage:** one Sample table with `material_type` and a parent link
-  covers multi-level chains (e.g. GDC sample → analyte → aliquot).
+  covers multi-level chains (e.g. GDC sample → analyte → aliquot). A derived
+  sample always has its parent's subject: it's set from the parent (a different
+  one is refused), and follows the parent's if that changes, so a subject's
+  page lists every sample from it, aliquots included.
 - **Metadata:** fixed columns for common fields; JSONB for type-specific
   `characteristics` (what a sample is) and `factor_values` (what was done to
   it), validated by Pydantic per type.

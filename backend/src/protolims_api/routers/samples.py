@@ -2,7 +2,8 @@
 
 Samples are created and listed under their study, and fetched by their permanent ID.
 A sample's subject and parent sample must be in the same study: connections between
-studies are made only by explicit links.
+studies are made only by explicit links. A derived sample (one with a parent) always has its
+parent's subject: it's set from the parent, and follows it if the parent's subject changes.
 """
 
 import uuid
@@ -110,6 +111,65 @@ async def linked_names(
     return subject_name, parent_name
 
 
+DERIVED_SUBJECT = (
+    "A derived sample's subject is its parent sample's, so it can't be set to another "
+    "(leave it out, or change the parent's)"
+)
+
+
+async def parent_subject(session: AsyncSession, parent_sample_id: uuid.UUID) -> uuid.UUID | None:
+    """The subject of a sample, which a sample derived from it takes too."""
+    return await session.scalar(select(Sample.subject_id).where(Sample.id == parent_sample_id))
+
+
+async def subject_for(
+    session: AsyncSession, parent_sample_id: uuid.UUID | None, subject_id: uuid.UUID | None
+) -> uuid.UUID | None:
+    """The subject a sample should have: its parent's, if it has one (refusing a different
+    subject), or else the one given."""
+    if parent_sample_id is None:
+        return subject_id
+    inherited = await parent_subject(session, parent_sample_id)
+    if subject_id is not None and subject_id != inherited:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=DERIVED_SUBJECT
+        )
+    return inherited
+
+
+async def update_descendants(session: AsyncSession, sample: Sample, actor: str | None) -> None:
+    """Give every sample derived from this one (directly or not) its subject, recording each
+    change in the audit trail."""
+    children = [sample]
+    while children:
+        found = list(
+            await session.scalars(
+                select(Sample).where(Sample.parent_sample_id.in_([c.id for c in children]))
+            )
+        )
+        for child in found:
+            if child.subject_id != sample.subject_id:
+                await record_event(
+                    session,
+                    action="update",
+                    entity_type="sample",
+                    entity_id=child.id,
+                    actor=actor,
+                    changes={
+                        "before": {
+                            "subject_id": str(child.subject_id) if child.subject_id else None
+                        },
+                        "after": {
+                            "subject_id": str(sample.subject_id) if sample.subject_id else None
+                        },
+                        "reason": "it follows its parent sample's subject",
+                    },
+                )
+                child.subject_id = sample.subject_id
+                child.updated_at = datetime.now(UTC)
+        children = found
+
+
 async def makes_a_loop(
     session: AsyncSession, sample_id: uuid.UUID, new_parent_id: uuid.UUID
 ) -> bool:
@@ -136,10 +196,10 @@ async def create_sample(
     """Create a sample within a study. Sample names are unique within their study."""
     study = await get_study_or_404(session, project_code, study_code, actor)
     await require_study_role(session, actor, study, "editor")
-    subject_name, parent_name = await linked_names(
-        session, study.id, payload.subject_id, payload.parent_sample_id
-    )
-    sample = Sample(study_id=study.id, created_by=actor.label, **payload.model_dump())
+    await linked_names(session, study.id, payload.subject_id, payload.parent_sample_id)
+    fields = payload.model_dump()
+    fields["subject_id"] = await subject_for(session, payload.parent_sample_id, payload.subject_id)
+    sample = Sample(study_id=study.id, created_by=actor.label, **fields)
     session.add(sample)
     try:
         await session.flush()
@@ -168,8 +228,9 @@ async def create_sample(
         },
     )
     await session.commit()
-    await session.refresh(sample)
-    return sample_read(sample, project_code, study_code, subject_name, parent_name)
+    row = (await session.execute(SAMPLE_QUERY.where(Sample.id == sample.id))).one()
+    created, _, _, subject_name, parent_name = row
+    return sample_read(created, project_code, study_code, subject_name, parent_name)
 
 
 @router.get("/projects/{project_code}/studies/{study_code}/samples")
@@ -292,6 +353,14 @@ async def update_sample(
     await require_editor_of(session, actor, sample.study_id)
 
     requested = payload.model_dump(exclude_unset=True)
+    if "parent_sample_id" in requested or "subject_id" in requested:
+        parent = requested.get("parent_sample_id", sample.parent_sample_id)
+        if "parent_sample_id" in requested and parent is not None:
+            await linked_names(session, sample.study_id, None, parent)
+        subject = requested.get("subject_id")
+        if "subject_id" not in requested and parent is None:
+            subject = sample.subject_id
+        requested["subject_id"] = await subject_for(session, parent, subject)
     changed = {
         field: value for field, value in requested.items() if getattr(sample, field) != value
     }
@@ -310,6 +379,8 @@ async def update_sample(
         for field, value in changed.items():
             setattr(sample, field, value)
         sample.updated_at = datetime.now(UTC)
+        if "subject_id" in changed:
+            await update_descendants(session, sample, actor.label)
         try:
             await session.flush()
         except IntegrityError as exc:
@@ -328,7 +399,9 @@ async def update_sample(
             actor=actor.label,
             changes={
                 "before": {field: before[field] for field in changed},
-                "after": payload.model_dump(mode="json", include=set(changed)),
+                "after": SampleFields.model_validate(sample).model_dump(
+                    mode="json", include=set(changed)
+                ),
             },
         )
         await session.commit()

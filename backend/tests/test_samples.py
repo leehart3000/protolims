@@ -61,7 +61,8 @@ def test_create_and_get_samples_with_subject_and_parent(client: TestClient) -> N
     aliquot = response.json()
     assert aliquot["material_type"] == "RNA"
     assert aliquot["parent_sample_name"] == "S1"
-    assert aliquot["subject_name"] is None
+    # A derived sample has its parent's subject.
+    assert aliquot["subject_name"] == "Patient-01"
 
 
 def test_invalid_details_are_rejected(client: TestClient) -> None:
@@ -327,3 +328,80 @@ def test_update_sample_cannot_make_a_loop(client: TestClient) -> None:
 def test_update_unknown_sample_returns_404(client: TestClient) -> None:
     unknown = f"{API}/samples/00000000-0000-7000-8000-000000000000"
     assert client.patch(unknown, json={"status": "in_use"}).status_code == 404
+
+
+DERIVED_SUBJECT = (
+    "A derived sample's subject is its parent sample's, so it can't be set to another "
+    "(leave it out, or change the parent's)"
+)
+
+
+def subject_names(client: TestClient, *sample_ids: str) -> list[str | None]:
+    return [client.get(f"{API}/samples/{i}").json()["subject_name"] for i in sample_ids]
+
+
+def test_a_derived_sample_has_its_parents_subject(client: TestClient) -> None:
+    study = create_study(client)
+    first = create_subject(client, study, "Patient-01")
+    second = create_subject(client, study, "Patient-02")
+    tissue = create_sample(client, study, "T1", subject_id=first)
+
+    # Given or left out, the subject is the parent's; another is refused.
+    same = create_sample(client, study, "T1-DNA", parent_sample_id=tissue, subject_id=first)
+    response = client.post(
+        f"{study}/samples",
+        json={
+            "name": "X",
+            "material_type": "RNA",
+            "parent_sample_id": tissue,
+            "subject_id": second,
+        },
+    )
+    assert (response.status_code, response.json()["detail"]) == (422, DERIVED_SUBJECT)
+    assert subject_names(client, same) == ["Patient-01"]
+
+    # Nor can it be changed on its own; clearing it leaves it as the parent's.
+    response = client.patch(f"{API}/samples/{same}", json={"subject_id": second})
+    assert (response.status_code, response.json()["detail"]) == (422, DERIVED_SUBJECT)
+    response = client.patch(f"{API}/samples/{same}", json={"subject_id": None})
+    assert (response.status_code, response.json()["subject_name"]) == (200, "Patient-01")
+
+
+def test_derived_samples_follow_their_parents_subject(client: TestClient, database: Engine) -> None:
+    study = create_study(client)
+    first = create_subject(client, study, "Patient-01")
+    second = create_subject(client, study, "Patient-02")
+    tissue = create_sample(client, study, "T1", subject_id=first)
+    rna = create_sample(client, study, "T1-RNA", parent_sample_id=tissue)
+    library = create_sample(client, study, "T1-RNA-LIB", parent_sample_id=rna)
+    other = create_sample(client, study, "T2", subject_id=second)
+
+    # Changing the top sample's subject changes every sample derived from it, with an audit
+    # entry for each.
+    response = client.patch(f"{API}/samples/{tissue}", json={"subject_id": second})
+    assert response.status_code == 200
+    assert subject_names(client, tissue, rna, library) == ["Patient-02"] * 3
+    with database.connect() as conn:
+        reasons = conn.execute(
+            text(
+                "SELECT count(*) FROM audit_event"
+                " WHERE changes->>'reason' = 'it follows its parent sample''s subject'"
+            )
+        ).scalar_one()
+    assert reasons == 2
+
+    # Moving a sample to a parent with another subject takes that subject, for its own derived
+    # samples too.
+    client.patch(f"{API}/samples/{tissue}", json={"subject_id": first})
+    response = client.patch(f"{API}/samples/{rna}", json={"parent_sample_id": other})
+    assert response.json()["subject_name"] == "Patient-02"
+    assert subject_names(client, tissue, rna, library) == ["Patient-01", "Patient-02", "Patient-02"]
+
+    # Taking a sample's parent away keeps its subject, which can then be changed.
+    response = client.patch(f"{API}/samples/{rna}", json={"parent_sample_id": None})
+    assert (response.json()["parent_sample_name"], response.json()["subject_name"]) == (
+        None,
+        "Patient-02",
+    )
+    response = client.patch(f"{API}/samples/{rna}", json={"subject_id": first})
+    assert subject_names(client, rna, library) == ["Patient-01", "Patient-01"]

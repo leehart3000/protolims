@@ -117,8 +117,9 @@ export function SampleForm({
         onChange={(event) => {
           const parent = samples.find((sample) => sample.id === event.target.value)
           setParentId(event.target.value)
-          if (parent?.subject_id) {
-            setSubjectId(parent.subject_id)
+          // A derived sample always has its parent's subject (the API sets it too).
+          if (parent) {
+            setSubjectId(parent.subject_id ?? '')
           }
         }}
         optional
@@ -126,6 +127,8 @@ export function SampleForm({
       <SelectField
         label="Subject"
         name="subject_id"
+        hint={parentId ? "The same as the sample it's derived from." : undefined}
+        disabled={Boolean(parentId)}
         options={subjects.map((subject) => ({ value: subject.id, label: subject.name }))}
         value={subjectId}
         onChange={(event) => {

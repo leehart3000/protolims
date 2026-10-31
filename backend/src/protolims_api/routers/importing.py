@@ -233,13 +233,37 @@ def derives_from_itself(name: str, new_samples: dict[str, SampleImport]) -> bool
     return False
 
 
+def inherited_subject(
+    name: str,
+    new_samples: dict[str, SampleImport],
+    subject_targets: dict[str, Target],
+    sample_targets: dict[str, Target],
+    existing_subjects: dict[uuid.UUID, uuid.UUID | None],
+) -> Target | None:
+    """The subject a new derived sample takes from its parent (through any new parents in the
+    import): that of the first existing sample up the chain, or of the new sample at its top."""
+    item = new_samples[name]
+    seen = {name}
+    while item.parent is not None:
+        target = sample_targets.get(item.parent)
+        if isinstance(target, uuid.UUID):
+            return existing_subjects.get(target)
+        if target is None or target in seen:
+            return None  # A missing parent or a loop, reported separately.
+        seen.add(target)
+        item = new_samples[target]
+    return None if item.subject is None else subject_targets.get(item.subject)
+
+
 def check_samples(
     matches: list[tuple[SampleImport, Sample | None]],
     subject_targets: dict[str, Target],
     sample_targets: dict[str, Target],
+    existing_subjects: dict[uuid.UUID, uuid.UUID | None],
     problems: list[str],
 ) -> None:
-    """Report samples whose subject or parent can't be found, or that would form a loop."""
+    """Report samples whose subject or parent can't be found, that would form a loop, or whose
+    subject isn't their parent's (a derived sample always has its parent's subject)."""
     for item, _ in matches:
         if item.subject is not None and item.subject not in subject_targets:
             problems.append(
@@ -252,12 +276,22 @@ def check_samples(
                 "in the study or the import"
             )
     new_samples = {item.name: item for item, record in matches if record is None}
-    for name in new_samples:
+    for name, item in new_samples.items():
         if derives_from_itself(name, new_samples):
             problems.append(
                 f"sample {name!r}: it would be derived from itself, directly or through "
                 "other samples"
             )
+        elif item.parent in sample_targets and item.subject is not None:
+            own = subject_targets.get(item.subject)
+            inherited = inherited_subject(
+                name, new_samples, subject_targets, sample_targets, existing_subjects
+            )
+            if own is not None and own != inherited:
+                problems.append(
+                    f"sample {name!r}: a derived sample's subject is its parent sample's, "
+                    f"so it can't be {item.subject!r} (leave its subject out)"
+                )
 
 
 def check_sample_links(
@@ -502,8 +536,10 @@ async def create_samples(
     subject_targets: dict[str, Target],
     sample_targets: dict[str, Target],
     new_subjects: dict[str, Subject],
+    existing_subjects: dict[uuid.UUID, uuid.UUID | None],
 ) -> dict[str, Sample]:
-    """Create the samples that don't exist yet, link them to their parents, and return them."""
+    """Create the samples that don't exist yet, link them to their parents (taking their
+    parent's subject), and return them."""
 
     def subject_id(name: str | None) -> uuid.UUID | None:
         if name is None:
@@ -529,6 +565,20 @@ async def create_samples(
             sample.parent_sample_id = (
                 target if isinstance(target, uuid.UUID) else created[target][1].id
             )
+    new_by_id = {sample.id: sample for _, sample in created.values()}
+
+    def subject_from_parents(sample: Sample) -> uuid.UUID | None:
+        """The subject at the top of a new sample's chain of parents."""
+        while sample.parent_sample_id is not None:
+            parent = new_by_id.get(sample.parent_sample_id)
+            if parent is None:
+                return existing_subjects.get(sample.parent_sample_id)
+            sample = parent
+        return sample.subject_id
+
+    for item, sample in created.values():
+        if sample.parent_sample_id is not None:
+            sample.subject_id = subject_from_parents(sample)
         await record_event(
             session,
             action="create",
@@ -776,7 +826,8 @@ async def import_records(
     sample_targets = targets(existing.samples, sample_matches)
     assay_targets = targets(existing.assays, assay_matches)
     file_targets = locations(existing.files, file_matches)
-    check_samples(sample_matches, subject_targets, sample_targets, problems)
+    existing_subjects = {sample.id: sample.subject_id for sample in existing.samples}
+    check_samples(sample_matches, subject_targets, sample_targets, existing_subjects, problems)
     check_assays(assay_matches, sample_targets, problems)
     check_files(file_matches, assay_targets, sample_targets, file_targets, problems)
     check_file_loops(file_matches, file_targets, existing.inputs, problems)
@@ -858,7 +909,15 @@ async def import_records(
     where = {"project": project_code, "study": study_code, "import": payload.source}
     new_subjects = await create_subjects(session, study, by, where, subject_matches)
     new_samples = await create_samples(
-        session, study, by, where, sample_matches, subject_targets, sample_targets, new_subjects
+        session,
+        study,
+        by,
+        where,
+        sample_matches,
+        subject_targets,
+        sample_targets,
+        new_subjects,
+        existing_subjects,
     )
     new_assays = await create_assays(session, study, by, where, assay_matches)
     await create_assay_samples(
