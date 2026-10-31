@@ -18,6 +18,7 @@ import {
 } from '../forms'
 import { Permitted } from '../components/Permitted'
 import { editorOf } from '../permissions'
+import { kindCrumb } from '../recordLists'
 
 type AssayCreate = components['schemas']['AssayCreate']
 
@@ -72,6 +73,7 @@ export default function NewAssayPage() {
           { label: projectCode, to: projectPath, mono: true },
           { label: 'Studies', to: `/studies?project=${encodeURIComponent(projectCode)}` },
           { label: studyCode, to: studyPath, mono: true },
+          kindCrumb('assays', projectCode, studyCode),
           { label: 'New assay' },
         ]}
       />

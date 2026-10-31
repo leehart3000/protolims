@@ -17,6 +17,7 @@ import {
 } from '../forms'
 import { Permitted } from '../components/Permitted'
 import { editorOf } from '../permissions'
+import { kindCrumb } from '../recordLists'
 
 type SubjectCreate = components['schemas']['SubjectCreate']
 
@@ -73,6 +74,7 @@ export default function NewSubjectPage() {
           { label: projectCode, to: projectPath, mono: true },
           { label: 'Studies', to: `/studies?project=${encodeURIComponent(projectCode)}` },
           { label: studyCode, to: studyPath, mono: true },
+          kindCrumb('subjects', projectCode, studyCode),
           { label: 'New subject' },
         ]}
       />

@@ -162,6 +162,11 @@ describe('SampleDetailPage', () => {
       'href',
       '/projects/TCGA-BRCA/studies/RNASEQ',
     )
+    // The study's samples, in the list of all samples.
+    expect(within(trail).getByRole('link', { name: 'Samples' })).toHaveAttribute(
+      'href',
+      '/samples?project=TCGA-BRCA&study=RNASEQ',
+    )
   })
 
   it('links a derived sample to its parent and leaves out missing details', async () => {

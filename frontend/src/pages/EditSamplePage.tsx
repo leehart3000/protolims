@@ -19,6 +19,7 @@ import { errorBox } from '../styles'
 import { SampleIcon, SaveIcon } from '../icons'
 import { Permitted } from '../components/Permitted'
 import { editorOf } from '../permissions'
+import { kindCrumb } from '../recordLists'
 
 type Sample = components['schemas']['SampleRead']
 type SampleUpdate = components['schemas']['SampleUpdate']
@@ -136,6 +137,7 @@ function EditSample({ sample }: { sample: Sample }) {
           { label: projectCode, to: projectPath, mono: true },
           { label: 'Studies', to: `/studies?project=${encodeURIComponent(projectCode)}` },
           { label: studyCode, to: studyPath, mono: true },
+          kindCrumb('samples', projectCode, studyCode),
           { label: sample.name, to: samplePath },
           { label: 'Edit' },
         ]}

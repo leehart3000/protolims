@@ -27,7 +27,13 @@ from protolims_api.permissions import (
     require_study_role,
     visible_studies,
 )
-from protolims_api.routers.studies import get_study_or_404
+from protolims_api.routers.studies import (
+    ProjectFilter,
+    StudyFilter,
+    get_study_or_404,
+    in_project_and_study,
+    record_order,
+)
 from protolims_api.schemas.common import Page
 from protolims_api.schemas.sample import SampleCreate, SampleFields, SampleRead, SampleUpdate
 
@@ -55,6 +61,8 @@ SampleSort = Literal[
     "-status",
     "created_at",
     "-created_at",
+    "study",
+    "-study",
 ]
 
 # What each sort key orders by. A leading "-" reverses the order.
@@ -269,6 +277,8 @@ async def list_samples(
 async def list_all_samples(
     session: SessionDep,
     actor: ActorDep,
+    project: ProjectFilter = None,
+    study: StudyFilter = None,
     q: Annotated[
         str | None,
         Query(max_length=200, description="Search sample names and external IDs, ignoring case"),
@@ -281,7 +291,8 @@ async def list_all_samples(
 ) -> Page[SampleRead]:
     """List the samples in the studies the actor can see, across all projects, a page at a
     time, with the total number that match."""
-    return await sample_page(session, [visible_studies(actor)], q, sort, limit, offset)
+    conditions = [visible_studies(actor), *in_project_and_study(project, study)]
+    return await sample_page(session, conditions, q, sort, limit, offset)
 
 
 async def sample_page(
@@ -308,11 +319,9 @@ async def sample_page(
     )
     total = (await session.execute(count_query)).scalar_one()
 
-    column = SAMPLE_SORT_COLUMNS[sort.removeprefix("-")]
-    order = column.desc() if sort.startswith("-") else column.asc()
     result = await session.execute(
         SAMPLE_QUERY.where(*conditions)
-        .order_by(order.nulls_last(), Sample.name, Sample.id)
+        .order_by(*record_order(sort, SAMPLE_SORT_COLUMNS), Sample.name, Sample.id)
         .limit(limit)
         .offset(offset)
     )

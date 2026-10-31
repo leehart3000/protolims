@@ -16,6 +16,7 @@ import { formatDate } from '../format'
 import { editorOf } from '../permissions'
 import { errorBox } from '../styles'
 import { AssayIcon, DataFileIcon, SampleIcon } from '../icons'
+import { kindCrumb } from '../recordLists'
 
 type Assay = components['schemas']['AssayRead']
 
@@ -33,6 +34,7 @@ function AssayDetails({ assay }: { assay: Assay }) {
           { label: assay.project_code, to: projectPath, mono: true },
           { label: 'Studies', to: `/studies?project=${encodeURIComponent(assay.project_code)}` },
           { label: assay.study_code, to: studyPath, mono: true },
+          kindCrumb('assays', assay.project_code, assay.study_code),
           { label: assay.name },
         ]}
       />

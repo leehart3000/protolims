@@ -1081,7 +1081,9 @@
                 "species",
                 "-species",
                 "created_at",
-                "-created_at"
+                "-created_at",
+                "study",
+                "-study"
               ],
               "type": "string",
               "description": "The column to sort by; a leading - reverses the order",
@@ -1182,6 +1184,42 @@
         "operationId": "list_all_subjects_api_v1_subjects_get",
         "parameters": [
           {
+            "name": "project",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only list records in the project with this code",
+              "title": "Project"
+            },
+            "description": "Only list records in the project with this code"
+          },
+          {
+            "name": "study",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only list records in the study with this code (give its project too)",
+              "title": "Study"
+            },
+            "description": "Only list records in the study with this code (give its project too)"
+          },
+          {
             "name": "q",
             "in": "query",
             "required": false,
@@ -1213,7 +1251,9 @@
                 "species",
                 "-species",
                 "created_at",
-                "-created_at"
+                "-created_at",
+                "study",
+                "-study"
               ],
               "type": "string",
               "description": "The column to sort by; a leading - reverses the order",
@@ -1661,7 +1701,9 @@
                 "status",
                 "-status",
                 "created_at",
-                "-created_at"
+                "-created_at",
+                "study",
+                "-study"
               ],
               "type": "string",
               "description": "The column to sort by; a leading - reverses the order",
@@ -1762,6 +1804,42 @@
         "operationId": "list_all_samples_api_v1_samples_get",
         "parameters": [
           {
+            "name": "project",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only list records in the project with this code",
+              "title": "Project"
+            },
+            "description": "Only list records in the project with this code"
+          },
+          {
+            "name": "study",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only list records in the study with this code (give its project too)",
+              "title": "Study"
+            },
+            "description": "Only list records in the study with this code (give its project too)"
+          },
+          {
             "name": "q",
             "in": "query",
             "required": false,
@@ -1795,7 +1873,9 @@
                 "status",
                 "-status",
                 "created_at",
-                "-created_at"
+                "-created_at",
+                "study",
+                "-study"
               ],
               "type": "string",
               "description": "The column to sort by; a leading - reverses the order",
@@ -2207,7 +2287,9 @@
                 "performed_at",
                 "-performed_at",
                 "created_at",
-                "-created_at"
+                "-created_at",
+                "study",
+                "-study"
               ],
               "type": "string",
               "description": "The column to sort by; a leading - reverses the order",
@@ -2308,6 +2390,42 @@
         "operationId": "list_all_assays_api_v1_assays_get",
         "parameters": [
           {
+            "name": "project",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only list records in the project with this code",
+              "title": "Project"
+            },
+            "description": "Only list records in the project with this code"
+          },
+          {
+            "name": "study",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only list records in the study with this code (give its project too)",
+              "title": "Study"
+            },
+            "description": "Only list records in the study with this code (give its project too)"
+          },
+          {
             "name": "q",
             "in": "query",
             "required": false,
@@ -2343,7 +2461,9 @@
                 "performed_at",
                 "-performed_at",
                 "created_at",
-                "-created_at"
+                "-created_at",
+                "study",
+                "-study"
               ],
               "type": "string",
               "description": "The column to sort by; a leading - reverses the order",
@@ -3274,7 +3394,9 @@
                 "size_bytes",
                 "-size_bytes",
                 "created_at",
-                "-created_at"
+                "-created_at",
+                "study",
+                "-study"
               ],
               "type": "string",
               "description": "The column to sort by; a leading - reverses the order",
@@ -3398,6 +3520,42 @@
             "description": "Only list files at this level"
           },
           {
+            "name": "project",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only list records in the project with this code",
+              "title": "Project"
+            },
+            "description": "Only list records in the project with this code"
+          },
+          {
+            "name": "study",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only list records in the study with this code (give its project too)",
+              "title": "Study"
+            },
+            "description": "Only list records in the study with this code (give its project too)"
+          },
+          {
             "name": "q",
             "in": "query",
             "required": false,
@@ -3431,7 +3589,9 @@
                 "size_bytes",
                 "-size_bytes",
                 "created_at",
-                "-created_at"
+                "-created_at",
+                "study",
+                "-study"
               ],
               "type": "string",
               "description": "The column to sort by; a leading - reverses the order",

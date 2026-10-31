@@ -81,6 +81,67 @@ def test_the_lists_are_paged_and_data_files_can_be_filtered_by_level(
     assert client.get(f"{API}/data-files", params={"level": "processed"}).json()["total"] == 1
 
 
+def add_another_project(client: TestClient) -> None:
+    """Project P0 with a study S1, holding a subject, a sample, an assay and a data file, all
+    named with a 0: its study has the same code as P1's first study."""
+    assert client.post(f"{API}/projects", json={"code": "P0", "name": "P0"}).status_code == 201
+    study = f"{API}/projects/P0/studies/S1"
+    response = client.post(f"{API}/projects/P0/studies", json={"code": "S1", "title": "S1"})
+    assert response.status_code == 201
+    file = {"level": "raw", "format": "BAM", "uri": "https://example.org/z.bam"}
+    for kind, body in (
+        ("subjects", {"name": "P-0", "subject_type": "patient"}),
+        ("samples", {"name": "T-0", "material_type": "tissue"}),
+        ("assays", {"name": "Run-0", "measurement_type": "m", "technology_type": "t"}),
+        ("data-files", {"name": "z.bam", **file}),
+    ):
+        assert client.post(f"{study}/{kind}", json=body).status_code == 201
+
+
+@pytest.mark.parametrize(
+    ("kind", "everything", "in_s1_of_p1", "in_p0"),
+    [
+        ("subjects", ["P-0", "P-1", "P-2"], ["P-1"], ["P-0"]),
+        ("samples", ["T-0", "T-1", "T-2"], ["T-1"], ["T-0"]),
+        ("assays", ["Run-0", "Run-1", "Run-2"], ["Run-1"], ["Run-0"]),
+        ("data-files", ["a.bam", "b.bam", "c.vcf", "z.bam"], ["a.bam", "b.bam"], ["z.bam"]),
+    ],
+)
+def test_the_lists_can_be_filtered_by_project_and_study(
+    client: TestClient, kind: str, everything: list[str], in_s1_of_p1: list[str], in_p0: list[str]
+) -> None:
+    make_records(client)
+    add_records_to_other_study(client)
+    add_another_project(client)
+
+    assert names(client.get(f"{API}/{kind}")) == everything
+    assert names(client.get(f"{API}/{kind}", params={"project": "P0"})) == in_p0
+    both = client.get(f"{API}/{kind}", params={"project": "P1", "study": "S1"})
+    assert names(both) == in_s1_of_p1
+    assert both.json()["total"] == len(in_s1_of_p1)
+    # A study code alone matches that study in every project.
+    assert names(client.get(f"{API}/{kind}", params={"study": "S1"})) == sorted(in_s1_of_p1 + in_p0)
+    assert client.get(f"{API}/{kind}", params={"project": "NOPE"}).json()["total"] == 0
+
+
+@pytest.mark.parametrize("kind", KINDS)
+def test_the_lists_can_be_sorted_by_study(client: TestClient, kind: str) -> None:
+    make_records(client)
+    add_records_to_other_study(client)
+    add_another_project(client)
+
+    def studies(sort: str) -> list[tuple[str, str]]:
+        items = client.get(f"{API}/{kind}", params={"sort": sort}).json()["items"]
+        return [(item["project_code"], item["study_code"]) for item in items]
+
+    # By project code, then study code, then name.
+    ascending = studies("study")
+    assert ascending == sorted(ascending)
+    assert ascending[0] == ("P0", "S1")
+    assert ascending[-1] == ("P1", "S2")
+    assert studies("-study") == sorted(ascending, reverse=True)
+
+
 def test_only_records_in_studies_someone_can_see_are_listed(
     client: TestClient, sign_in_as: SignIn, private: None
 ) -> None:

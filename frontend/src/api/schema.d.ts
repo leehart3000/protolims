@@ -2720,7 +2720,7 @@ export interface operations {
                 /** @description Search subject names and external IDs, ignoring case */
                 q?: string | null;
                 /** @description The column to sort by; a leading - reverses the order */
-                sort?: "name" | "-name" | "subject_type" | "-subject_type" | "species" | "-species" | "created_at" | "-created_at";
+                sort?: "name" | "-name" | "subject_type" | "-subject_type" | "species" | "-species" | "created_at" | "-created_at" | "study" | "-study";
                 limit?: number;
                 offset?: number;
             };
@@ -2802,10 +2802,14 @@ export interface operations {
     list_all_subjects_api_v1_subjects_get: {
         parameters: {
             query?: {
+                /** @description Only list records in the project with this code */
+                project?: string | null;
+                /** @description Only list records in the study with this code (give its project too) */
+                study?: string | null;
                 /** @description Search subject names and external IDs, ignoring case */
                 q?: string | null;
                 /** @description The column to sort by; a leading - reverses the order */
-                sort?: "name" | "-name" | "subject_type" | "-subject_type" | "species" | "-species" | "created_at" | "-created_at";
+                sort?: "name" | "-name" | "subject_type" | "-subject_type" | "species" | "-species" | "created_at" | "-created_at" | "study" | "-study";
                 limit?: number;
                 offset?: number;
             };
@@ -2926,7 +2930,7 @@ export interface operations {
                 /** @description Search sample names and external IDs, ignoring case */
                 q?: string | null;
                 /** @description The column to sort by; a leading - reverses the order */
-                sort?: "name" | "-name" | "material_type" | "-material_type" | "subject" | "-subject" | "status" | "-status" | "created_at" | "-created_at";
+                sort?: "name" | "-name" | "material_type" | "-material_type" | "subject" | "-subject" | "status" | "-status" | "created_at" | "-created_at" | "study" | "-study";
                 limit?: number;
                 offset?: number;
             };
@@ -3008,10 +3012,14 @@ export interface operations {
     list_all_samples_api_v1_samples_get: {
         parameters: {
             query?: {
+                /** @description Only list records in the project with this code */
+                project?: string | null;
+                /** @description Only list records in the study with this code (give its project too) */
+                study?: string | null;
                 /** @description Search sample names and external IDs, ignoring case */
                 q?: string | null;
                 /** @description The column to sort by; a leading - reverses the order */
-                sort?: "name" | "-name" | "material_type" | "-material_type" | "subject" | "-subject" | "status" | "-status" | "created_at" | "-created_at";
+                sort?: "name" | "-name" | "material_type" | "-material_type" | "subject" | "-subject" | "status" | "-status" | "created_at" | "-created_at" | "study" | "-study";
                 limit?: number;
                 offset?: number;
             };
@@ -3128,7 +3136,7 @@ export interface operations {
                 /** @description Search assay names and external IDs, ignoring case */
                 q?: string | null;
                 /** @description The column to sort by; a leading - reverses the order */
-                sort?: "name" | "-name" | "measurement_type" | "-measurement_type" | "technology_type" | "-technology_type" | "platform" | "-platform" | "performed_at" | "-performed_at" | "created_at" | "-created_at";
+                sort?: "name" | "-name" | "measurement_type" | "-measurement_type" | "technology_type" | "-technology_type" | "platform" | "-platform" | "performed_at" | "-performed_at" | "created_at" | "-created_at" | "study" | "-study";
                 limit?: number;
                 offset?: number;
             };
@@ -3210,10 +3218,14 @@ export interface operations {
     list_all_assays_api_v1_assays_get: {
         parameters: {
             query?: {
+                /** @description Only list records in the project with this code */
+                project?: string | null;
+                /** @description Only list records in the study with this code (give its project too) */
+                study?: string | null;
                 /** @description Search assay names and external IDs, ignoring case */
                 q?: string | null;
                 /** @description The column to sort by; a leading - reverses the order */
-                sort?: "name" | "-name" | "measurement_type" | "-measurement_type" | "technology_type" | "-technology_type" | "platform" | "-platform" | "performed_at" | "-performed_at" | "created_at" | "-created_at";
+                sort?: "name" | "-name" | "measurement_type" | "-measurement_type" | "technology_type" | "-technology_type" | "platform" | "-platform" | "performed_at" | "-performed_at" | "created_at" | "-created_at" | "study" | "-study";
                 limit?: number;
                 offset?: number;
             };
@@ -3525,7 +3537,7 @@ export interface operations {
                 /** @description Search file names, external IDs and URIs, ignoring case */
                 q?: string | null;
                 /** @description The column to sort by; a leading - reverses the order */
-                sort?: "name" | "-name" | "level" | "-level" | "format" | "-format" | "size_bytes" | "-size_bytes" | "created_at" | "-created_at";
+                sort?: "name" | "-name" | "level" | "-level" | "format" | "-format" | "size_bytes" | "-size_bytes" | "created_at" | "-created_at" | "study" | "-study";
                 limit?: number;
                 offset?: number;
             };
@@ -3609,10 +3621,14 @@ export interface operations {
             query?: {
                 /** @description Only list files at this level */
                 level?: ("raw" | "processed" | "analysis") | null;
+                /** @description Only list records in the project with this code */
+                project?: string | null;
+                /** @description Only list records in the study with this code (give its project too) */
+                study?: string | null;
                 /** @description Search file names, external IDs and URIs, ignoring case */
                 q?: string | null;
                 /** @description The column to sort by; a leading - reverses the order */
-                sort?: "name" | "-name" | "level" | "-level" | "format" | "-format" | "size_bytes" | "-size_bytes" | "created_at" | "-created_at";
+                sort?: "name" | "-name" | "level" | "-level" | "format" | "-format" | "size_bytes" | "-size_bytes" | "created_at" | "-created_at" | "study" | "-study";
                 limit?: number;
                 offset?: number;
             };

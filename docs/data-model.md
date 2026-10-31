@@ -145,6 +145,13 @@ An append-only `audit_event` table records who changed what, and when.
   `/data-files/{id}`), so links never break when a name changes. Pages show
   names and breadcrumbs, never the ID. Creating and listing them still happens
   under their study.
+- **Lists across studies** (`/subjects`, `/samples`, `/assays`, `/data-files`)
+  show everything someone can see, and take `project` and `study` codes to list
+  only one project's or study's records (a study code is unique only within its
+  project, so the website always sends both), and `sort=study` to order by
+  project and study code. On the website the filters are in the page's address
+  (e.g. `/assays?project=CPTAC-3&study=MULTIOMICS`), which a record's
+  breadcrumbs link to, as in Projects › CPTAC-3 › Studies › MULTIOMICS › Assays.
 - **Reserved codes:** project and study codes can't be `new` or `edit` (in any
   capitalisation), as they would clash with page addresses. If more reserved
   words are ever needed, consider GitLab-style `/-/` addresses instead.

@@ -5,6 +5,7 @@ import type { components } from '../api/schema'
 import { subjectTypeLabel } from '../labels'
 import {
   rowLink,
+  studyHeader,
   table,
   tableCell,
   tableHead,
@@ -14,7 +15,7 @@ import {
 } from '../styles'
 import { SortHeader } from './SortHeader'
 import { RowArrow } from './RowArrow'
-import { StudyCell, StudyHeader, StudyLine } from './StudyColumn'
+import { StudyCell, StudyLine } from './StudyColumn'
 
 type Subject = components['schemas']['SubjectRead']
 type SubjectColumn = Exclude<SubjectSort, `-${string}`>
@@ -57,7 +58,7 @@ export function SubjectTable({
             {heading('Name', 'name', tableHeader)}
             {heading('Type', 'subject_type', `${tableHeader} hidden w-px sm:table-cell`)}
             {heading('Species', 'species', `${tableHeader} hidden sm:table-cell`)}
-            {showStudy && <StudyHeader />}
+            {showStudy && heading('Study', 'study', studyHeader)}
             <th scope="col" className={`${tableHeader} w-px`}>
               <span className="sr-only">Open</span>
             </th>

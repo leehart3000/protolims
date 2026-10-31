@@ -18,6 +18,7 @@ import { DuplicateExternalIdError, isExternalIdConflict, refusal } from '../form
 import { DataFileIcon, SaveIcon } from '../icons'
 import { Permitted } from '../components/Permitted'
 import { editorOf } from '../permissions'
+import { kindCrumb } from '../recordLists'
 
 type DataFile = components['schemas']['DataFileRead']
 type DataFileUpdate = components['schemas']['DataFileUpdate']
@@ -100,6 +101,7 @@ function EditDataFile({ file }: { file: DataFile }) {
           { label: projectCode, to: projectPath, mono: true },
           { label: 'Studies', to: `/studies?project=${encodeURIComponent(projectCode)}` },
           { label: studyCode, to: studyPath, mono: true },
+          kindCrumb('data-files', projectCode, studyCode),
           { label: file.name, to: filePath },
           { label: 'Edit' },
         ]}

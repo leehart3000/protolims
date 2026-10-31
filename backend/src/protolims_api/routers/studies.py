@@ -55,6 +55,39 @@ def study_order(sort: str) -> UnaryExpression[Any]:
     return column.desc() if sort.startswith("-") else column.asc()
 
 
+# The filters on the lists of records across all studies: by project code, and by study code
+# (within the project, if one is given, as study codes are only unique within a project).
+ProjectFilter = Annotated[
+    str | None, Query(description="Only list records in the project with this code")
+]
+StudyFilter = Annotated[
+    str | None,
+    Query(description="Only list records in the study with this code (give its project too)"),
+]
+
+
+def in_project_and_study(project: str | None, study: str | None) -> list[ColumnElement[bool]]:
+    """Conditions (on Study) for records in the project and study with these codes, if given."""
+    conditions: list[ColumnElement[bool]] = []
+    if project is not None:
+        conditions.append(Study.project_id.in_(select(Project.id).where(Project.code == project)))
+    if study is not None:
+        conditions.append(Study.code == study)
+    return conditions
+
+
+def record_order(
+    sort: str, columns: dict[str, InstrumentedAttribute[Any]]
+) -> list[UnaryExpression[Any]]:
+    """The ORDER BY for a sort key on a list of records: its column, or for "study" the project
+    and study codes (the query must join both). A leading "-" reverses it; blanks go last."""
+    key = sort.removeprefix("-")
+    by: list[InstrumentedAttribute[Any]] = (
+        [Project.code, Study.code] if key == "study" else [columns[key]]
+    )
+    return [(column.desc() if sort.startswith("-") else column.asc()).nulls_last() for column in by]
+
+
 @router.post("/projects/{project_code}/studies", status_code=status.HTTP_201_CREATED)
 async def create_study(
     project_code: str, payload: StudyCreate, session: SessionDep, actor: ActorDep

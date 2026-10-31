@@ -1,19 +1,12 @@
-import { tableCell, tableHeader } from '../styles'
+import { tableCell } from '../styles'
 
 // Which study each record is in, for the lists of records across all studies. From medium
-// screens it's a column of its own; on narrower ones, a line under the record's name.
+// screens it's a column of its own (headed with studyHeader, from styles.ts, sorting by
+// project and study code); on narrower ones, a line under the record's name.
 
 interface InStudy {
   project_code: string
   study_code: string
-}
-
-export function StudyHeader() {
-  return (
-    <th scope="col" className={`${tableHeader} hidden w-px md:table-cell`}>
-      Study
-    </th>
-  )
 }
 
 export function StudyCell({ record }: { record: InStudy }) {

@@ -18,6 +18,7 @@ import { errorBox } from '../styles'
 import { AssayIcon, SaveIcon } from '../icons'
 import { Permitted } from '../components/Permitted'
 import { editorOf } from '../permissions'
+import { kindCrumb } from '../recordLists'
 
 type Assay = components['schemas']['AssayRead']
 type AssayUpdate = components['schemas']['AssayUpdate']
@@ -98,6 +99,7 @@ function EditAssay({ assay }: { assay: Assay }) {
           { label: projectCode, to: projectPath, mono: true },
           { label: 'Studies', to: `/studies?project=${encodeURIComponent(projectCode)}` },
           { label: studyCode, to: studyPath, mono: true },
+          kindCrumb('assays', projectCode, studyCode),
           { label: assay.name, to: assayPath },
           { label: 'Edit' },
         ]}

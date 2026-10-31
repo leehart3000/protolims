@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { queryOptions, useQuery } from '@tanstack/react-query'
 import { useParams } from 'react-router'
 
 import type { components } from '../api/schema'
@@ -19,15 +19,22 @@ import { errorBox } from '../styles'
 import { editorOf } from '../permissions'
 import { SectionHeading } from '../components/SectionHeading'
 import { AssayIcon, DataFileIcon, SampleIcon, SubjectIcon } from '../icons'
+import { kindCrumb } from '../recordLists'
 
 type Subject = components['schemas']['SubjectRead']
 
 // The assays the subject's samples (derived ones included) were measured in.
-function SubjectAssays({ subjectId }: { subjectId: string }) {
-  const query = useQuery({
+// The assays the subject's samples were measured in: for the Assays section, and for the Data
+// files section (which mentions their files that hold all their samples' data), fetched once.
+function assaysQuery(subjectId: string) {
+  return queryOptions({
     queryKey: ['subjects', subjectId, 'assays'],
     queryFn: () => fetchSubjectAssays(subjectId),
   })
+}
+
+function SubjectAssays({ subjectId }: { subjectId: string }) {
+  const query = useQuery(assaysQuery(subjectId))
 
   if (query.isPending) {
     return <p className="mt-4 text-muted">Loading assays…</p>
@@ -59,10 +66,7 @@ function SubjectDataFiles({ subjectId }: { subjectId: string }) {
     queryKey: ['subjects', subjectId, 'data-files'],
     queryFn: () => fetchSubjectDataFiles(subjectId),
   })
-  const assays = useQuery({
-    queryKey: ['subjects', subjectId, 'assays'],
-    queryFn: () => fetchSubjectAssays(subjectId),
-  })
+  const assays = useQuery(assaysQuery(subjectId))
 
   if (query.isPending || assays.isPending) {
     return <p className="mt-4 text-muted">Loading data files…</p>
@@ -105,6 +109,7 @@ function SubjectDetails({ subject }: { subject: Subject }) {
             to: `/studies?project=${encodeURIComponent(subject.project_code)}`,
           },
           { label: subject.study_code, to: studyPath, mono: true },
+          kindCrumb('subjects', subject.project_code, subject.study_code),
           { label: subject.name },
         ]}
       />

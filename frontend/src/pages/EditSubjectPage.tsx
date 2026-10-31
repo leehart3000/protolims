@@ -19,6 +19,7 @@ import type { SubjectDetails } from '../subjects'
 import { SaveIcon, SubjectIcon } from '../icons'
 import { Permitted } from '../components/Permitted'
 import { editorOf } from '../permissions'
+import { kindCrumb } from '../recordLists'
 
 type Subject = components['schemas']['SubjectRead']
 type SubjectUpdate = components['schemas']['SubjectUpdate']
@@ -88,6 +89,7 @@ function EditSubject({ subject }: { subject: Subject }) {
           { label: projectCode, to: projectPath, mono: true },
           { label: 'Studies', to: `/studies?project=${encodeURIComponent(projectCode)}` },
           { label: studyCode, to: studyPath, mono: true },
+          kindCrumb('subjects', projectCode, studyCode),
           { label: subject.name, to: subjectPath },
           { label: 'Edit' },
         ]}

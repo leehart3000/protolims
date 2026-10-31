@@ -36,7 +36,13 @@ from protolims_api.permissions import (
     require_study_role,
     visible_studies,
 )
-from protolims_api.routers.studies import get_study_or_404
+from protolims_api.routers.studies import (
+    ProjectFilter,
+    StudyFilter,
+    get_study_or_404,
+    in_project_and_study,
+    record_order,
+)
 from protolims_api.routers.subjects import get_subject_or_404
 from protolims_api.schemas.common import Page
 from protolims_api.schemas.data_file import (
@@ -82,6 +88,8 @@ DataFileSort = Literal[
     "-size_bytes",
     "created_at",
     "-created_at",
+    "study",
+    "-study",
 ]
 
 # What each sort key orders by. A leading "-" reverses the order.
@@ -232,6 +240,8 @@ async def list_all_data_files(
     level: Annotated[DataFileLevel | None, Query(description="Only list files at this level")] = (
         None
     ),
+    project: ProjectFilter = None,
+    study: StudyFilter = None,
     q: Annotated[
         str | None,
         Query(
@@ -247,7 +257,7 @@ async def list_all_data_files(
 ) -> Page[DataFileRead]:
     """List the data files in the studies the actor can see, across all projects, a page at a
     time, with the total number that match."""
-    conditions: list[ColumnElement[bool]] = [visible_studies(actor)]
+    conditions = [visible_studies(actor), *in_project_and_study(project, study)]
     if level is not None:
         conditions.append(DataFile.level == level)
     return await data_file_page(session, conditions, q, sort, limit, offset)
@@ -279,11 +289,9 @@ async def data_file_page(
     )
     total = (await session.execute(count_query)).scalar_one()
 
-    column = DATA_FILE_SORT_COLUMNS[sort.removeprefix("-")]
-    order = column.desc() if sort.startswith("-") else column.asc()
     result = await session.execute(
         DATA_FILE_QUERY.where(*conditions)
-        .order_by(order.nulls_last(), DataFile.name, DataFile.id)
+        .order_by(*record_order(sort, DATA_FILE_SORT_COLUMNS), DataFile.name, DataFile.id)
         .limit(limit)
         .offset(offset)
     )

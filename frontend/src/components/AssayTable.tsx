@@ -4,6 +4,7 @@ import type { AssaySort } from '../api/queries'
 import type { components } from '../api/schema'
 import {
   rowLink,
+  studyHeader,
   table,
   tableCell,
   tableHead,
@@ -13,7 +14,7 @@ import {
 } from '../styles'
 import { RowArrow } from './RowArrow'
 import { SortHeader } from './SortHeader'
-import { StudyCell, StudyHeader, StudyLine } from './StudyColumn'
+import { StudyCell, StudyLine } from './StudyColumn'
 
 type Assay = components['schemas']['AssayRead']
 type AssayColumn = Exclude<AssaySort, `-${string}`>
@@ -71,7 +72,7 @@ export function AssayTable({
             <th scope="col" className={`${tableHeader} hidden w-px text-right sm:table-cell`}>
               Samples
             </th>
-            {showStudy && <StudyHeader />}
+            {showStudy && heading('Study', 'study', studyHeader)}
             <th scope="col" className={`${tableHeader} w-px`}>
               <span className="sr-only">Open</span>
             </th>

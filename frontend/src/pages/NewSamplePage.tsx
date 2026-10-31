@@ -19,6 +19,7 @@ import { errorBox } from '../styles'
 import { NewIcon, SampleIcon } from '../icons'
 import { Permitted } from '../components/Permitted'
 import { editorOf } from '../permissions'
+import { kindCrumb } from '../recordLists'
 
 type SampleCreate = components['schemas']['SampleCreate']
 type Sample = components['schemas']['SampleRead']
@@ -127,6 +128,7 @@ export default function NewSamplePage() {
           { label: projectCode, to: projectPath, mono: true },
           { label: 'Studies', to: `/studies?project=${encodeURIComponent(projectCode)}` },
           { label: studyCode, to: studyPath, mono: true },
+          kindCrumb('samples', projectCode, studyCode),
           { label: 'New sample' },
         ]}
       />

@@ -157,3 +157,179 @@ describe.each([
     )
   })
 })
+
+type Project = components['schemas']['ProjectRead']
+type Study = components['schemas']['StudyWithProjectRead']
+
+const brca: Project = {
+  id: '0192a5b0-0000-7000-8000-000000000001',
+  code: 'TCGA-BRCA',
+  name: 'TCGA breast cancer',
+  description: null,
+  source_repository: null,
+  licence: null,
+  citation: null,
+  created_at: '2026-10-24T12:00:00Z',
+  updated_at: '2026-10-24T12:00:00Z',
+  created_by: null,
+}
+
+const rnaseqStudy: Study = {
+  id: inStudy.study_id,
+  project_id: brca.id,
+  code: 'RNASEQ',
+  title: 'RNA sequencing',
+  description: null,
+  design_factors: [],
+  created_at: '2026-10-24T12:00:00Z',
+  updated_at: '2026-10-24T12:00:00Z',
+  created_by: null,
+  project_code: brca.code,
+  project_name: brca.name,
+}
+
+// Answers the assays list with `rnaseq`, and the projects and studies to filter by. Returns
+// each assays request's query, and each studies request's.
+function stubFilteredList() {
+  const queries: URLSearchParams[] = []
+  const studyQueries: URLSearchParams[] = []
+  vi.stubGlobal(
+    'fetch',
+    vi.fn((request: Request) => {
+      const url = new URL(request.url)
+      if (url.pathname === '/api/v1/projects') {
+        return Promise.resolve(Response.json({ items: [brca], total: 1 }))
+      }
+      if (url.pathname === '/api/v1/studies') {
+        studyQueries.push(url.searchParams)
+        return Promise.resolve(Response.json({ items: [rnaseqStudy], total: 1 }))
+      }
+      queries.push(url.searchParams)
+      return Promise.resolve(Response.json({ items: [rnaseq], total: 1 }))
+    }),
+  )
+  return { queries, studyQueries }
+}
+
+describe('filtering the lists by project and study', () => {
+  it('lists everything until a project, and then a study, is chosen', async () => {
+    const user = userEvent.setup()
+    const { queries, studyQueries } = stubFilteredList()
+    renderPage(<AssaysPage />)
+
+    expect(await screen.findByRole('table', { name: 'Assays' })).toBeInTheDocument()
+    expect(queries[0]?.has('project')).toBe(false)
+    expect(screen.queryByRole('navigation', { name: 'Breadcrumb' })).not.toBeInTheDocument()
+    expect(screen.getByText(/Every assay in the studies you can see/)).toBeInTheDocument()
+    expect(screen.getByLabelText('Study')).toBeDisabled()
+
+    const project = screen.getByLabelText('Project')
+    await screen.findByRole('option', { name: 'TCGA-BRCA · TCGA breast cancer' })
+    await user.selectOptions(project, 'TCGA-BRCA')
+    await waitFor(() => {
+      expect(queries.at(-1)?.get('project')).toBe('TCGA-BRCA')
+    })
+    expect(queries.at(-1)?.has('study')).toBe(false)
+    const projectTrail = within(screen.getByRole('navigation', { name: 'Breadcrumb' }))
+    expect(projectTrail.getByRole('link', { name: 'TCGA-BRCA' })).toBeInTheDocument()
+    expect(projectTrail.queryByRole('link', { name: 'Studies' })).not.toBeInTheDocument()
+    expect(projectTrail.getByText('Assays')).toHaveAttribute('aria-current', 'page')
+    expect(screen.getByText(/in the studies of project/)).toHaveTextContent(
+      'Every assay in the studies of project TCGA-BRCA that you can see.',
+    )
+
+    const study = screen.getByLabelText('Study')
+    expect(study).toBeEnabled()
+    await screen.findByRole('option', { name: 'RNASEQ · RNA sequencing' })
+    // Only the project's studies are offered.
+    expect(studyQueries[0]?.get('project')).toBe('TCGA-BRCA')
+    await user.selectOptions(study, 'RNASEQ')
+    await waitFor(() => {
+      expect(queries.at(-1)?.get('study')).toBe('RNASEQ')
+    })
+    expect(queries.at(-1)?.get('project')).toBe('TCGA-BRCA')
+
+    // Choosing another project (here, all of them) forgets the study.
+    await user.selectOptions(project, '')
+    await waitFor(() => {
+      expect(queries.at(-1)?.has('project')).toBe(false)
+    })
+    expect(queries.at(-1)?.has('study')).toBe(false)
+    expect(screen.getByLabelText('Study')).toBeDisabled()
+  })
+
+  it('starts from the filters in the address, with breadcrumbs back to the study', async () => {
+    const { queries } = stubFilteredList()
+    render(
+      <TestProviders route="/assays?project=TCGA-BRCA&study=RNASEQ">
+        <AssaysPage />
+      </TestProviders>,
+    )
+
+    expect(await screen.findByRole('table', { name: 'Assays' })).toBeInTheDocument()
+    expect(queries[0]?.get('project')).toBe('TCGA-BRCA')
+    expect(queries[0]?.get('study')).toBe('RNASEQ')
+    expect(screen.getByLabelText('Project')).toHaveValue('TCGA-BRCA')
+    expect(screen.getByLabelText('Study')).toHaveValue('RNASEQ')
+
+    const trail = within(screen.getByRole('navigation', { name: 'Breadcrumb' }))
+    expect(trail.getByRole('link', { name: 'TCGA-BRCA' })).toHaveAttribute(
+      'href',
+      '/projects/TCGA-BRCA',
+    )
+    expect(trail.getByRole('link', { name: 'RNASEQ' })).toHaveAttribute(
+      'href',
+      '/projects/TCGA-BRCA/studies/RNASEQ',
+    )
+    expect(trail.getByText('Assays')).toHaveAttribute('aria-current', 'page')
+    expect(screen.getByText(/Every assay in study/)).toHaveTextContent(
+      'Every assay in study RNASEQ of project TCGA-BRCA. To add one, go to the study.',
+    )
+    expect(screen.getByRole('link', { name: 'the study' })).toHaveAttribute(
+      'href',
+      '/projects/TCGA-BRCA/studies/RNASEQ',
+    )
+  })
+
+  it('keeps a chosen project or study it was not told about', async () => {
+    stubList('/api/v1/subjects', patient)
+    render(
+      <TestProviders route="/subjects?project=GONE&study=ALSO-GONE">
+        <SubjectsPage />
+      </TestProviders>,
+    )
+
+    // The projects and studies couldn't be loaded, but the chosen ones are still shown.
+    expect(await screen.findByRole('option', { name: 'GONE' })).toBeInTheDocument()
+    expect(screen.getByLabelText('Project')).toHaveValue('GONE')
+    expect(screen.getByLabelText('Study')).toHaveValue('ALSO-GONE')
+    expect(
+      within(screen.getByRole('navigation', { name: 'Breadcrumb' })).getByText('Subjects'),
+    ).toBeInTheDocument()
+  })
+
+  it('ignores a study without its project', async () => {
+    const queries = stubList('/api/v1/samples', tumour)
+    render(
+      <TestProviders route="/samples?study=RNASEQ">
+        <SamplesPage />
+      </TestProviders>,
+    )
+
+    expect(await screen.findByRole('table', { name: 'Samples' })).toBeInTheDocument()
+    expect(queries[0]?.has('study')).toBe(false)
+    expect(screen.getByLabelText('Study')).toHaveValue('')
+  })
+
+  it('sorts by study', async () => {
+    const user = userEvent.setup()
+    const queries = stubList('/api/v1/data-files', counts)
+    renderPage(<DataFilesPage />)
+
+    const table = within(await screen.findByRole('table', { name: 'Data files' }))
+    await user.click(table.getByRole('button', { name: 'Study' }))
+    await waitFor(() => {
+      expect(queries.at(-1)?.get('sort')).toBe('study')
+    })
+  })
+})

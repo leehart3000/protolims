@@ -14,6 +14,7 @@ import { DuplicateExternalIdError, isExternalIdConflict, refusal } from '../form
 import { DataFileIcon, NewIcon } from '../icons'
 import { Permitted } from '../components/Permitted'
 import { editorOf } from '../permissions'
+import { kindCrumb } from '../recordLists'
 
 type Assay = components['schemas']['AssayRead']
 type DataFileCreate = components['schemas']['DataFileCreate']
@@ -116,6 +117,7 @@ export default function NewDataFilePage() {
           { label: projectCode, to: projectPath, mono: true },
           { label: 'Studies', to: `/studies?project=${encodeURIComponent(projectCode)}` },
           { label: studyCode, to: studyPath, mono: true },
+          kindCrumb('data-files', projectCode, studyCode),
           { label: 'New data file' },
         ]}
       />

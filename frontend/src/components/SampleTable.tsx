@@ -5,6 +5,7 @@ import type { components } from '../api/schema'
 import { sampleStatusLabel } from '../labels'
 import {
   rowLink,
+  studyHeader,
   table,
   tableCell,
   tableHead,
@@ -14,7 +15,7 @@ import {
 } from '../styles'
 import { SortHeader } from './SortHeader'
 import { RowArrow } from './RowArrow'
-import { StudyCell, StudyHeader, StudyLine } from './StudyColumn'
+import { StudyCell, StudyLine } from './StudyColumn'
 
 type Sample = components['schemas']['SampleRead']
 type SampleColumn = Exclude<SampleSort, `-${string}`>
@@ -70,7 +71,7 @@ export function SampleTable({
             {heading('Material', 'material_type', `${tableHeader} hidden w-px sm:table-cell`)}
             {heading('Subject', 'subject', `${tableHeader} hidden sm:table-cell`)}
             {heading('Status', 'status', `${tableHeader} hidden w-px sm:table-cell`)}
-            {showStudy && <StudyHeader />}
+            {showStudy && heading('Study', 'study', studyHeader)}
             <th scope="col" className={`${tableHeader} w-px`}>
               <span className="sr-only">Open</span>
             </th>

@@ -26,7 +26,13 @@ from protolims_api.permissions import (
     require_study_role,
     visible_studies,
 )
-from protolims_api.routers.studies import get_study_or_404
+from protolims_api.routers.studies import (
+    ProjectFilter,
+    StudyFilter,
+    get_study_or_404,
+    in_project_and_study,
+    record_order,
+)
 from protolims_api.schemas.common import Page
 from protolims_api.schemas.subject import SubjectCreate, SubjectFields, SubjectRead, SubjectUpdate
 
@@ -41,6 +47,8 @@ SubjectSort = Literal[
     "-species",
     "created_at",
     "-created_at",
+    "study",
+    "-study",
 ]
 
 # What each sort key orders by. A leading "-" reverses the order.
@@ -139,6 +147,8 @@ async def list_subjects(
 async def list_all_subjects(
     session: SessionDep,
     actor: ActorDep,
+    project: ProjectFilter = None,
+    study: StudyFilter = None,
     q: Annotated[
         str | None,
         Query(max_length=200, description="Search subject names and external IDs, ignoring case"),
@@ -151,7 +161,8 @@ async def list_all_subjects(
 ) -> Page[SubjectRead]:
     """List the subjects in the studies the actor can see, across all projects, a page at a
     time, with the total number that match."""
-    return await subject_page(session, [visible_studies(actor)], q, sort, limit, offset)
+    conditions = [visible_studies(actor), *in_project_and_study(project, study)]
+    return await subject_page(session, conditions, q, sort, limit, offset)
 
 
 async def subject_page(
@@ -178,11 +189,9 @@ async def subject_page(
     )
     total = (await session.execute(count_query)).scalar_one()
 
-    column = SUBJECT_SORT_COLUMNS[sort.removeprefix("-")]
-    order = column.desc() if sort.startswith("-") else column.asc()
     result = await session.execute(
         SUBJECT_QUERY.where(*conditions)
-        .order_by(order.nulls_last(), Subject.name, Subject.id)
+        .order_by(*record_order(sort, SUBJECT_SORT_COLUMNS), Subject.name, Subject.id)
         .limit(limit)
         .offset(offset)
     )

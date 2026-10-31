@@ -27,6 +27,7 @@ import { useListControls } from '../useListControls'
 import { editorOf } from '../permissions'
 import { SectionHeading } from '../components/SectionHeading'
 import { DataFileIcon, SampleIcon } from '../icons'
+import { kindCrumb } from '../recordLists'
 
 type DataFile = components['schemas']['DataFileRead']
 
@@ -146,6 +147,7 @@ function DataFileDetails({ file }: { file: DataFile }) {
           { label: file.project_code, to: projectPath, mono: true },
           { label: 'Studies', to: `/studies?project=${encodeURIComponent(file.project_code)}` },
           { label: file.study_code, to: studyPath, mono: true },
+          kindCrumb('data-files', file.project_code, file.study_code),
           { label: file.name },
         ]}
       />

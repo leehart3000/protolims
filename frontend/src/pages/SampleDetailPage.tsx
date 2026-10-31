@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { queryOptions, useQuery } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router'
 
 import { fetchSample, fetchSampleAssays, fetchSampleDataFiles, fetchSamples } from '../api/queries'
@@ -20,8 +20,18 @@ import { editorOf } from '../permissions'
 import { sampleStatusLabel } from '../labels'
 import { errorBox, textLink } from '../styles'
 import { AssayIcon, DataFileIcon, SampleIcon } from '../icons'
+import { kindCrumb } from '../recordLists'
 
 type Sample = components['schemas']['SampleRead']
+
+// The assays the sample was measured in: for the Assays section, and for the Data
+// files section (which mentions their files that hold all their samples' data), fetched once.
+function assaysQuery(sampleId: string) {
+  return queryOptions({
+    queryKey: ['samples', sampleId, 'assays'],
+    queryFn: () => fetchSampleAssays(sampleId),
+  })
+}
 
 function DerivedSamples({ sample }: { sample: Sample }) {
   const query = useQuery({
@@ -56,10 +66,7 @@ function DerivedSamples({ sample }: { sample: Sample }) {
 }
 
 function SampleAssays({ sampleId }: { sampleId: string }) {
-  const query = useQuery({
-    queryKey: ['samples', sampleId, 'assays'],
-    queryFn: () => fetchSampleAssays(sampleId),
-  })
+  const query = useQuery(assaysQuery(sampleId))
 
   if (query.isPending) {
     return <p className="mt-4 text-muted">Loading assays…</p>
@@ -87,10 +94,7 @@ function SampleDataFiles({ sampleId }: { sampleId: string }) {
     queryKey: ['samples', sampleId, 'data-files'],
     queryFn: () => fetchSampleDataFiles(sampleId),
   })
-  const assays = useQuery({
-    queryKey: ['samples', sampleId, 'assays'],
-    queryFn: () => fetchSampleAssays(sampleId),
-  })
+  const assays = useQuery(assaysQuery(sampleId))
 
   if (query.isPending || assays.isPending) {
     return <p className="mt-4 text-muted">Loading data files…</p>
@@ -132,6 +136,7 @@ function SampleDetails({ sample }: { sample: Sample }) {
           { label: sample.project_code, to: projectPath, mono: true },
           { label: 'Studies', to: `/studies?project=${encodeURIComponent(sample.project_code)}` },
           { label: sample.study_code, to: studyPath, mono: true },
+          kindCrumb('samples', sample.project_code, sample.study_code),
           { label: sample.name },
         ]}
       />
