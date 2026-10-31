@@ -229,6 +229,19 @@ def test_cancelling_at_orcid_signs_nobody_in(client: TestClient, database: Engin
         ),
         (lambda nonce: httpx.Response(200, json={"id_token": id_token(nonce, kid="other")}), 400),
         (lambda nonce: httpx.Response(200, json={"id_token": "not a token"}), 400),
+        # Issued, or expired, more than the allowed clock difference ago.
+        (
+            lambda nonce: httpx.Response(
+                200, json={"id_token": id_token(nonce, iat=int(time.time()) + 600)}
+            ),
+            400,
+        ),
+        (
+            lambda nonce: httpx.Response(
+                200, json={"id_token": id_token(nonce, exp=int(time.time()) - 600)}
+            ),
+            400,
+        ),
     ],
 )
 def test_a_sign_in_is_refused_unless_orcids_reply_checks_out(
@@ -242,6 +255,35 @@ def test_a_sign_in_is_refused_unless_orcids_reply_checks_out(
 
     assert come_back(client, sent).status_code == expected
     assert me(client) is None
+
+
+@pytest.mark.parametrize("seconds", [-60, 60])
+def test_a_sign_in_allows_for_clocks_that_disagree_a_little(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch, seconds: int
+) -> None:
+    # ORCID's clock a minute ahead of ours (the token seems issued in the future), or behind
+    # (the token seems to have just expired).
+    sent = start_sign_in(client)
+    now = int(time.time())
+    if seconds > 0:
+        token = id_token(sent["nonce"], iat=now + seconds)
+    else:
+        token = id_token(sent["nonce"], exp=now + seconds)
+    fake_orcid(monkeypatch, lambda: httpx.Response(200, json={"id_token": token}))
+
+    assert come_back(client, sent).status_code == 302
+    assert me(client)["subject"] == ORCID_ID
+
+
+def test_why_a_sign_in_was_refused_is_logged(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    sent = start_sign_in(client)
+    token = id_token(sent["nonce"], iat=int(time.time()) + 600)
+    fake_orcid(monkeypatch, lambda: httpx.Response(200, json={"id_token": token}))
+
+    assert come_back(client, sent).status_code == 400
+    assert "ID token didn't check out" in caplog.text
 
 
 def test_a_sign_in_is_refused_if_orcids_keys_cant_be_read(

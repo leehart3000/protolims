@@ -12,6 +12,7 @@ The API does the whole sign-in itself, so the browser never holds any tokens:
    HttpOnly, so page scripts can't read it, and only a hash of it is stored.
 """
 
+import logging
 import secrets
 from datetime import UTC, datetime, timedelta
 from typing import Annotated, Any
@@ -42,6 +43,13 @@ CALLBACK_PATH = f"{AUTH_PATH}/orcid/callback"
 SIGN_IN_MINUTES = 10
 INVALID_SIGN_IN = "This sign-in has expired or isn't valid. Please sign in again."
 UNCHECKED_REPLY = "ORCID's reply couldn't be checked, so you haven't been signed in."
+# How far this server's clock and ORCID's may disagree when checking when an ID token was
+# issued and when it expires. Without it, a clock a few seconds behind ORCID's makes a token
+# look "not yet valid", and the sign-in fails.
+CLOCK_LEEWAY = timedelta(minutes=2)
+
+# Why a sign-in was refused goes to the server's log (never to the browser), for diagnosis.
+logger = logging.getLogger(__name__)
 
 # Tests replace this with a fake ORCID; normally it's None, meaning the real network.
 transport: httpx.AsyncBaseTransport | None = None
@@ -116,10 +124,12 @@ async def signing_key(client: httpx.AsyncClient, settings: Settings, id_token: s
         keys = jwt.PyJWKSet.from_dict(response.json()).keys
         key_id = jwt.get_unverified_header(id_token).get("kid")
     except (ValueError, jwt.PyJWTError) as exc:
+        logger.warning("ORCID's keys or the ID token's header couldn't be read: %s", exc)
         raise HTTPException(status.HTTP_400_BAD_REQUEST, UNCHECKED_REPLY) from exc
     for key in keys:
         if key_id is None or key.key_id == key_id:
             return key.key
+    logger.warning("ORCID's published keys don't include the ID token's key %r", key_id)
     raise HTTPException(status.HTTP_400_BAD_REQUEST, UNCHECKED_REPLY)
 
 
@@ -133,10 +143,13 @@ def checked_claims(settings: Settings, id_token: str, key: Any, nonce: str) -> d
             audience=settings.orcid_client_id,
             issuer=settings.orcid_base_url,
             options={"require": ["exp", "iat", "sub", "nonce"]},
+            leeway=CLOCK_LEEWAY,
         )
     except jwt.PyJWTError as exc:
+        logger.warning("ORCID's ID token didn't check out: %s", exc)
         raise HTTPException(status.HTTP_400_BAD_REQUEST, UNCHECKED_REPLY) from exc
     if not secrets.compare_digest(str(claims["nonce"]), nonce):
+        logger.warning("ORCID's ID token has the wrong nonce")
         raise HTTPException(status.HTTP_400_BAD_REQUEST, UNCHECKED_REPLY)
     return claims
 

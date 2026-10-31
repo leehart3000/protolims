@@ -14,9 +14,10 @@ from protolims_api.models import Base
 config = context.config
 
 # Interpret the config file for Python logging.
-# This line sets up loggers basically.
+# This line sets up loggers basically. It leaves loggers that already exist working (such as
+# the API's own, when the tests run migrations), rather than silencing them.
 if config.config_file_name is not None:
-    fileConfig(config.config_file_name)
+    fileConfig(config.config_file_name, disable_existing_loggers=False)
 
 # add your model's MetaData object here
 # for 'autogenerate' support
