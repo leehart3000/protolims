@@ -160,9 +160,12 @@ Where it sends to, and where your token comes from:
   (`import-cf-access-client-id` and `import-cf-access-client-secret`).
 
 - `--target production` sends to `https://protolims.org`, with the token in
-  `import-api-token-production`, stored the same way. Until launch, production
-  is behind Cloudflare Access, and the import service token isn't allowed
-  there yet, so this stops with "Cloudflare Access turned the request away".
+  `import-api-token-production`, stored the same way (as a new version, with
+  `gcloud secrets versions add`, as it already exists). Production is public,
+  so no Cloudflare service token is needed, but it's read-only: unlock it
+  first, and lock it again afterwards (`docs/read-only.md`). Make a token
+  lasting 30 days for each import, and revoke it on your profile page
+  straight after (revoking works while it's locked).
 
 ## Importing proteomics from the PDC (CPTAC)
 

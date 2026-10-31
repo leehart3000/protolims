@@ -76,18 +76,12 @@ jobs:
             --quiet
 
       - name: Smoke test
-        env:
-          CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
-          CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
         run: |
           URL="$(gcloud run services describe protolims-api-production \
             --region="$REGION" --format='value(status.url)')"
           curl --fail --silent --show-error "$URL/health/db"
           # Through the website, as people reach it: production must say it's read-only.
-          me="$(curl --fail --silent --show-error \
-            --header "CF-Access-Client-Id: $CF_ACCESS_CLIENT_ID" \
-            --header "CF-Access-Client-Secret: $CF_ACCESS_CLIENT_SECRET" \
-            "https://protolims.org/api/v1/auth/me")"
+          me="$(curl --fail --silent --show-error "https://protolims.org/api/v1/auth/me")"
           if ! echo "$me" | jq --exit-status '.read_only == true' > /dev/null; then
             echo "::error::Production isn't read-only after deploying: $me"
             exit 1
@@ -133,15 +127,11 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: pnpm wrangler deploy --env production
 
+      # Production is public (since 31 October 2026), so as anyone would, without signing in.
       - name: Smoke test
-        env:
-          CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
-          CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
         run: |
           for path in / /api/v1/projects; do
             status="$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' \
-              --header "CF-Access-Client-Id: $CF_ACCESS_CLIENT_ID" \
-              --header "CF-Access-Client-Secret: $CF_ACCESS_CLIENT_SECRET" \
               "https://protolims.org$path")"
             echo "$path: $status"
             if [ "$status" != 200 ]; then

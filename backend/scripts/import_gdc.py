@@ -19,8 +19,8 @@ run, unless given --apply.
 It sends your personal API token (made on your profile page), so the import is recorded as
 you and needs the same permissions as on the website: editor of the study. Locally, the token
 comes from the PROTOLIMS_API_TOKEN environment variable; for staging and production, from
-Secret Manager, read with your own gcloud login, as is the Cloudflare Access service token
-that gets past Access. See docs/importing.md.
+Secret Manager, read with your own gcloud login, as is (for staging) the Cloudflare Access
+service token that gets past Access. See docs/importing.md.
 
 Only open-access data is used, and only the patient details the demo needs.
 """
@@ -108,9 +108,9 @@ class Target:
 TARGETS = {
     "local": Target("http://127.0.0.1:8000/api/v1", None, False),
     "staging": Target("https://staging.protolims.org/api/v1", "import-api-token-staging", True),
-    # Behind Access until launch; the import service token gets past it only once production's
-    # Access application allows it (Step 79).
-    "production": Target("https://protolims.org/api/v1", "import-api-token-production", True),
+    # Public since launch (31 October 2026), so not behind Access, but read-only: unlock it to
+    # import, then lock it again (docs/read-only.md).
+    "production": Target("https://protolims.org/api/v1", "import-api-token-production", False),
 }
 TOKEN_VARIABLE = "PROTOLIMS_API_TOKEN"
 GCP_PROJECT = "protolims"

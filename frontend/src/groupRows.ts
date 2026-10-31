@@ -16,6 +16,6 @@ export function groupRows<T>(rows: T[], key: (row: T) => string) {
 // A subject's samples in one group, as on a phone, e.g. "C3L-00263-08 (TMT 126), C3L-00263-09".
 export function sampleList(rows: { sample_name?: string; label: string | null }[]) {
   return rows
-    .map((row) => (row.label ? `${row.sample_name ?? ''} (${row.label})` : (row.sample_name ?? '')))
+    .map((row) => [row.sample_name, row.label && `(${row.label})`].filter(Boolean).join(' '))
     .join(', ')
 }
