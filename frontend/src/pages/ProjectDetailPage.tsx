@@ -27,6 +27,8 @@ import { useListControls } from '../useListControls'
 import { SectionHeading } from '../components/SectionHeading'
 import { ProjectIcon, StudyIcon } from '../icons'
 import { LinkedText } from '../components/LinkedText'
+import { DeleteSection } from '../components/DeleteSection'
+import { deleteProject } from '../deleting'
 
 type Project = components['schemas']['ProjectRead']
 type StudyColumn = Exclude<StudySort, `-${string}`>
@@ -162,6 +164,14 @@ function ProjectDetails({ project }: { project: Project }) {
         <NewStudyButton align="start" projectCode={project.code} />
       </p>
       <MembersSection projectCode={project.code} />
+      <DeleteSection
+        noun="project"
+        name={project.code}
+        need={{ siteAdmin: true }}
+        explanation="Only a project with no studies can be deleted. Its roles are removed with it, and its code can be used again."
+        onDelete={() => deleteProject(project.code)}
+        deletedTo="/projects"
+      />
     </>
   )
 }

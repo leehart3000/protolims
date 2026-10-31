@@ -57,6 +57,8 @@ function doing(item: Activity) {
       return 'Changed'
     case 'revoke':
       return 'Revoked'
+    case 'delete':
+      return 'Deleted'
     case 'set_member':
       return `Gave ${person} the ${item.role ?? ''} role on`
     case 'remove_member':

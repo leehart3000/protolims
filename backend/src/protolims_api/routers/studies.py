@@ -11,7 +11,7 @@ from sqlalchemy.orm import InstrumentedAttribute
 
 from protolims_api.audit import record_event
 from protolims_api.db import SessionDep
-from protolims_api.models import Project, Study
+from protolims_api.models import Assay, DataFile, Project, Sample, Study, StudyMember, Subject
 from protolims_api.permissions import (
     Actor,
     ActorDep,
@@ -219,6 +219,68 @@ async def update_study(
         await session.refresh(study)
 
     return StudyRead.model_validate(study)
+
+
+# The kinds of record a study holds, by name, as a study must have none of them to be deleted.
+STUDY_RECORDS: dict[str, type[Subject | Sample | Assay | DataFile]] = {
+    "subject": Subject,
+    "sample": Sample,
+    "assay": Assay,
+    "data file": DataFile,
+}
+
+
+def counted(count: int, noun: str) -> str:
+    """A count with its noun, as in "1 subject" or "3 data files"."""
+    return f"{count} {noun}" if count == 1 else f"{count} {noun}s"
+
+
+@router.delete(
+    "/projects/{project_code}/studies/{study_code}", status_code=status.HTTP_204_NO_CONTENT
+)
+async def delete_study(
+    project_code: str, study_code: str, session: SessionDep, actor: ActorDep
+) -> None:
+    """Delete an empty study: one with no subjects, samples, assays or data files. Its roles
+    are removed with it, and its code can be used again. The audit trail keeps what it was.
+
+    Only the project's admins (and site administrators) can, as only they can create one.
+    """
+    study = await get_study_or_404(session, project_code, study_code, actor)
+    await require_project_role(session, actor, study.project_id, "admin")
+    held: list[str] = []
+    for noun, model in STUDY_RECORDS.items():
+        count = await session.scalar(
+            select(func.count()).select_from(model).where(model.study_id == study.id)
+        )
+        if count:
+            held.append(counted(count, noun))
+    if held:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Study {study_code!r} still has {', '.join(held)}, so it can't be deleted: "
+            "only an empty study can be",
+        )
+    roles = await session.scalar(
+        select(func.count()).select_from(StudyMember).where(StudyMember.study_id == study.id)
+    )
+    await record_event(
+        session,
+        action="delete",
+        entity_type="study",
+        entity_id=study.id,
+        actor=actor.label,
+        changes={
+            "before": {
+                "project": project_code,
+                **StudyRead.model_validate(study).model_dump(mode="json"),
+                "roles": roles,
+            }
+        },
+    )
+    # The database removes its roles (study_member), and refuses if any records remain.
+    await session.delete(study)
+    await session.commit()
 
 
 @router.get("/studies")

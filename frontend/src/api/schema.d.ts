@@ -43,7 +43,14 @@ export interface paths {
         get: operations["get_project_api_v1_projects__code__get"];
         put?: never;
         post?: never;
-        delete?: never;
+        /**
+         * Delete Project
+         * @description Delete a project with no studies. Its roles are removed with it, and its code can be
+         *     used again. The audit trail keeps what it was.
+         *
+         *     Only site administrators can, as only they can create one.
+         */
+        delete: operations["delete_project_api_v1_projects__code__delete"];
         options?: never;
         head?: never;
         /**
@@ -96,7 +103,14 @@ export interface paths {
         get: operations["get_study_api_v1_projects__project_code__studies__study_code__get"];
         put?: never;
         post?: never;
-        delete?: never;
+        /**
+         * Delete Study
+         * @description Delete an empty study: one with no subjects, samples, assays or data files. Its roles
+         *     are removed with it, and its code can be used again. The audit trail keeps what it was.
+         *
+         *     Only the project's admins (and site administrators) can, as only they can create one.
+         */
+        delete: operations["delete_study_api_v1_projects__project_code__studies__study_code__delete"];
         options?: never;
         head?: never;
         /**
@@ -2470,6 +2484,40 @@ export interface operations {
             };
         };
     };
+    delete_project_api_v1_projects__code__delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A personal API token, as Bearer <token> */
+                authorization?: string | null;
+            };
+            path: {
+                code: string;
+            };
+            cookie?: {
+                protolims_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     update_project_api_v1_projects__code__patch: {
         parameters: {
             query?: never;
@@ -2618,6 +2666,41 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["StudyRead"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_study_api_v1_projects__project_code__studies__study_code__delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A personal API token, as Bearer <token> */
+                authorization?: string | null;
+            };
+            path: {
+                project_code: string;
+                study_code: string;
+            };
+            cookie?: {
+                protolims_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

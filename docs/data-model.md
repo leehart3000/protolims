@@ -231,6 +231,13 @@ An append-only `audit_event` table records who changed what, and when.
   check that no other study's record still points at it.
 - **No hard deletes:** samples change `status` instead. Links (assay and file
   samples, file inputs) can be removed; the audit trail keeps the record.
+- **Deleting an empty study or project** is the one exception, as nothing refers
+  to it: a study with no subjects, samples, assays or data files
+  (`DELETE /projects/{p}/studies/{s}`, by the project's admins), and a project
+  with no studies (`DELETE /projects/{p}`, by site administrators), as they are
+  who can create one. Anything else answers 409, saying what's still there. Its
+  roles go with it, its code can be used again, and the audit trail records
+  what it was.
 - **Audit trail:** recorded by the application (to revisit later).
 
 ## Demo data and licensing rules

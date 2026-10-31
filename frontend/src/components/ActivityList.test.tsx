@@ -109,6 +109,19 @@ describe('ActivityList', () => {
     expect(queries[0]?.get('offset')).toBe('0')
   })
 
+  it('says a deleted study or project is no longer available', async () => {
+    stubActivity([
+      activity({ action: 'delete', entity_type: 'study', name: null }),
+      activity({ action: 'delete', entity_type: 'project', name: null }),
+    ])
+    renderList()
+
+    expect(await rowTexts()).toEqual([
+      'Deleted a study (no longer available)',
+      'Deleted a project (no longer available)',
+    ])
+  })
+
   it('says when there are no changes yet', async () => {
     stubActivity([])
     renderList()

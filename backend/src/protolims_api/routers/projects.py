@@ -11,7 +11,7 @@ from sqlalchemy.orm import InstrumentedAttribute
 
 from protolims_api.audit import record_event
 from protolims_api.db import SessionDep
-from protolims_api.models import Project
+from protolims_api.models import Project, ProjectMember, Study
 from protolims_api.permissions import (
     Actor,
     ActorDep,
@@ -155,3 +155,45 @@ async def update_project(
         await session.refresh(project)
 
     return ProjectRead.model_validate(project)
+
+
+@router.delete("/{code}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_project(code: str, session: SessionDep, actor: ActorDep) -> None:
+    """Delete a project with no studies. Its roles are removed with it, and its code can be
+    used again. The audit trail keeps what it was.
+
+    Only site administrators can, as only they can create one.
+    """
+    project = await get_project_or_404(session, code, actor)
+    require_site_admin(actor)
+    studies = await session.scalar(
+        select(func.count()).select_from(Study).where(Study.project_id == project.id)
+    )
+    if studies:
+        noun = "study" if studies == 1 else "studies"
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Project {code!r} still has {studies} {noun}, so it can't be deleted: "
+            "delete its studies first (only empty ones can be)",
+        )
+    roles = await session.scalar(
+        select(func.count())
+        .select_from(ProjectMember)
+        .where(ProjectMember.project_id == project.id)
+    )
+    await record_event(
+        session,
+        action="delete",
+        entity_type="project",
+        entity_id=project.id,
+        actor=actor.label,
+        changes={
+            "before": {
+                **ProjectRead.model_validate(project).model_dump(mode="json"),
+                "roles": roles,
+            }
+        },
+    )
+    # The database removes its roles (project_member), and refuses if any studies remain.
+    await session.delete(project)
+    await session.commit()

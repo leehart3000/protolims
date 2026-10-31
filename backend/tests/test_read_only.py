@@ -2,7 +2,7 @@
 
 import pytest
 from fastapi.testclient import TestClient
-from helpers import ALICE, API, PROJECT, STUDY, SignIn, every_change, make_records
+from helpers import ALICE, API, OTHER_STUDY, PROJECT, STUDY, SignIn, every_change, make_records
 from sqlalchemy import Engine, text
 
 from protolims_api.config import get_settings
@@ -43,6 +43,8 @@ def test_nothing_can_be_changed_while_read_only(
         ("DELETE", f"{PROJECT}/members/{ALICE}", None),
         ("DELETE", f"{API}/users/{ALICE}", None),
         ("POST", f"{API}/auth/me/tokens", {"name": "x"}),
+        ("DELETE", OTHER_STUDY, None),
+        ("DELETE", PROJECT, None),
     ]:
         assert client.request(method, url, json=body).status_code == 423, (method, url)
     assert audit_count(database) == events_before
