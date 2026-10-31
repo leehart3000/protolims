@@ -405,3 +405,34 @@ def test_derived_samples_follow_their_parents_subject(client: TestClient, databa
     )
     response = client.patch(f"{API}/samples/{rna}", json={"subject_id": first})
     assert subject_names(client, rna, library) == ["Patient-01", "Patient-01"]
+
+
+def test_a_derived_sample_already_with_the_new_subject_is_left_alone(
+    client: TestClient, database: Engine
+) -> None:
+    study = create_study(client)
+    first = create_subject(client, study, "Patient-01")
+    second = create_subject(client, study, "Patient-02")
+    tissue = create_sample(client, study, "T1", subject_id=first)
+    rna = create_sample(client, study, "T1-RNA", parent_sample_id=tissue)
+    library = create_sample(client, study, "T1-RNA-LIB", parent_sample_id=rna)
+    # As if stored before derived samples had to share their parent's subject.
+    with database.begin() as conn:
+        conn.execute(
+            text("UPDATE sample SET subject_id = :subject WHERE id = :id"),
+            {"subject": second, "id": rna},
+        )
+
+    client.patch(f"{API}/samples/{tissue}", json={"subject_id": second})
+
+    # Only the library needed changing (the RNA already had the subject), so only it has an
+    # audit entry for following its parent.
+    assert subject_names(client, tissue, rna, library) == ["Patient-02"] * 3
+    with database.connect() as conn:
+        changed = conn.execute(
+            text(
+                "SELECT entity_id::text FROM audit_event"
+                " WHERE changes->>'reason' = 'it follows its parent sample''s subject'"
+            )
+        ).scalars()
+        assert list(changed) == [library]

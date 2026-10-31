@@ -507,7 +507,7 @@ async def list_sample_assays(
         .where(AssaySample.sample_id == sample_id)
         .order_by(Assay.name, Assay.id)
     )
-    return [SampleAssayRead(**sample_assay(*row)) for row in result.tuples()]
+    return [SampleAssayRead(**sample_assay(*row)) for row in result]
 
 
 @router.get("/subjects/{subject_id}/assays")
@@ -530,5 +530,5 @@ async def list_subject_assays(
             sample_id=sample_id,
             sample_name=sample_name,
         )
-        for assay, label, assay_wide_files, sample_id, sample_name in result.tuples()
+        for assay, label, assay_wide_files, sample_id, sample_name in result
     ]

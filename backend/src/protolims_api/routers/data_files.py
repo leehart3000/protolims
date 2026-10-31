@@ -566,7 +566,7 @@ async def list_sample_data_files(
         .where(DataFileSample.sample_id == sample_id)
         .order_by(DataFile.name, DataFile.id)
     )
-    return [SampleDataFileRead(**sample_data_file(*row)) for row in result.tuples()]
+    return [SampleDataFileRead(**sample_data_file(*row)) for row in result]
 
 
 @router.get("/subjects/{subject_id}/data-files")
@@ -588,7 +588,7 @@ async def list_subject_data_files(
         SubjectDataFileRead(
             **sample_data_file(data_file, label), sample_id=sample_id, sample_name=sample_name
         )
-        for data_file, label, sample_id, sample_name in result.tuples()
+        for data_file, label, sample_id, sample_name in result
     ]
 
 
