@@ -21,6 +21,7 @@ import { editorOf } from '../permissions'
 import { errorBox } from '../styles'
 import { useListControls } from '../useListControls'
 import { AssayIcon, DataFileIcon, SampleIcon, StudyIcon, SubjectIcon } from '../icons'
+import { LinkedText } from '../components/LinkedText'
 
 type Study = components['schemas']['StudyRead']
 
@@ -99,7 +100,11 @@ function StudyDetails({ projectCode, study }: { projectCode: string; study: Stud
       </PageTitle>
 
       <DetailsCard editTo={`${studyPath}/edit`} editLabel="Edit study" editNeed={editing}>
-        {study.description && <p className="mt-3 max-w-3xl text-muted">{study.description}</p>}
+        {study.description && (
+          <p className="mt-3 max-w-3xl text-muted">
+            <LinkedText text={study.description} />
+          </p>
+        )}
 
         <DetailList
           items={[

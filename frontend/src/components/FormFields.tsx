@@ -68,16 +68,31 @@ export function TextAreaField({
   label,
   name,
   optional,
+  hint,
   ...textareaProps
 }: {
   label: string
   name: string
   optional?: boolean
+  hint?: string
 } & TextareaHTMLAttributes<HTMLTextAreaElement>) {
+  const hintId = `${name}-hint`
+
   return (
     <div>
       <FieldLabel htmlFor={name} label={label} optional={optional} />
-      <textarea id={name} name={name} className={`${inputClass} border-line`} {...textareaProps} />
+      {hint && (
+        <p id={hintId} className="mt-1 text-sm text-muted">
+          {hint}
+        </p>
+      )}
+      <textarea
+        id={name}
+        name={name}
+        aria-describedby={hint ? hintId : undefined}
+        className={`${inputClass} border-line`}
+        {...textareaProps}
+      />
     </div>
   )
 }

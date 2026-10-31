@@ -86,14 +86,22 @@ export function ProjectForm({
         defaultValue={initial.source_repository ?? ''}
         optional
       />
-      <TextField
+      <TextAreaField
         label="Licence"
         name="licence"
-        hint="For example, CC BY 4.0."
+        hint="For example, CC BY 4.0, or the terms the source sets. Web addresses become links."
         defaultValue={initial.licence ?? ''}
+        rows={3}
         optional
       />
-      <TextField label="Citation" name="citation" defaultValue={initial.citation ?? ''} optional />
+      <TextAreaField
+        label="Citation"
+        name="citation"
+        hint="How to cite the data: papers, with their DOIs as web addresses (which become links)."
+        defaultValue={initial.citation ?? ''}
+        rows={3}
+        optional
+      />
 
       <div className="flex items-center gap-4 pt-2">
         <button

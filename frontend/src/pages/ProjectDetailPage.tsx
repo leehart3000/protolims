@@ -26,9 +26,15 @@ import {
 import { useListControls } from '../useListControls'
 import { SectionHeading } from '../components/SectionHeading'
 import { ProjectIcon, StudyIcon } from '../icons'
+import { LinkedText } from '../components/LinkedText'
 
 type Project = components['schemas']['ProjectRead']
 type StudyColumn = Exclude<StudySort, `-${string}`>
+
+// A detail's text with its web addresses as links, or nothing (so it's left out) if it's empty.
+function linked(text: string | null) {
+  return text === null ? null : <LinkedText text={text} />
+}
 
 function StudyList({ projectCode }: { projectCode: string }) {
   const controls = useListControls<StudySort>('code')
@@ -131,13 +137,17 @@ function ProjectDetails({ project }: { project: Project }) {
         editLabel="Edit project"
         editNeed={{ role: 'admin', project: project.code }}
       >
-        {project.description && <p className="mt-3 max-w-3xl text-muted">{project.description}</p>}
+        {project.description && (
+          <p className="mt-3 max-w-3xl text-muted">
+            <LinkedText text={project.description} />
+          </p>
+        )}
         <DetailList
           items={[
             ['Code', <span className="font-mono">{project.code}</span>],
-            ['Source repository', project.source_repository],
-            ['Licence', project.licence],
-            ['Citation', project.citation],
+            ['Source repository', linked(project.source_repository)],
+            ['Licence', linked(project.licence)],
+            ['Citation', linked(project.citation)],
             ['Created', formatDate(project.created_at)],
           ]}
         />
