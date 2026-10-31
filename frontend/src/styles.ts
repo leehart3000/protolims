@@ -19,7 +19,7 @@ export const tableHead =
 export const tableHeader = 'px-4 py-3'
 
 // The heading of the Study column in the lists of records across all studies (StudyColumn).
-export const studyHeader = 'px-4 py-3 hidden w-px md:table-cell'
+export const studyHeader = 'px-4 py-3 hidden w-px lg:table-cell'
 
 export const tableCell = 'px-4 py-3 align-top'
 
