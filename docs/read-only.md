@@ -42,8 +42,13 @@ and, to unlock, the same with `PROTOLIMS_READ_ONLY=false`. Each makes a new
 Cloud Run revision with the same image, in about a minute; nothing is rebuilt.
 For staging, use `protolims-api-staging`.
 
-Deploys use `--update-env-vars`, so they keep the lock as it is. Don't deploy
-with `--set-env-vars`, which would replace every setting, and unlock the site.
+**Every production deploy locks it** (`PROTOLIMS_READ_ONLY=true` in
+`.github/workflows/deploy-production.yml`), whatever it was before, and its
+smoke test fails if `/api/v1/auth/me` doesn't then say `read_only: true`. So a
+deploy can never leave production unlocked, and an import must be done between
+deploys. Staging deploys use `--update-env-vars` without the setting, so they
+keep its lock as it is. Don't deploy with `--set-env-vars`, which would replace
+every setting.
 
 ## For an import
 

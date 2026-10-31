@@ -58,13 +58,16 @@ jobs:
           gcloud run jobs execute migrate-production --region="$REGION" --wait
 
       # Public access (--allow-unauthenticated) was granted once, by hand.
+      # Every deploy locks production (PROTOLIMS_READ_ONLY=true), whatever it was before, so a
+      # deploy can never leave it unlocked: unlock it by hand for an import (docs/read-only.md).
       - name: Deploy to Cloud Run
         run: |
           gcloud run deploy protolims-api-production \
             --image="$IMAGE" \
             --region="$REGION" \
             --service-account=protolims-api-production@protolims.iam.gserviceaccount.com \
-            --set-secrets=PROTOLIMS_DATABASE_URL=production-database-url:latest,PROTOLIMS_PROXY_KEY=production-proxy-key:latest \
+            --set-secrets=PROTOLIMS_DATABASE_URL=production-database-url:latest,PROTOLIMS_PROXY_KEY=production-proxy-key:latest,PROTOLIMS_ORCID_CLIENT_SECRET=orcid-client-secret:latest \
+            --update-env-vars=PROTOLIMS_PUBLIC_URL=https://protolims.org,PROTOLIMS_ORCID_BASE_URL=https://orcid.org,PROTOLIMS_ORCID_CLIENT_ID=APP-NXYFXJL2RT3PVERJ,PROTOLIMS_SITE_ADMINS=0000-0002-6473-0964,PROTOLIMS_PUBLIC_READ=true,PROTOLIMS_READ_ONLY=true \
             --port=8080 \
             --cpu=1 \
             --memory=512Mi \
@@ -73,10 +76,23 @@ jobs:
             --quiet
 
       - name: Smoke test
+        env:
+          CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
+          CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
         run: |
           URL="$(gcloud run services describe protolims-api-production \
             --region="$REGION" --format='value(status.url)')"
           curl --fail --silent --show-error "$URL/health/db"
+          # Through the website, as people reach it: production must say it's read-only.
+          me="$(curl --fail --silent --show-error \
+            --header "CF-Access-Client-Id: $CF_ACCESS_CLIENT_ID" \
+            --header "CF-Access-Client-Secret: $CF_ACCESS_CLIENT_SECRET" \
+            "https://protolims.org/api/v1/auth/me")"
+          if ! echo "$me" | jq --exit-status '.read_only == true' > /dev/null; then
+            echo "::error::Production isn't read-only after deploying: $me"
+            exit 1
+          fi
+          echo "Production is read-only."
 
   deploy-web:
     name: Deploy website to production
