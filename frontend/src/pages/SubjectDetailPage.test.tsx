@@ -195,6 +195,10 @@ describe('SubjectDetailPage', () => {
       `/data-files/${counts.data_file_id}`,
     )
     expect(files.getByRole('cell', { name: 'Tumour-01-RNA' })).toBeInTheDocument()
+    expect(screen.getByText("1 assay, measuring 1 of this subject's samples")).toBeInTheDocument()
+    expect(
+      screen.getByText("1 data file, holding data from 1 of this subject's samples"),
+    ).toBeInTheDocument()
     expect(screen.getByText(/75 files from assay/)).toHaveTextContent(
       "Also in 75 files from assay Plex 1, which hold the data of all the assay's samples.",
     )
@@ -210,6 +214,7 @@ describe('SubjectDetailPage', () => {
 
     expect(await screen.findByText(/75 files from assay/)).toHaveTextContent(/^In 75 files/)
     expect(screen.getAllByText(/files from assay/)).toHaveLength(1)
+    expect(screen.getByText("1 assay, measuring 2 of this subject's samples")).toBeInTheDocument()
     expect(within(screen.getByRole('table', { name: 'Assays' })).getAllByRole('row')).toHaveLength(
       3,
     )

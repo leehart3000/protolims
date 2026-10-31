@@ -5,8 +5,8 @@ sent:
 
     uv run --directory backend python scripts/import_gdc.py survey --project TCGA-BRCA
     uv run --directory backend python scripts/import_gdc.py fetch --project TCGA-BRCA
-    uv run --directory backend python scripts/import_gdc.py send --study RNASEQ
-    uv run --directory backend python scripts/import_gdc.py send --study RNASEQ --apply
+    uv run --directory backend python scripts/import_gdc.py send --study GDC-OPEN
+    uv run --directory backend python scripts/import_gdc.py send --study GDC-OPEN --apply
 
 "survey" lists the open-access files a GDC project has, by data type and workflow, to check
 what "fetch" will find. "fetch" reads the GDC's public API (no account needed) and saves an

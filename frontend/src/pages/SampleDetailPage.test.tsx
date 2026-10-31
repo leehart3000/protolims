@@ -148,6 +148,7 @@ describe('SampleDetailPage', () => {
     )
     expect(assays.getByRole('cell', { name: '126' })).toBeInTheDocument()
     expect(assays.getByText('126 · protein expression profiling · Orbitrap')).toBeInTheDocument()
+    expect(screen.getByText('1 assay')).toBeInTheDocument()
 
     const files = within(await screen.findByRole('table', { name: 'Data files' }))
     expect(files.getByRole('link', { name: 'counts.tsv' })).toHaveAttribute(
@@ -156,6 +157,7 @@ describe('SampleDetailPage', () => {
     )
     expect(files.getByRole('cell', { name: 'column 1' })).toBeInTheDocument()
     expect(files.getByText('column 1 · Processed · TSV')).toBeInTheDocument()
+    expect(screen.getByText('1 data file')).toBeInTheDocument()
 
     const trail = screen.getByRole('navigation', { name: 'Breadcrumb' })
     expect(within(trail).getByRole('link', { name: 'RNASEQ' })).toHaveAttribute(

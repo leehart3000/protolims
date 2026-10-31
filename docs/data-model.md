@@ -133,13 +133,13 @@ An append-only `audit_event` table records who changed what, and when.
   study, different studies can each have a sample called `S1`, and two studies
   can each record the same file. Someone working on one study never interferes
   with another. Studies are addressed through their project, e.g.
-  `/projects/TCGA-BRCA/studies/RNASEQ`.
+  `/projects/TCGA-BRCA/studies/GDC-OPEN`.
 - **External IDs** (a record's ID in its source repository) are optional, and
   unique within their study for subjects, samples, assays and data files. A
   clash is refused with a 409 whose message starts "External ID …".
 - **Addresses:** projects and studies, of which there are few and whose codes
   are chosen deliberately, are addressed by code (e.g.
-  `/projects/TCGA-BRCA/studies/RNASEQ`). Subjects, samples, assays and data
+  `/projects/TCGA-BRCA/studies/GDC-OPEN`). Subjects, samples, assays and data
   files, which are numerous and whose names are imported and may be corrected,
   are addressed by their permanent ID (e.g. `/subjects/{id}`, `/assays/{id}`,
   `/data-files/{id}`), so links never break when a name changes. Pages show
@@ -150,8 +150,8 @@ An append-only `audit_event` table records who changed what, and when.
   only one project's or study's records (a study code is unique only within its
   project, so the website always sends both), and `sort=study` to order by
   project and study code. On the website the filters are in the page's address
-  (e.g. `/assays?project=CPTAC-3&study=MULTIOMICS`), which a record's
-  breadcrumbs link to, as in Projects › CPTAC-3 › Studies › MULTIOMICS › Assays.
+  (e.g. `/assays?project=CPTAC-3&study=LUAD-DISCOVERY`), which a record's
+  breadcrumbs link to, as in Projects › CPTAC-3 › Studies › LUAD-DISCOVERY › Assays.
 - **Reserved codes:** project and study codes can't be `new` or `edit` (in any
   capitalisation), as they would clash with page addresses. If more reserved
   words are ever needed, consider GitLab-style `/-/` addresses instead.

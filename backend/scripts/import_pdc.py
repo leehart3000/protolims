@@ -4,7 +4,7 @@ It works in steps, like import_gdc.py, so you can read exactly what will be impo
 
     uv run --directory backend python scripts/import_pdc.py survey --study PDC000153
     uv run --directory backend python scripts/import_pdc.py fetch --study PDC000153 --plexes 2
-    uv run --directory backend python scripts/import_pdc.py send --study MULTIOMICS
+    uv run --directory backend python scripts/import_pdc.py send --study LUAD-DISCOVERY
 
 "survey" tries each query an import needs on one study, and prints a little of each answer
 (or the PDC's error). "fetch" takes the study's first few TMT plexes (by name), and saves an

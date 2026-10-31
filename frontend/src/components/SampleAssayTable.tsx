@@ -1,6 +1,7 @@
 import { Link } from 'react-router'
 
 import type { components } from '../api/schema'
+import { counted, samplesOf } from '../format'
 import {
   rowLink,
   table,
@@ -27,55 +28,65 @@ function summary(assay: Row) {
 export function SampleAssayTable({ assays }: { assays: Row[] }) {
   const bySample = assays.some((assay) => assay.sample_name !== undefined)
 
+  // How many there are, and (for a subject's) of how many of its samples, as rows are one for
+  // each sample in each.
+  const count = counted(new Set(assays.map((row) => row.assay_id)).size, 'assay')
+  const samples = new Set(assays.map((row) => row.sample_id)).size
+
   return (
-    <div className={`mt-4 ${tableWrapper}`}>
-      <table className={table} aria-label="Assays">
-        <thead className={tableHead}>
-          <tr>
-            <th scope="col" className={tableHeader}>
-              Name
-            </th>
-            {bySample && (
-              <th scope="col" className={`${tableHeader} hidden sm:table-cell`}>
-                Sample
+    <>
+      <p className="mt-4 text-sm text-muted">
+        {bySample ? `${count}, measuring ${samplesOf(samples)}` : count}
+      </p>
+      <div className={`mt-2 ${tableWrapper}`}>
+        <table className={table} aria-label="Assays">
+          <thead className={tableHead}>
+            <tr>
+              <th scope="col" className={tableHeader}>
+                Name
               </th>
-            )}
-            <th scope="col" className={`${tableHeader} hidden w-px sm:table-cell`}>
-              Label
-            </th>
-            <th scope="col" className={`${tableHeader} hidden sm:table-cell`}>
-              Measurement
-            </th>
-            <th scope="col" className={`${tableHeader} hidden sm:table-cell`}>
-              Platform
-            </th>
-            <th scope="col" className={`${tableHeader} w-px`}>
-              <span className="sr-only">Open</span>
-            </th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-line">
-          {assays.map((assay) => (
-            <tr key={`${assay.assay_id}-${assay.sample_id ?? ''}`} className={tableRow}>
-              <td className={`${tableCell} wrap-anywhere`}>
-                <Link to={`/assays/${assay.assay_id}`} className={rowLink}>
-                  {assay.assay_name}
-                </Link>
-                <div className="mt-1 text-sm text-muted sm:hidden">{summary(assay)}</div>
-              </td>
               {bySample && (
-                <td className={`${tableCell} hidden sm:table-cell`}>{assay.sample_name}</td>
+                <th scope="col" className={`${tableHeader} hidden sm:table-cell`}>
+                  Sample
+                </th>
               )}
-              <td className={`${tableCell} hidden whitespace-nowrap font-mono sm:table-cell`}>
-                {assay.label}
-              </td>
-              <td className={`${tableCell} hidden sm:table-cell`}>{assay.measurement_type}</td>
-              <td className={`${tableCell} hidden text-muted sm:table-cell`}>{assay.platform}</td>
-              <RowArrow />
+              <th scope="col" className={`${tableHeader} hidden w-px sm:table-cell`}>
+                Label
+              </th>
+              <th scope="col" className={`${tableHeader} hidden sm:table-cell`}>
+                Measurement
+              </th>
+              <th scope="col" className={`${tableHeader} hidden sm:table-cell`}>
+                Platform
+              </th>
+              <th scope="col" className={`${tableHeader} w-px`}>
+                <span className="sr-only">Open</span>
+              </th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody className="divide-y divide-line">
+            {assays.map((assay) => (
+              <tr key={`${assay.assay_id}-${assay.sample_id ?? ''}`} className={tableRow}>
+                <td className={`${tableCell} wrap-anywhere`}>
+                  <Link to={`/assays/${assay.assay_id}`} className={rowLink}>
+                    {assay.assay_name}
+                  </Link>
+                  <div className="mt-1 text-sm text-muted sm:hidden">{summary(assay)}</div>
+                </td>
+                {bySample && (
+                  <td className={`${tableCell} hidden sm:table-cell`}>{assay.sample_name}</td>
+                )}
+                <td className={`${tableCell} hidden whitespace-nowrap font-mono sm:table-cell`}>
+                  {assay.label}
+                </td>
+                <td className={`${tableCell} hidden sm:table-cell`}>{assay.measurement_type}</td>
+                <td className={`${tableCell} hidden text-muted sm:table-cell`}>{assay.platform}</td>
+                <RowArrow />
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </>
   )
 }

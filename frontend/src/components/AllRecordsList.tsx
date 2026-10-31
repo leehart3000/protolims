@@ -54,7 +54,7 @@ function trail(label: string, project: string, study: string | undefined) {
   ]
 }
 
-// What's listed, and where to add more, as in "Every assay in study MULTIOMICS of project
+// What's listed, and where to add more, as in "Every assay in study LUAD-DISCOVERY of project
 // CPTAC-3. To add one, go to the study."
 function Description({ one, project, study }: { one: string; project?: string; study?: string }) {
   if (project === undefined) {
@@ -137,7 +137,7 @@ function RecordList<S extends string, T>({
 
 // The page of every record of one kind (subjects, say) in the studies someone can see, a page
 // at a time, with sorting and search, and filters by project and study. The filters are in
-// the page's address (as in /assays?project=CPTAC-3&study=MULTIOMICS), so a filtered list can
+// the page's address (as in /assays?project=CPTAC-3&study=LUAD-DISCOVERY), so a filtered list can
 // be bookmarked or linked to; a study is only used with its project. `one` is the singular,
 // as in "Every assay".
 export function AllRecordsList<S extends string, T>({

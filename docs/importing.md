@@ -112,8 +112,8 @@ uv run --directory backend python scripts/import_gdc.py fetch --project TCGA-BRC
 **2. Send** the file to ProtoLIMS. The study must already exist.
 
 ```sh
-uv run --directory backend python scripts/import_gdc.py send --study RNASEQ
-uv run --directory backend python scripts/import_gdc.py send --study RNASEQ --apply
+uv run --directory backend python scripts/import_gdc.py send --study GDC-OPEN
+uv run --directory backend python scripts/import_gdc.py send --study GDC-OPEN --apply
 ```
 
 - Without `--apply`, it's a dry run: nothing is saved.
@@ -176,7 +176,7 @@ beside their RNA, miRNA and methylation data in one study.
 ```sh
 uv run --directory backend python scripts/import_pdc.py survey
 uv run --directory backend python scripts/import_pdc.py fetch --plexes 2
-uv run --directory backend python scripts/import_pdc.py send --study MULTIOMICS
+uv run --directory backend python scripts/import_pdc.py send --study LUAD-DISCOVERY
 ```
 
 - **survey** tries each PDC query on the study and prints a little of each
