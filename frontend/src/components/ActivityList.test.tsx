@@ -18,6 +18,7 @@ function activity(fields: Partial<Activity>): Activity {
     study_code: 'S1',
     person: null,
     role: null,
+    deleted: false,
     ...fields,
   }
 }
@@ -109,17 +110,40 @@ describe('ActivityList', () => {
     expect(queries[0]?.get('offset')).toBe('0')
   })
 
-  it('says a deleted study or project is no longer available', async () => {
+  it('names a deleted study or project as it was, if the change says', async () => {
     stubActivity([
-      activity({ action: 'delete', entity_type: 'study', name: null }),
-      activity({ action: 'delete', entity_type: 'project', name: null }),
+      activity({
+        action: 'delete',
+        entity_type: 'study',
+        name: 'S two',
+        study_code: 'S2',
+        deleted: true,
+      }),
+      activity({
+        action: 'create',
+        entity_type: 'project',
+        name: 'P nine',
+        project_code: 'P9',
+        study_code: null,
+        deleted: true,
+      }),
+      activity({
+        action: 'set_member',
+        entity_type: 'study',
+        name: null,
+        person: 'Y',
+        role: 'viewer',
+        deleted: true,
+      }),
     ])
     renderList()
 
     expect(await rowTexts()).toEqual([
-      'Deleted a study (no longer available)',
-      'Deleted a project (no longer available)',
+      'Deleted study S twoS2 · P1 (since deleted)',
+      'Created project P nine (since deleted)',
+      'Gave Y the viewer role on a study (no longer available)',
     ])
+    expect(screen.queryByRole('link', { name: 'S two' })).not.toBeInTheDocument()
   })
 
   it('says when there are no changes yet', async () => {

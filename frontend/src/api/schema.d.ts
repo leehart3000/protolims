@@ -1065,6 +1065,11 @@ export interface components {
             person: string | null;
             /** Role */
             role: string | null;
+            /**
+             * Deleted
+             * @default false
+             */
+            deleted: boolean;
         };
         /**
          * ApiTokenCreate

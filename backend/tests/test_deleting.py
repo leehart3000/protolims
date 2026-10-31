@@ -118,3 +118,33 @@ def test_only_site_administrators_can_delete_a_project(
     assert client.delete(f"{API}/projects/P9", headers=sign_in_as(BOB)).status_code == 403
     assert anonymous.delete(f"{API}/projects/P9").status_code == 401
     assert client.get(f"{API}/projects/P9").status_code == 200
+
+
+def test_your_changes_name_a_deleted_study_as_it_was(client: TestClient) -> None:
+    make_records(client)
+    client.put(f"{OTHER_STUDY}/members/{ALICE}", json={"role": "viewer"})
+    client.delete(OTHER_STUDY)
+
+    items = client.get(f"{API}/auth/me/activity", params={"limit": 100}).json()["items"]
+    studies = [
+        (item["action"], item["name"], item["project_code"], item["study_code"], item["deleted"])
+        for item in items
+        if item["entity_type"] == "study"
+    ]
+    assert studies == [
+        ("delete", "S2", "P1", "S2", True),
+        # A change to its roles doesn't record which study it was, so it isn't named.
+        ("set_member", None, None, None, True),
+        ("create", "S2", "P1", "S2", True),
+        ("create", "S1", "P1", "S1", False),
+    ]
+
+
+def test_your_changes_name_a_deleted_project_as_it_was(client: TestClient) -> None:
+    assert client.post(f"{API}/projects", json={"code": "P9", "name": "Nine"}).status_code == 201
+    client.delete(f"{API}/projects/P9")
+
+    items = client.get(f"{API}/auth/me/activity").json()["items"]
+    assert [
+        (item["action"], item["name"], item["project_code"], item["deleted"]) for item in items
+    ] == [("delete", "Nine", "P9", True), ("create", "Nine", "P9", True)]

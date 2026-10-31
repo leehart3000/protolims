@@ -4,6 +4,7 @@ import { Link, NavLink, Route, Routes } from 'react-router'
 import AccountMenu from './components/AccountMenu'
 import { EnvironmentBadge } from './components/EnvironmentBadge'
 import { ReadOnlyBadge } from './components/ReadOnlyBadge'
+import { ScrollToTop } from './components/ScrollToTop'
 import ThemeToggle from './components/ThemeToggle'
 import {
   AssayIcon,
@@ -68,6 +69,7 @@ export default function App() {
 
   return (
     <div className="flex min-h-screen flex-col">
+      <ScrollToTop />
       <header className="border-b border-line bg-panel">
         <div className="mx-auto flex h-14 max-w-6xl items-center gap-3 px-4 sm:h-16 sm:gap-6">
           <Link to="/" className="flex items-center gap-2.5">

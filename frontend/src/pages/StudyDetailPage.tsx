@@ -23,7 +23,6 @@ import { useListControls } from '../useListControls'
 import { AssayIcon, DataFileIcon, SampleIcon, StudyIcon, SubjectIcon } from '../icons'
 import { LinkedText } from '../components/LinkedText'
 import { DeleteSection } from '../components/DeleteSection'
-import { deleteStudy } from '../deleting'
 
 type Study = components['schemas']['StudyRead']
 
@@ -192,14 +191,7 @@ function StudyDetails({ projectCode, study }: { projectCode: string; study: Stud
       </p>
 
       <MembersSection projectCode={projectCode} studyCode={study.code} />
-      <DeleteSection
-        noun="study"
-        name={study.code}
-        need={{ role: 'admin', project: projectCode }}
-        explanation="Only an empty study can be deleted: one with no subjects, samples, assays or data files. Its roles are removed with it, and its code can be used again."
-        onDelete={() => deleteStudy(projectCode, study.code)}
-        deletedTo={`/projects/${encodeURIComponent(projectCode)}`}
-      />
+      <DeleteSection project={projectCode} study={study.code} />
     </>
   )
 }

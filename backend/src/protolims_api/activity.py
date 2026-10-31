@@ -86,11 +86,46 @@ async def describe(
     return found
 
 
-def activity_read(event: AuditEvent, description: Description | None) -> ActivityRead:
+async def deleted(
+    session: AsyncSession, events: Sequence[AuditEvent], found: dict[tuple[str, uuid.UUID], Any]
+) -> set[tuple[str, uuid.UUID]]:
+    """The projects and studies the events were made to that have since been deleted (not just
+    hidden from the actor): the only records that can be."""
+    gone: set[tuple[str, uuid.UUID]] = set()
+    kinds: dict[str, type[Project] | type[Study]] = {"project": Project, "study": Study}
+    for entity_type, model in kinds.items():
+        missing = {
+            event.entity_id
+            for event in events
+            if event.entity_type == entity_type and (entity_type, event.entity_id) not in found
+        }
+        if missing:
+            existing = set(await session.scalars(select(model.id).where(model.id.in_(missing))))
+            gone |= {(entity_type, entity_id) for entity_id in missing - existing}
+    return gone
+
+
+def as_it_was(event: AuditEvent) -> Description | None:
+    """What a deleted project or study was, from the change itself, as the person who made it
+    saw it then: creating and deleting one record all its details. Other changes (only of what
+    changed) don't say which it was, so nothing is named."""
+    values = event.changes.get("after") or event.changes.get("before") or {}
+    if "code" not in values:
+        return None
+    if event.entity_type == "project":
+        return (values.get("name") or values["code"], values["code"], None)
+    return (values.get("title") or values["code"], values.get("project"), values["code"])
+
+
+def activity_read(
+    event: AuditEvent, description: Description | None, gone: bool = False
+) -> ActivityRead:
     # Changes to roles, and removing someone, name the person in the change itself.
     after = event.changes.get("after") or {}
     before = event.changes.get("before") or {}
     person = after.get("orcid") or before.get("orcid")
+    if gone:
+        description = as_it_was(event)
     name, project_code, study_code = description or (None, None, None)
     return ActivityRead(
         occurred_at=event.occurred_at,
@@ -102,6 +137,7 @@ def activity_read(event: AuditEvent, description: Description | None) -> Activit
         study_code=study_code,
         person=person,
         role=after.get("role") if event.action in ("set_member", "remove_member") else None,
+        deleted=gone,
     )
 
 
@@ -122,9 +158,14 @@ async def activity_page(
         )
     ).all()
     found = await describe(session, actor, events)
+    gone = await deleted(session, events, found)
     return Page[ActivityRead](
         items=[
-            activity_read(event, found.get((event.entity_type, event.entity_id)))
+            activity_read(
+                event,
+                found.get((event.entity_type, event.entity_id)),
+                (event.entity_type, event.entity_id) in gone,
+            )
             for event in events
         ],
         total=total,

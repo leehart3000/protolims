@@ -6328,6 +6328,11 @@
               }
             ],
             "title": "Role"
+          },
+          "deleted": {
+            "type": "boolean",
+            "title": "Deleted",
+            "default": false
           }
         },
         "type": "object",

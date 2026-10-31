@@ -79,7 +79,8 @@ function doing(item: Activity) {
 }
 
 // One change, in words: what was done, and to what, linked to its page if it's still there and
-// can be seen; otherwise it says so.
+// can be seen; a deleted project or study is named as it was, if the change says; otherwise it
+// says it's no longer available.
 function describe(item: Activity): ReactNode {
   if (item.action === 'remove_user') {
     return `Removed ${item.person ?? 'someone'}, who had never signed in`
@@ -98,13 +99,23 @@ function describe(item: Activity): ReactNode {
     item.entity_type === 'project'
       ? null
       : [item.study_code, item.project_code].filter(Boolean).join(' · ')
+  const codes = where && <span className="ml-2 font-mono text-xs text-muted">{where}</span>
+  // A project or study deleted since, named as it was, with no page to link to.
+  if (item.deleted) {
+    return (
+      <>
+        {doing(item)} {noun} {item.name}
+        {codes} <span className="text-muted italic">(since deleted)</span>
+      </>
+    )
+  }
   return (
     <>
       {doing(item)} {noun}{' '}
       <Link to={kind.path(item)} className={textLink}>
         {item.name}
       </Link>
-      {where && <span className="ml-2 font-mono text-xs text-muted">{where}</span>}
+      {codes}
     </>
   )
 }

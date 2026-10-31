@@ -47,6 +47,9 @@ class ActivityRead(BaseModel):
     # was taken away). For removing someone: their ORCID iD.
     person: str | None
     role: str | None
+    # Whether it was a project or study that has since been deleted. Then its name and codes
+    # (if any) are as this change recorded them, and it has no page to link to.
+    deleted: bool = False
 
 
 class RoleRead(BaseModel):

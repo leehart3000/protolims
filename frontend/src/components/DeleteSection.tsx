@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
 
+import { deleteProject, deleteStudy } from '../deleting'
 import { DeleteIcon } from '../icons'
 import { refusalReason, roleOn } from '../permissions'
 import { dangerButton, errorBox, secondaryButton } from '../styles'
@@ -9,31 +10,28 @@ import { useMe } from '../useMe'
 import { DisabledButton } from './DisabledButton'
 import { SectionHeading } from './SectionHeading'
 
-// Deleting a study or project, at the bottom of its page. Shown only to those who could
-// create one there (a project's admins for a study, site administrators for a project), as
-// for the Members section; greyed out, with the reason, while the site is read-only. It's
-// confirmed first; the API says why if it isn't empty. Afterwards, it goes to `deletedTo`.
-export function DeleteSection({
-  noun,
-  name,
-  need,
-  explanation,
-  onDelete,
-  deletedTo,
-}: {
-  noun: 'study' | 'project'
-  name: string
-  need: { siteAdmin: true } | { role: 'admin'; project: string }
-  explanation: string
-  onDelete: () => Promise<void>
-  deletedTo: string
-}) {
+// Deleting an empty study (when `study` is given) or a project with no studies, at the bottom
+// of its page. Shown only to those who could create one there (a project's admins for a study,
+// site administrators for a project), as for the Members section; greyed out, with the reason,
+// while the site is read-only. It's confirmed first, and the API says why if it isn't empty.
+// Afterwards, it goes to the project's page, or to the list of projects.
+export function DeleteSection({ project, study }: { project: string; study?: string }) {
+  const noun = study === undefined ? 'project' : 'study'
+  const name = study ?? project
+  const need =
+    study === undefined ? { siteAdmin: true as const } : { role: 'admin' as const, project }
+  const explanation =
+    study === undefined
+      ? 'Only a project with no studies can be deleted. Its roles are removed with it, and its code can be used again.'
+      : 'Only an empty study can be deleted: one with no subjects, samples, assays or data files. Its roles are removed with it, and its code can be used again.'
+  const deletedTo = study === undefined ? '/projects' : `/projects/${encodeURIComponent(project)}`
+
   const { data: me } = useMe()
   const queryClient = useQueryClient()
   const navigate = useNavigate()
   const [confirming, setConfirming] = useState(false)
   const deleting = useMutation({
-    mutationFn: onDelete,
+    mutationFn: () => (study === undefined ? deleteProject(project) : deleteStudy(project, study)),
     onSuccess: async () => {
       // Leave its page first, so it isn't fetched again (and not found) on the way out. Then
       // it's gone from the lists of projects and studies, and is in your changes.
