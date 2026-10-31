@@ -1,14 +1,19 @@
-"""Import a few open-access TCGA-BRCA cases from the GDC into a ProtoLIMS study.
+"""Import open-access cases from a GDC project (such as TCGA-BRCA) into a ProtoLIMS study.
 
 It works in two halves, so you can read exactly what will be imported before anything is
 sent:
 
-    uv run --directory backend python scripts/import_gdc.py fetch
+    uv run --directory backend python scripts/import_gdc.py survey --project TCGA-BRCA
+    uv run --directory backend python scripts/import_gdc.py fetch --project TCGA-BRCA
     uv run --directory backend python scripts/import_gdc.py send --study RNASEQ
     uv run --directory backend python scripts/import_gdc.py send --study RNASEQ --apply
 
-"fetch" reads the GDC's public API (no account needed) and saves an import request to a JSON
-file. "send" sends that file to ProtoLIMS: as a dry run, unless given --apply.
+"survey" lists the open-access files a GDC project has, by data type and workflow, to check
+what "fetch" will find. "fetch" reads the GDC's public API (no account needed) and saves an
+import request to a JSON file: the first cases (by GDC name) that have every chosen kind of
+data (see ASSAY_TYPES), with their samples, the aliquots or portions each file was made
+from, one assay per kind of data, and the files. "send" sends that file to ProtoLIMS: as a dry
+run, unless given --apply.
 
 "send" goes to your local ProtoLIMS unless given --target staging or --target production.
 It sends your personal API token (made on your profile page), so the import is recorded as
@@ -36,11 +41,57 @@ from protolims_api.schemas.importing import ImportRequest
 
 GDC_API = "https://api.gdc.cancer.gov"
 PROJECT = "TCGA-BRCA"
-WORKFLOW = "STAR - Counts"
-ASSAY = "RNA-Seq gene counts"
 # Kept beside the repository, never in it, so no data is committed by accident.
 IMPORTS = Path(__file__).resolve().parents[3] / "protolims_resources" / "imports"
-DEFAULT_FILE = IMPORTS / "gdc-tcga-brca.json"
+# Enough to find every open file of one kind in a project (TCGA-BRCA has about 1,100 cases).
+MAX_FILES = 10_000
+
+
+@dataclass(frozen=True)
+class AssayType:
+    """One kind of open-access GDC data, imported as one assay in the study."""
+
+    # The GDC's data_type for the files.
+    data_type: str
+    # The assay's name and description in ProtoLIMS (the first, RNA-seq, is kept as it was
+    # first imported, so importing again leaves it unchanged).
+    assay: str
+    measurement_type: str
+    technology_type: str
+    # What the files were made from: the material of the aliquot (or portion) they link to.
+    material: str
+
+
+ASSAY_TYPES = {
+    "rna": AssayType(
+        "Gene Expression Quantification",
+        "RNA-Seq gene counts",
+        "transcription profiling",
+        "nucleotide sequencing",
+        "RNA",
+    ),
+    "mirna": AssayType(
+        "miRNA Expression Quantification",
+        "miRNA-Seq expression",
+        "miRNA profiling",
+        "nucleotide sequencing",
+        "RNA",
+    ),
+    "methylation": AssayType(
+        "Methylation Beta Value",
+        "DNA methylation beta values",
+        "DNA methylation profiling",
+        "DNA methylation microarray",
+        "DNA",
+    ),
+    "protein": AssayType(
+        "Protein Expression Quantification",
+        "RPPA protein expression",
+        "protein expression profiling",
+        "reverse phase protein array",
+        "protein lysate",
+    ),
+}
 
 
 @dataclass(frozen=True)
@@ -146,88 +197,183 @@ def subject(case: Record) -> Record:
     }
 
 
-def linked_aliquots(hit: Record) -> list[tuple[Record, Record, Record]]:
-    """The (case, sample, aliquot) chains a GDC file comes from."""
+def linked_entities(hit: Record) -> list[tuple[Record, Record, Record]]:
+    """The (case, sample, entity) chains a GDC file comes from, where the entity is the
+    aliquot (or, for protein arrays, the portion) the file names as its source."""
     wanted = {entity["entity_id"] for entity in hit.get("associated_entities", [])}
     found = []
     for case in hit.get("cases", []):
         for sample in case.get("samples", []):
             for portion in sample.get("portions", []):
+                if portion.get("portion_id") in wanted:
+                    found.append((case, sample, {**portion, "id": portion["portion_id"]}))
                 for analyte in portion.get("analytes", []):
                     for aliquot in analyte.get("aliquots", []):
                         if aliquot["aliquot_id"] in wanted:
-                            found.append((case, sample, aliquot))
+                            found.append((case, sample, {**aliquot, "id": aliquot["aliquot_id"]}))
     return found
 
 
-def build_request(cases: list[Record], files: list[Record]) -> Record:
-    """Turn the GDC's cases and files into a ProtoLIMS import request."""
+def tissue_sample(case: Record, sample: Record) -> Record:
+    """A GDC sample (such as a tumour or normal tissue) as a ProtoLIMS sample."""
+    sample_type = sample.get("sample_type") or ""
+    characteristics = {
+        "sample_type": sample.get("sample_type"),
+        "tissue_type": sample.get("tissue_type"),
+    }
+    return {
+        "name": sample["submitter_id"],
+        "external_id": sample["sample_id"],
+        "subject": case["submitter_id"],
+        "material_type": "blood" if "Blood" in sample_type else "tissue",
+        "characteristics": {k: v for k, v in characteristics.items() if v is not None},
+    }
+
+
+def build_request(project: str, cases: list[Record], files: dict[str, list[Record]]) -> Record:
+    """Turn the GDC's cases and each kind's files into a ProtoLIMS import request."""
     samples: dict[str, Record] = {}
-    aliquots: dict[str, Record] = {}
+    derived: dict[str, Record] = {}
     data_files = []
-    for hit in sorted(files, key=lambda hit: hit["file_name"]):
-        linked = linked_aliquots(hit)
-        for case, sample, aliquot in linked:
-            sample_type = sample.get("sample_type") or ""
-            characteristics = {
-                "sample_type": sample.get("sample_type"),
-                "tissue_type": sample.get("tissue_type"),
-            }
-            samples[sample["sample_id"]] = {
-                "name": sample["submitter_id"],
-                "external_id": sample["sample_id"],
-                "subject": case["submitter_id"],
-                "material_type": "blood" if "Blood" in sample_type else "tissue",
-                "characteristics": {k: v for k, v in characteristics.items() if v is not None},
-            }
-            aliquots[aliquot["aliquot_id"]] = {
-                "name": aliquot["submitter_id"],
-                "external_id": aliquot["aliquot_id"],
-                "parent": sample["submitter_id"],
-                "material_type": "RNA",
-            }
-        data_files.append(
+    assays = []
+    for kind, hits in files.items():
+        assay_type = ASSAY_TYPES[kind]
+        measured: set[str] = set()
+        workflows: set[str] = set()
+        unlinked = 0
+        for hit in sorted(hits, key=lambda hit: hit["file_name"]):
+            linked = linked_entities(hit)
+            if not linked:
+                unlinked += 1
+            for case, sample, entity in linked:
+                samples[sample["sample_id"]] = tissue_sample(case, sample)
+                derived[entity["id"]] = {
+                    "name": entity["submitter_id"],
+                    "external_id": entity["id"],
+                    "parent": sample["submitter_id"],
+                    "material_type": assay_type.material,
+                }
+                measured.add(entity["submitter_id"])
+            workflow = (hit.get("analysis") or {}).get("workflow_type")
+            if workflow:
+                workflows.add(workflow)
+            data_files.append(
+                {
+                    "name": hit["file_name"],
+                    "external_id": hit["file_id"],
+                    "uri": f"{GDC_API}/data/{hit['file_id']}",
+                    "level": "processed",
+                    "format": hit["data_format"],
+                    "assay": assay_type.assay,
+                    "size_bytes": hit.get("file_size"),
+                    "summary": {
+                        key: value
+                        for key, value in {"workflow": workflow, "md5": hit.get("md5sum")}.items()
+                        if value
+                    },
+                    "samples": [{"sample": entity["submitter_id"]} for _, _, entity in linked],
+                }
+            )
+        if unlinked:
+            print(
+                f"Warning: {unlinked} of the {kind} files aren't linked to an aliquot or portion, "
+                "so they'll have no samples. Check the GDC's associated_entities for them."
+            )
+        parameters = {"workflow": ", ".join(sorted(workflows))} if workflows else {}
+        assays.append(
             {
-                "name": hit["file_name"],
-                "external_id": hit["file_id"],
-                "uri": f"{GDC_API}/data/{hit['file_id']}",
-                "level": "processed",
-                "format": hit["data_format"],
-                "assay": ASSAY,
-                "size_bytes": hit.get("file_size"),
-                "summary": {"workflow": WORKFLOW, "md5": hit.get("md5sum")},
-                "samples": [{"sample": aliquot["submitter_id"]} for _, _, aliquot in linked],
+                "name": assay_type.assay,
+                "measurement_type": assay_type.measurement_type,
+                "technology_type": assay_type.technology_type,
+                "parameters": {**parameters, "source": "GDC"},
+                "samples": [{"sample": name} for name in sorted(measured)],
             }
         )
-    aliquot_names = sorted(aliquot["name"] for aliquot in aliquots.values())
     return {
-        "source": f"GDC {PROJECT}, fetched {datetime.now(UTC).date().isoformat()}",
+        "source": f"GDC {project}, fetched {datetime.now(UTC).date().isoformat()}",
         "dry_run": True,
         "subjects": [subject(case) for case in cases],
         "samples": sorted(
-            [*samples.values(), *aliquots.values()], key=lambda sample: sample["name"]
+            [*samples.values(), *derived.values()], key=lambda sample: sample["name"]
         ),
-        "assays": [
-            {
-                "name": ASSAY,
-                "measurement_type": "transcription profiling",
-                "technology_type": "nucleotide sequencing",
-                "parameters": {"workflow": WORKFLOW, "source": "GDC"},
-                "samples": [{"sample": name} for name in aliquot_names],
-            }
-        ],
+        "assays": assays,
         "data_files": data_files,
     }
 
 
-def fetch(count: int, out: Path) -> None:
-    """Fetch the first cases (by GDC name) that have open RNA-seq gene counts, and save them."""
+def open_files(
+    project: str, data_type: str, fields: list[str], cases: list[str] | None = None
+) -> list[Record]:
+    """The project's open-access files of one data type (only those of the given cases)."""
+    filters = [
+        equals("cases.project.project_id", project),
+        equals("data_type", data_type),
+        equals("access", "open"),
+    ]
+    if cases is not None:
+        filters.append(one_of("cases.case_id", cases))
+    return search_gdc("files", all_of(*filters), fields, MAX_FILES)
+
+
+def survey(project: str) -> None:
+    """Print how many open-access files the project has, by data type and workflow."""
+    body = {
+        "filters": all_of(equals("cases.project.project_id", project), equals("access", "open")),
+        "facets": "data_type,analysis.workflow_type",
+        "size": 0,
+        "format": "json",
+    }
+    status, reply = post_json(f"{GDC_API}/files", body)
+    if status != 200:
+        sys.exit(f"The GDC replied {status}: {reply}")
+    total = reply["data"]["pagination"]["total"]
+    print(f"{project}: {total} open-access files")
+    for facet, buckets in reply["data"]["aggregations"].items():
+        print(f"\nBy {facet}:")
+        for bucket in buckets["buckets"]:
+            print(f"  {bucket['doc_count']:>6}  {bucket['key']}")
+    known = {assay_type.data_type: kind for kind, assay_type in ASSAY_TYPES.items()}
+    print("\n--kinds this script can fetch: " + ", ".join(f"{k} ({v})" for v, k in known.items()))
+
+
+FILE_FIELDS = [
+    "file_id",
+    "file_name",
+    "file_size",
+    "md5sum",
+    "data_format",
+    "analysis.workflow_type",
+    "associated_entities.entity_id",
+    "cases.case_id",
+    "cases.submitter_id",
+    "cases.samples.sample_id",
+    "cases.samples.submitter_id",
+    "cases.samples.sample_type",
+    "cases.samples.tissue_type",
+    "cases.samples.portions.portion_id",
+    "cases.samples.portions.submitter_id",
+    "cases.samples.portions.analytes.aliquots.aliquot_id",
+    "cases.samples.portions.analytes.aliquots.submitter_id",
+]
+
+
+def fetch(project: str, kinds: list[str], count: int, out: Path) -> None:
+    """Fetch the first cases (by GDC name) that have open files of every chosen kind, with
+    those files, and save them as an import request."""
+    # Which cases have each kind of data, from the files' own links to cases.
+    having: list[set[str]] = []
+    for kind in kinds:
+        hits = open_files(project, ASSAY_TYPES[kind].data_type, ["cases.case_id"])
+        case_ids = {case["case_id"] for hit in hits for case in hit.get("cases", [])}
+        print(f"{kind}: {len(hits)} open files, from {len(case_ids)} cases")
+        having.append(case_ids)
+    in_all = set.intersection(*having) if having else set()
+    if not in_all:
+        sys.exit(f"No case in {project} has open files of every kind: {', '.join(kinds)}")
+
     cases = search_gdc(
         "cases",
-        all_of(
-            equals("project.project_id", PROJECT),
-            equals("files.analysis.workflow_type", WORKFLOW),
-        ),
+        one_of("case_id", sorted(in_all)),
         [
             "case_id",
             "submitter_id",
@@ -235,40 +381,24 @@ def fetch(count: int, out: Path) -> None:
             "diagnoses.age_at_diagnosis",
             "diagnoses.primary_diagnosis",
         ],
-        count,
+        len(in_all),
     )
-    files = search_gdc(
-        "files",
-        all_of(
-            one_of("cases.case_id", [case["case_id"] for case in cases]),
-            equals("analysis.workflow_type", WORKFLOW),
-            equals("access", "open"),
-        ),
-        [
-            "file_id",
-            "file_name",
-            "file_size",
-            "md5sum",
-            "data_format",
-            "associated_entities.entity_id",
-            "cases.case_id",
-            "cases.submitter_id",
-            "cases.samples.sample_id",
-            "cases.samples.submitter_id",
-            "cases.samples.sample_type",
-            "cases.samples.tissue_type",
-            "cases.samples.portions.analytes.aliquots.aliquot_id",
-            "cases.samples.portions.analytes.aliquots.submitter_id",
-        ],
-        1000,
-    )
-    request = build_request(cases, files)
+    cases = sorted(cases, key=lambda case: case["submitter_id"])[:count]
+    chosen = [case["case_id"] for case in cases]
+    files = {
+        kind: open_files(project, ASSAY_TYPES[kind].data_type, FILE_FIELDS, chosen)
+        for kind in kinds
+    }
+    request = build_request(project, cases, files)
     ImportRequest.model_validate(request)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(request, indent=2) + "\n")
+    records = sum(len(request[key]) for key in ("subjects", "samples", "assays", "data_files"))
+    links = sum(len(item["samples"]) for item in [*request["assays"], *request["data_files"]])
     print(
-        f"Saved {len(request['subjects'])} subjects, {len(request['samples'])} samples and "
-        f"{len(request['data_files'])} data files to {out}"
+        f"Saved {len(request['subjects'])} subjects, {len(request['samples'])} samples, "
+        f"{len(request['assays'])} assays and {len(request['data_files'])} data files "
+        f"({records + links} records and links; at most 5,000 per import) to {out}"
     )
 
 
@@ -356,23 +486,43 @@ def send(path: Path, target_name: str, project: str, study: str, *, apply: bool)
         print("Dry run: nothing was saved. Add --apply to save.")
 
 
+def default_file(project: str) -> Path:
+    """Where a project's import request is saved, e.g. imports/gdc-tcga-brca.json."""
+    return IMPORTS / f"gdc-{project.lower()}.json"
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     commands = parser.add_subparsers(dest="command", required=True)
+    survey_command = commands.add_parser("survey", help="list a GDC project's open files")
+    survey_command.add_argument("--project", default=PROJECT, help=f"default {PROJECT}")
     fetch_command = commands.add_parser("fetch", help="fetch from the GDC and save to a file")
+    fetch_command.add_argument("--project", default=PROJECT, help=f"default {PROJECT}")
+    fetch_command.add_argument(
+        "--kinds",
+        default=",".join(ASSAY_TYPES),
+        help=f"kinds of data, separated by commas (default {','.join(ASSAY_TYPES)})",
+    )
     fetch_command.add_argument("--cases", type=int, default=10, help="how many (default 10)")
-    fetch_command.add_argument("--out", type=Path, default=DEFAULT_FILE)
+    fetch_command.add_argument("--out", type=Path, help="default imports/gdc-<project>.json")
     send_command = commands.add_parser("send", help="send a saved file to ProtoLIMS")
-    send_command.add_argument("--file", type=Path, default=DEFAULT_FILE)
-    send_command.add_argument("--target", choices=TARGETS, default="local")
-    send_command.add_argument("--project", default=PROJECT)
+    send_command.add_argument("--project", default=PROJECT, help="the ProtoLIMS project code")
     send_command.add_argument("--study", required=True)
+    send_command.add_argument("--file", type=Path, help="default imports/gdc-<project>.json")
+    send_command.add_argument("--target", choices=TARGETS, default="local")
     send_command.add_argument("--apply", action="store_true", help="save (default: dry run)")
     args = parser.parse_args()
-    if args.command == "fetch":
-        fetch(args.cases, args.out)
+    if args.command == "survey":
+        survey(args.project)
+    elif args.command == "fetch":
+        kinds = [kind.strip() for kind in args.kinds.split(",") if kind.strip()]
+        unknown = [kind for kind in kinds if kind not in ASSAY_TYPES]
+        if unknown or not kinds:
+            sys.exit(f"Unknown kinds: {', '.join(unknown)}. Known: {', '.join(ASSAY_TYPES)}")
+        fetch(args.project, kinds, args.cases, args.out or default_file(args.project))
     else:
-        send(args.file, args.target, args.project, args.study, apply=args.apply)
+        path = args.file or default_file(args.project)
+        send(path, args.target, args.project, args.study, apply=args.apply)
 
 
 if __name__ == "__main__":

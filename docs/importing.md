@@ -52,27 +52,56 @@ A script signs in as you with a personal API token, sent with each request as
 - Your profile shows when each token was last used (to within an hour), and
   making and revoking tokens are in your list of changes.
 
-## Importing from the GDC (TCGA-BRCA)
+## Importing from the GDC
 
-`backend/scripts/import_gdc.py` imports open-access TCGA-BRCA cases with their
-RNA-seq gene counts files. It works in two halves, so you can read exactly what
-will be imported before anything is sent.
+`backend/scripts/import_gdc.py` imports open-access cases from a GDC project
+(TCGA-BRCA unless `--project` says otherwise), with several kinds of data for
+each. It works in steps, so you can read exactly what will be imported before
+anything is sent.
+
+**0. Survey** (optional): list a project's open-access files by data type and
+workflow, to see what's there:
+
+```sh
+uv run --directory backend python scripts/import_gdc.py survey --project TCGA-BRCA
+```
 
 **1. Fetch** from the GDC's public API (no account needed) and save the import
 request to a file:
 
 ```sh
-uv run --directory backend python scripts/import_gdc.py fetch
+uv run --directory backend python scripts/import_gdc.py fetch --project TCGA-BRCA
 ```
 
-- `--cases 200` fetches more cases (the default is 10): the first ones by TCGA
-  code that have open-access gene counts.
-- `--out FILE` saves somewhere else. Paths are relative to `backend`.
-- By default the file goes in `protolims_resources/imports/`, a folder **beside**
-  the repository, never in it, so no data can be committed by accident.
-- Each patient keeps only sex at birth, age at diagnosis in whole years, and the
-  primary diagnosis. GDC's portion and analyte levels are skipped: each tumour
-  sample has one RNA aliquot as its child.
+- **Which kinds of data:** `--kinds` chooses among these, separated by commas
+  (all four by default). Each becomes one assay in the study:
+
+  | Kind | GDC data type | Assay | Made from |
+  | --- | --- | --- | --- |
+  | `rna` | Gene Expression Quantification | RNA-Seq gene counts | RNA aliquot |
+  | `mirna` | miRNA Expression Quantification | miRNA-Seq expression | RNA aliquot |
+  | `methylation` | Methylation Beta Value | DNA methylation beta values | DNA aliquot |
+  | `protein` | Protein Expression Quantification | RPPA protein expression | portion (protein lysate) |
+
+- **Which cases:** the first ones by GDC name that have open files of **every**
+  chosen kind; `--cases 50` chooses how many (the default is 10). It prints how
+  many files and cases each kind has.
+- **Where it's saved:** `protolims_resources/imports/gdc-<project>.json` (such
+  as `gdc-tcga-brca.json`), a folder **beside** the repository, never in it, so
+  no data can be committed by accident. `--out FILE` saves somewhere else.
+  Paths are relative to `backend`.
+- **What's kept:** each patient keeps only sex at birth, age at diagnosis in
+  whole years, and the primary diagnosis. Each tissue sample has, as children,
+  the aliquots (or portions) the files were made from; the GDC's analyte level
+  is skipped. Each file records its workflow and MD5 checksum, and links to the
+  GDC's download address; the data itself stays at the GDC.
+- **Size:** it prints how many records and links the request holds. An import
+  takes at most 5,000, which is roughly 150 to 200 cases with all four kinds.
+  For more, fetch a few kinds at a time into separate files (`--kinds rna,mirna
+  --out …`) and send each; cases and samples already imported are matched, not
+  repeated.
+- **Warnings:** if a file isn't linked to an aliquot or portion, it says so, and
+  the file is imported without samples.
 
 **2. Send** the file to ProtoLIMS. The study must already exist.
 
@@ -82,8 +111,9 @@ uv run --directory backend python scripts/import_gdc.py send --study RNASEQ --ap
 ```
 
 - Without `--apply`, it's a dry run: nothing is saved.
+- `--project CODE` is the ProtoLIMS project (TCGA-BRCA by default), and also
+  chooses the default file, `gdc-<project>.json`.
 - `--file FILE` sends a file other than the default.
-- `--project CODE` sends to a project other than TCGA-BRCA.
 - If ProtoLIMS refuses the token (401), you aren't an editor of the study
   (403), or the site is read-only (423, see `docs/read-only.md`), the script
   says so, and nothing is imported. A dry run works even while the site is
