@@ -19,6 +19,7 @@ from protolims_api.conflicts import external_id_conflict, is_external_id_conflic
 from protolims_api.db import SessionDep
 from protolims_api.models import Project, Study, Subject
 from protolims_api.permissions import (
+    Actor,
     ActorDep,
     can_see_study,
     require_editor_of,
@@ -208,17 +209,23 @@ async def get_subject(subject_id: uuid.UUID, session: SessionDep, actor: ActorDe
     return subject_read(subject, project_code, study_code)
 
 
-@router.patch("/subjects/{subject_id}")
-async def update_subject(
-    subject_id: uuid.UUID, payload: SubjectUpdate, session: SessionDep, actor: ActorDep
-) -> SubjectRead:
-    """Change some of a subject's details. Only the fields sent are changed; null clears one."""
+async def get_subject_or_404(session: AsyncSession, subject_id: uuid.UUID, actor: Actor) -> Subject:
+    """Find a subject, or respond with 404. One in a study the actor can't see is not found."""
     subject = await session.get(Subject, subject_id)
     if subject is None or not await can_see_study(session, actor, subject.study_id):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Subject {subject_id} not found",
         )
+    return subject
+
+
+@router.patch("/subjects/{subject_id}")
+async def update_subject(
+    subject_id: uuid.UUID, payload: SubjectUpdate, session: SessionDep, actor: ActorDep
+) -> SubjectRead:
+    """Change some of a subject's details. Only the fields sent are changed; null clears one."""
+    subject = await get_subject_or_404(session, subject_id, actor)
     await require_editor_of(session, actor, subject.study_id)
 
     requested = payload.model_dump(exclude_unset=True)

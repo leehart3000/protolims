@@ -8,6 +8,8 @@ import SubjectDetailPage from './SubjectDetailPage'
 
 type Subject = components['schemas']['SubjectRead']
 type Sample = components['schemas']['SampleRead']
+type SubjectAssay = components['schemas']['SubjectAssayRead']
+type SubjectDataFile = components['schemas']['SubjectDataFileRead']
 
 const subjectId = '0192a5b0-0000-7000-8000-000000000005'
 
@@ -47,13 +49,41 @@ const tumour: Sample = {
   parent_sample_name: null,
 }
 
+const plex: SubjectAssay = {
+  assay_id: '0192a5b0-0000-7000-8000-000000000020',
+  assay_name: 'Plex 1',
+  measurement_type: 'protein expression profiling',
+  technology_type: 'mass spectrometry',
+  platform: null,
+  label: 'TMT 126',
+  assay_wide_files: 75,
+  sample_id: '0192a5b0-0000-7000-8000-000000000012',
+  sample_name: 'Tumour-01-protein',
+}
+
+const counts: SubjectDataFile = {
+  data_file_id: '0192a5b0-0000-7000-8000-000000000030',
+  name: 'counts.tsv',
+  level: 'processed',
+  format: 'TSV',
+  uri: 'https://example.org/counts.tsv',
+  label: null,
+  sample_id: '0192a5b0-0000-7000-8000-000000000011',
+  sample_name: 'Tumour-01-RNA',
+}
+
 const samplesPath = '/api/v1/projects/TCGA-BRCA/studies/RNASEQ/samples'
 
-// Answers the subject request with `subjectResponse`, and the samples request with a page of
-// samples. Returns the query of each samples request.
+// Answers the subject request with `subjectResponse`, the samples request with a page of
+// samples, and the requests for its samples' assays and data files with fresh responses.
+// Returns the query of each samples request.
 function respondWith(
   subjectResponse: Response,
   samplePage: { items: Sample[]; total: number } = { items: [], total: 0 },
+  {
+    assays = () => Response.json([]),
+    dataFiles = () => Response.json([]),
+  }: { assays?: () => Response; dataFiles?: () => Response } = {},
 ) {
   const sampleQueries: URLSearchParams[] = []
   vi.stubGlobal(
@@ -63,6 +93,12 @@ function respondWith(
       if (url.pathname === samplesPath) {
         sampleQueries.push(url.searchParams)
         return Promise.resolve(Response.json(samplePage))
+      }
+      if (url.pathname.endsWith('/assays')) {
+        return Promise.resolve(assays())
+      }
+      if (url.pathname.endsWith('/data-files')) {
+        return Promise.resolve(dataFiles())
       }
       return Promise.resolve(subjectResponse)
     }),
@@ -127,6 +163,69 @@ describe('SubjectDetailPage', () => {
     expect(screen.queryByText('Species:')).not.toBeInTheDocument()
     expect(screen.queryByText('External ID:')).not.toBeInTheDocument()
     expect(await screen.findByText('No samples from this subject yet.')).toBeInTheDocument()
+    expect(
+      await screen.findByText("None of this subject's samples have been measured in an assay yet."),
+    ).toBeInTheDocument()
+    expect(
+      await screen.findByText("None of this subject's samples are in data files yet."),
+    ).toBeInTheDocument()
+  })
+
+  it('lists the assays and data files its samples are in, with which sample', async () => {
+    respondWith(Response.json(patient), undefined, {
+      assays: () => Response.json([plex]),
+      dataFiles: () => Response.json([counts]),
+    })
+    renderPage()
+
+    const assays = within(await screen.findByRole('table', { name: 'Assays' }))
+    expect(assays.getByRole('link', { name: 'Plex 1' })).toHaveAttribute(
+      'href',
+      `/assays/${plex.assay_id}`,
+    )
+    expect(assays.getByRole('cell', { name: 'Tumour-01-protein' })).toBeInTheDocument()
+    expect(assays.getByRole('cell', { name: 'TMT 126' })).toBeInTheDocument()
+    expect(
+      assays.getByText('Tumour-01-protein · TMT 126 · protein expression profiling'),
+    ).toBeInTheDocument()
+
+    const files = within(await screen.findByRole('table', { name: 'Data files' }))
+    expect(files.getByRole('link', { name: 'counts.tsv' })).toHaveAttribute(
+      'href',
+      `/data-files/${counts.data_file_id}`,
+    )
+    expect(files.getByRole('cell', { name: 'Tumour-01-RNA' })).toBeInTheDocument()
+    expect(screen.getByText(/75 files from assay/)).toHaveTextContent(
+      "Also in 75 files from assay Plex 1, which hold the data of all the assay's samples.",
+    )
+  })
+
+  it("lists only its assays' files when its samples have none of their own", async () => {
+    // Two of its samples were in the plex, but its files are mentioned once.
+    const alsoInPlex = { ...plex, sample_id: tumour.id, sample_name: 'Tumour-01', label: null }
+    respondWith(Response.json(patient), undefined, {
+      assays: () => Response.json([plex, alsoInPlex]),
+    })
+    renderPage()
+
+    expect(await screen.findByText(/75 files from assay/)).toHaveTextContent(/^In 75 files/)
+    expect(screen.getAllByText(/files from assay/)).toHaveLength(1)
+    expect(within(screen.getByRole('table', { name: 'Assays' })).getAllByRole('row')).toHaveLength(
+      3,
+    )
+    expect(screen.queryByRole('table', { name: 'Data files' })).not.toBeInTheDocument()
+  })
+
+  it('shows an error when its assays or data files cannot be loaded', async () => {
+    const error = () => Response.json({ detail: 'Error' }, { status: 500 })
+    respondWith(Response.json(patient), undefined, { assays: error, dataFiles: error })
+    renderPage()
+
+    const alerts = await screen.findAllByRole('alert')
+    expect(alerts.map((alert) => alert.textContent)).toEqual([
+      'Could not load assays. Please try again later.',
+      'Could not load data files. Please try again later.',
+    ])
   })
 
   it('says when there is no such subject', async () => {

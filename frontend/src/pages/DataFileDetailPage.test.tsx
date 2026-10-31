@@ -189,6 +189,36 @@ describe('DataFileDetailPage', () => {
     expect(await screen.findByText('No files recorded as made from this one.')).toBeInTheDocument()
   })
 
+  it("shows its assay's samples when it has none of its own", async () => {
+    const spectra = { ...counts, name: 'f01.raw', assay_name: 'Plex 1', sample_count: 0 }
+    const sampleRequests: string[] = []
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((request: Request) => {
+        const url = new URL(request.url)
+        if (url.pathname.endsWith('/samples')) {
+          sampleRequests.push(url.pathname)
+          return Promise.resolve(Response.json({ items: [tumourRna], total: 1 }))
+        }
+        if (url.pathname.endsWith('/inputs') || url.pathname.endsWith('/outputs')) {
+          return Promise.resolve(Response.json([]))
+        }
+        return Promise.resolve(Response.json(spectra))
+      }),
+    )
+    renderPage()
+
+    expect(await screen.findByText(/has no samples of its own/)).toHaveTextContent(
+      'This file has no samples of its own, so it holds the data of all the samples of its ' +
+        'assay, Plex 1.',
+    )
+    expect(await screen.findByRole('link', { name: 'Tumour-01-RNA' })).toBeInTheDocument()
+    // Only the assay's samples are asked for, not the file's.
+    expect([...new Set(sampleRequests)]).toEqual([
+      `/api/v1/assays/${counts.assay_id ?? ''}/samples`,
+    ])
+  })
+
   it('sorts and searches its samples', async () => {
     const sampleQueries = stubApi({
       samples: (query) =>

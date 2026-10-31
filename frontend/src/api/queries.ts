@@ -303,6 +303,28 @@ export async function fetchSampleDataFiles(sampleId: string) {
   return data
 }
 
+// The assays a subject's samples were measured in, once for each sample.
+export async function fetchSubjectAssays(subjectId: string) {
+  const { data } = await api.GET('/api/v1/subjects/{subject_id}/assays', {
+    params: { path: { subject_id: subjectId } },
+  })
+  if (!data) {
+    throw new Error('Could not load assays')
+  }
+  return data
+}
+
+// The data files a subject's samples are in, once for each sample.
+export async function fetchSubjectDataFiles(subjectId: string) {
+  const { data } = await api.GET('/api/v1/subjects/{subject_id}/data-files', {
+    params: { path: { subject_id: subjectId } },
+  })
+  if (!data) {
+    throw new Error('Could not load data files')
+  }
+  return data
+}
+
 // Who is signed in on this browser (user is null if nobody), and what this server allows.
 export async function fetchMe() {
   const { data } = await api.GET('/api/v1/auth/me')

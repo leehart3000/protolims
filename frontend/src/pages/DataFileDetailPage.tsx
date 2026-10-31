@@ -9,6 +9,7 @@ import {
   fetchDataFileSamplePage,
 } from '../api/queries'
 import type { components } from '../api/schema'
+import { AssaySampleList } from '../components/AssaySampleList'
 import { LinkedSampleTable } from '../components/LinkedSampleTable'
 import { Breadcrumbs } from '../components/Breadcrumbs'
 import { DetailList } from '../components/DetailList'
@@ -189,7 +190,21 @@ function DataFileDetails({ file }: { file: DataFile }) {
       <SectionHeading icon={SampleIcon} className="mt-10">
         Samples
       </SectionHeading>
-      <DataFileSampleList dataFileId={file.id} />
+      {file.sample_count === 0 && file.assay_id ? (
+        <>
+          <p className="mt-3 max-w-2xl text-muted">
+            This file has no samples of its own, so it holds the data of all the samples of its
+            assay,{' '}
+            <Link to={`/assays/${file.assay_id}`} className={textLink}>
+              {file.assay_name}
+            </Link>
+            .
+          </p>
+          <AssaySampleList assayId={file.assay_id} />
+        </>
+      ) : (
+        <DataFileSampleList dataFileId={file.id} />
+      )}
 
       <SectionHeading icon={DataFileIcon} className="mt-10">
         Made from

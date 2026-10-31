@@ -39,6 +39,8 @@ def reads(ids: dict[str, str]) -> list[str]:
         f"{STUDY}/assays",
         f"{STUDY}/data-files",
         f"{API}/subjects/{ids['subject']}",
+        f"{API}/subjects/{ids['subject']}/assays",
+        f"{API}/subjects/{ids['subject']}/data-files",
         f"{API}/samples/{ids['sample']}",
         f"{API}/samples/{ids['sample']}/assays",
         f"{API}/samples/{ids['sample']}/data-files",

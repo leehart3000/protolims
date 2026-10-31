@@ -1,9 +1,9 @@
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { useParams } from 'react-router'
 
-import { type AssaySampleSort, fetchAssay, fetchAssaySamplePage } from '../api/queries'
+import { fetchAssay } from '../api/queries'
 import type { components } from '../api/schema'
-import { LinkedSampleTable } from '../components/LinkedSampleTable'
+import { AssaySampleList } from '../components/AssaySampleList'
 import { Breadcrumbs } from '../components/Breadcrumbs'
 import { DataFileList } from '../components/DataFileList'
 import { DetailList } from '../components/DetailList'
@@ -11,63 +11,13 @@ import { DetailsCard } from '../components/DetailsCard'
 import { KeyValueList } from '../components/KeyValueList'
 import { NewButton } from '../components/NewButton'
 import { PageTitle } from '../components/PageTitle'
-import { PagedTable } from '../components/PagedTable'
-import { SearchBox } from '../components/SearchBox'
 import { SectionHeading } from '../components/SectionHeading'
 import { formatDate } from '../format'
 import { editorOf } from '../permissions'
 import { errorBox } from '../styles'
-import { useListControls } from '../useListControls'
 import { AssayIcon, DataFileIcon, SampleIcon } from '../icons'
 
 type Assay = components['schemas']['AssayRead']
-
-function AssaySampleList({ assayId }: { assayId: string }) {
-  const controls = useListControls<AssaySampleSort>('name')
-  const { search, q, sort, offset, limit, changeSearch, changeSort } = controls
-  const query = useQuery({
-    queryKey: ['assays', assayId, 'samples', { q, sort, offset, limit }],
-    queryFn: () => fetchAssaySamplePage(assayId, { q: q || undefined, sort, limit, offset }),
-    placeholderData: keepPreviousData,
-  })
-
-  if (query.isPending) {
-    return <p className="mt-4 text-muted">Loading samples…</p>
-  }
-
-  if (query.isError) {
-    return (
-      <p role="alert" className={`mt-4 ${errorBox}`}>
-        Could not load samples. Please try again later.
-      </p>
-    )
-  }
-
-  const { items, total } = query.data
-
-  return (
-    <>
-      {(total > 0 || q !== '') && (
-        <SearchBox
-          id="assay-sample-search"
-          label="Search samples"
-          placeholder="Search by name or external ID"
-          value={search}
-          onChange={changeSearch}
-        />
-      )}
-      {total === 0 ? (
-        <p className="mt-4 text-muted">
-          {q ? `No samples match “${q}”.` : 'No samples linked to this assay yet.'}
-        </p>
-      ) : (
-        <PagedTable total={total} controls={controls}>
-          <LinkedSampleTable samples={items} sort={sort} onSort={changeSort} />
-        </PagedTable>
-      )}
-    </>
-  )
-}
 
 function AssayDetails({ assay }: { assay: Assay }) {
   const projectPath = `/projects/${encodeURIComponent(assay.project_code)}`

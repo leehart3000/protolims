@@ -2995,6 +2995,88 @@
         }
       }
     },
+    "/api/v1/subjects/{subject_id}/assays": {
+      "get": {
+        "tags": [
+          "assays"
+        ],
+        "summary": "List Subject Assays",
+        "description": "List the assays a subject's samples (derived ones included) were measured in, once for\neach sample, by assay name and then sample name.",
+        "operationId": "list_subject_assays_api_v1_subjects__subject_id__assays_get",
+        "parameters": [
+          {
+            "name": "subject_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Subject Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "A personal API token, as Bearer <token>",
+              "title": "Authorization"
+            },
+            "description": "A personal API token, as Bearer <token>"
+          },
+          {
+            "name": "protolims_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Protolims Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SubjectAssayRead"
+                  },
+                  "title": "Response List Subject Assays Api V1 Subjects  Subject Id  Assays Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/projects/{project_code}/studies/{study_code}/data-files": {
       "post": {
         "tags": [
@@ -3925,7 +4007,7 @@
           "data files"
         ],
         "summary": "List Sample Data Files",
-        "description": "List the data files a sample appears in, by name.",
+        "description": "List the data files a sample appears in, by name. Files that only have the samples of\ntheir assay aren't listed: see assay_wide_files in the sample's assays.",
         "operationId": "list_sample_data_files_api_v1_samples__sample_id__data_files_get",
         "parameters": [
           {
@@ -3984,6 +4066,88 @@
                     "$ref": "#/components/schemas/SampleDataFileRead"
                   },
                   "title": "Response List Sample Data Files Api V1 Samples  Sample Id  Data Files Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/subjects/{subject_id}/data-files": {
+      "get": {
+        "tags": [
+          "data files"
+        ],
+        "summary": "List Subject Data Files",
+        "description": "List the data files a subject's samples (derived ones included) appear in, once for each\nsample, by file name and then sample name. Files that only have the samples of their assay\naren't listed: see assay_wide_files in the subject's assays.",
+        "operationId": "list_subject_data_files_api_v1_subjects__subject_id__data_files_get",
+        "parameters": [
+          {
+            "name": "subject_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Subject Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "A personal API token, as Bearer <token>",
+              "title": "Authorization"
+            },
+            "description": "A personal API token, as Bearer <token>"
+          },
+          {
+            "name": "protolims_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Protolims Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SubjectDataFileRead"
+                  },
+                  "title": "Response List Subject Data Files Api V1 Subjects  Subject Id  Data Files Get"
                 }
               }
             }
@@ -7942,6 +8106,11 @@
               }
             ],
             "title": "Label"
+          },
+          "assay_wide_files": {
+            "type": "integer",
+            "title": "Assay Wide Files",
+            "description": "How many of the assay's data files have no samples of their own, so hold the data of all its samples (such as a TMT plex's spectra)"
           }
         },
         "type": "object",
@@ -7951,7 +8120,8 @@
           "measurement_type",
           "technology_type",
           "platform",
-          "label"
+          "label",
+          "assay_wide_files"
         ],
         "title": "SampleAssayRead",
         "description": "An assay a sample was measured in, with the sample's label there."
@@ -8790,6 +8960,77 @@
         "title": "StudyWithProjectRead",
         "description": "A study plus its project's code and name, for lists that span projects."
       },
+      "SubjectAssayRead": {
+        "properties": {
+          "assay_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Assay Id"
+          },
+          "assay_name": {
+            "type": "string",
+            "title": "Assay Name"
+          },
+          "measurement_type": {
+            "type": "string",
+            "title": "Measurement Type"
+          },
+          "technology_type": {
+            "type": "string",
+            "title": "Technology Type"
+          },
+          "platform": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Platform"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label"
+          },
+          "assay_wide_files": {
+            "type": "integer",
+            "title": "Assay Wide Files",
+            "description": "How many of the assay's data files have no samples of their own, so hold the data of all its samples (such as a TMT plex's spectra)"
+          },
+          "sample_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Sample Id"
+          },
+          "sample_name": {
+            "type": "string",
+            "title": "Sample Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "assay_id",
+          "assay_name",
+          "measurement_type",
+          "technology_type",
+          "platform",
+          "label",
+          "assay_wide_files",
+          "sample_id",
+          "sample_name"
+        ],
+        "title": "SubjectAssayRead",
+        "description": "An assay one of a subject's samples was measured in, with which sample."
+      },
       "SubjectCreate": {
         "properties": {
           "name": {
@@ -8848,6 +9089,64 @@
         ],
         "title": "SubjectCreate",
         "description": "Data needed to create a subject."
+      },
+      "SubjectDataFileRead": {
+        "properties": {
+          "data_file_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Data File Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "level": {
+            "type": "string",
+            "title": "Level"
+          },
+          "format": {
+            "type": "string",
+            "title": "Format"
+          },
+          "uri": {
+            "type": "string",
+            "title": "Uri"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label"
+          },
+          "sample_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Sample Id"
+          },
+          "sample_name": {
+            "type": "string",
+            "title": "Sample Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data_file_id",
+          "name",
+          "level",
+          "format",
+          "uri",
+          "label",
+          "sample_id",
+          "sample_name"
+        ],
+        "title": "SubjectDataFileRead",
+        "description": "A data file one of a subject's samples appears in, with which sample."
       },
       "SubjectImport": {
         "properties": {

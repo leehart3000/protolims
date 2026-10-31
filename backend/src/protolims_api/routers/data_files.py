@@ -37,6 +37,7 @@ from protolims_api.permissions import (
     visible_studies,
 )
 from protolims_api.routers.studies import get_study_or_404
+from protolims_api.routers.subjects import get_subject_or_404
 from protolims_api.schemas.common import Page
 from protolims_api.schemas.data_file import (
     DataFileCreate,
@@ -48,6 +49,7 @@ from protolims_api.schemas.data_file import (
     DataFileSummary,
     DataFileUpdate,
     SampleDataFileRead,
+    SubjectDataFileRead,
 )
 
 router = APIRouter(tags=["data files"])
@@ -526,11 +528,24 @@ async def unlink_data_file_sample(
     await session.commit()
 
 
+def sample_data_file(data_file: DataFile, label: str | None) -> dict[str, Any]:
+    """The fields of a data file a sample appears in."""
+    return {
+        "data_file_id": data_file.id,
+        "name": data_file.name,
+        "level": data_file.level,
+        "format": data_file.format,
+        "uri": data_file.uri,
+        "label": label,
+    }
+
+
 @router.get("/samples/{sample_id}/data-files")
 async def list_sample_data_files(
     sample_id: uuid.UUID, session: SessionDep, actor: ActorDep
 ) -> list[SampleDataFileRead]:
-    """List the data files a sample appears in, by name."""
+    """List the data files a sample appears in, by name. Files that only have the samples of
+    their assay aren't listed: see assay_wide_files in the sample's assays."""
     sample = await session.get(Sample, sample_id)
     if sample is None or not await can_see_study(session, actor, sample.study_id):
         raise HTTPException(
@@ -543,16 +558,29 @@ async def list_sample_data_files(
         .where(DataFileSample.sample_id == sample_id)
         .order_by(DataFile.name, DataFile.id)
     )
+    return [SampleDataFileRead(**sample_data_file(*row)) for row in result.tuples()]
+
+
+@router.get("/subjects/{subject_id}/data-files")
+async def list_subject_data_files(
+    subject_id: uuid.UUID, session: SessionDep, actor: ActorDep
+) -> list[SubjectDataFileRead]:
+    """List the data files a subject's samples (derived ones included) appear in, once for each
+    sample, by file name and then sample name. Files that only have the samples of their assay
+    aren't listed: see assay_wide_files in the subject's assays."""
+    await get_subject_or_404(session, subject_id, actor)
+    result = await session.execute(
+        select(DataFile, DataFileSample.label, Sample.id, Sample.name)
+        .join(DataFileSample, DataFileSample.data_file_id == DataFile.id)
+        .join(Sample, DataFileSample.sample_id == Sample.id)
+        .where(Sample.subject_id == subject_id)
+        .order_by(DataFile.name, DataFile.id, Sample.name, Sample.id)
+    )
     return [
-        SampleDataFileRead(
-            data_file_id=data_file.id,
-            name=data_file.name,
-            level=data_file.level,
-            format=data_file.format,
-            uri=data_file.uri,
-            label=label,
+        SubjectDataFileRead(
+            **sample_data_file(data_file, label), sample_id=sample_id, sample_name=sample_name
         )
-        for data_file, label in result
+        for data_file, label, sample_id, sample_name in result.tuples()
     ]
 
 

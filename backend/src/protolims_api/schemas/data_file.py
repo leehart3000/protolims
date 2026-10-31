@@ -155,6 +155,13 @@ class SampleDataFileRead(BaseModel):
     label: str | None
 
 
+class SubjectDataFileRead(SampleDataFileRead):
+    """A data file one of a subject's samples appears in, with which sample."""
+
+    sample_id: uuid.UUID
+    sample_name: str
+
+
 class DataFileSummary(BaseModel):
     """Enough about a data file to list and link to it, e.g. as another file's input."""
 

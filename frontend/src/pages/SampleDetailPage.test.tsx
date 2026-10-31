@@ -54,6 +54,7 @@ const proteomics: SampleAssay = {
   technology_type: 'mass spectrometry',
   platform: 'Orbitrap',
   label: '126',
+  assay_wide_files: 0,
 }
 
 const counts: SampleDataFile = {
@@ -193,6 +194,53 @@ describe('SampleDetailPage', () => {
     ).toBeInTheDocument()
     expect(await screen.findByText('Not measured in any assays yet.')).toBeInTheDocument()
     expect(await screen.findByText('Not in any data files yet.')).toBeInTheDocument()
+  })
+
+  it('lists the files of its assays that hold the data of all their samples', async () => {
+    const plex = { ...proteomics, assay_name: 'Plex 1', assay_wide_files: 75 }
+    const single = {
+      ...proteomics,
+      assay_id: '0192a5b0-0000-7000-8000-000000000021',
+      assay_name: 'Plex 2',
+      assay_wide_files: 1,
+    }
+    respondByPath({
+      [`/api/v1/samples/${tumour.id}`]: Response.json(tumour),
+      [samplesPath]: Response.json({ items: [], total: 0 }),
+      [assaysPath(tumour)]: Response.json([plex, single]),
+      [dataFilesPath(tumour)]: Response.json([]),
+    })
+    renderPage(tumour.id)
+
+    // Each line is one list item, with the assay's name as a link in it.
+    const plexFiles = await screen.findByText(/75 files from assay/)
+    expect(plexFiles).toHaveTextContent(
+      "In 75 files from assay Plex 1, which hold the data of all the assay's samples.",
+    )
+    expect(within(plexFiles).getByRole('link', { name: 'Plex 1' })).toHaveAttribute(
+      'href',
+      `/assays/${plex.assay_id}`,
+    )
+    expect(screen.getByText(/1 file from assay/)).toHaveTextContent(
+      "In 1 file from assay Plex 2, which holds the data of all the assay's samples.",
+    )
+    expect(screen.queryByText('Not in any data files yet.')).not.toBeInTheDocument()
+    expect(screen.queryByRole('table', { name: 'Data files' })).not.toBeInTheDocument()
+  })
+
+  it('lists those files after the ones the sample is linked to', async () => {
+    respondByPath({
+      [`/api/v1/samples/${tumour.id}`]: Response.json(tumour),
+      [samplesPath]: Response.json({ items: [], total: 0 }),
+      [assaysPath(tumour)]: Response.json([{ ...proteomics, assay_wide_files: 75 }]),
+      [dataFilesPath(tumour)]: Response.json([counts]),
+    })
+    renderPage(tumour.id)
+
+    expect(await screen.findByRole('table', { name: 'Data files' })).toBeInTheDocument()
+    expect(screen.getByText(/75 files from assay/)).toHaveTextContent(
+      /^Also in 75 files from assay Proteomics run 1,/,
+    )
   })
 
   it('says when there is no such sample, or the ID is invalid', async () => {

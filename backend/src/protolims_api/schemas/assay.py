@@ -109,3 +109,14 @@ class SampleAssayRead(BaseModel):
     technology_type: str
     platform: str | None
     label: str | None
+    assay_wide_files: int = Field(
+        description="How many of the assay's data files have no samples of their own, so hold "
+        "the data of all its samples (such as a TMT plex's spectra)"
+    )
+
+
+class SubjectAssayRead(SampleAssayRead):
+    """An assay one of a subject's samples was measured in, with which sample."""
+
+    sample_id: uuid.UUID
+    sample_name: str

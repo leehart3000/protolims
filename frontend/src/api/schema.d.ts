@@ -402,6 +402,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/subjects/{subject_id}/assays": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Subject Assays
+         * @description List the assays a subject's samples (derived ones included) were measured in, once for
+         *     each sample, by assay name and then sample name.
+         */
+        get: operations["list_subject_assays_api_v1_subjects__subject_id__assays_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/projects/{project_code}/studies/{study_code}/data-files": {
         parameters: {
             query?: never;
@@ -526,9 +547,32 @@ export interface paths {
         };
         /**
          * List Sample Data Files
-         * @description List the data files a sample appears in, by name.
+         * @description List the data files a sample appears in, by name. Files that only have the samples of
+         *     their assay aren't listed: see assay_wide_files in the sample's assays.
          */
         get: operations["list_sample_data_files_api_v1_samples__sample_id__data_files_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/subjects/{subject_id}/data-files": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Subject Data Files
+         * @description List the data files a subject's samples (derived ones included) appear in, once for each
+         *     sample, by file name and then sample name. Files that only have the samples of their assay
+         *     aren't listed: see assay_wide_files in the subject's assays.
+         */
+        get: operations["list_subject_data_files_api_v1_subjects__subject_id__data_files_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1765,6 +1809,11 @@ export interface components {
             platform: string | null;
             /** Label */
             label: string | null;
+            /**
+             * Assay Wide Files
+             * @description How many of the assay's data files have no samples of their own, so hold the data of all its samples (such as a TMT plex's spectra)
+             */
+            assay_wide_files: number;
         };
         /**
          * SampleCreate
@@ -2072,6 +2121,39 @@ export interface components {
             project_name: string;
         };
         /**
+         * SubjectAssayRead
+         * @description An assay one of a subject's samples was measured in, with which sample.
+         */
+        SubjectAssayRead: {
+            /**
+             * Assay Id
+             * Format: uuid
+             */
+            assay_id: string;
+            /** Assay Name */
+            assay_name: string;
+            /** Measurement Type */
+            measurement_type: string;
+            /** Technology Type */
+            technology_type: string;
+            /** Platform */
+            platform: string | null;
+            /** Label */
+            label: string | null;
+            /**
+             * Assay Wide Files
+             * @description How many of the assay's data files have no samples of their own, so hold the data of all its samples (such as a TMT plex's spectra)
+             */
+            assay_wide_files: number;
+            /**
+             * Sample Id
+             * Format: uuid
+             */
+            sample_id: string;
+            /** Sample Name */
+            sample_name: string;
+        };
+        /**
          * SubjectCreate
          * @description Data needed to create a subject.
          */
@@ -2091,6 +2173,34 @@ export interface components {
             attributes?: {
                 [key: string]: unknown;
             };
+        };
+        /**
+         * SubjectDataFileRead
+         * @description A data file one of a subject's samples appears in, with which sample.
+         */
+        SubjectDataFileRead: {
+            /**
+             * Data File Id
+             * Format: uuid
+             */
+            data_file_id: string;
+            /** Name */
+            name: string;
+            /** Level */
+            level: string;
+            /** Format */
+            format: string;
+            /** Uri */
+            uri: string;
+            /** Label */
+            label: string | null;
+            /**
+             * Sample Id
+             * Format: uuid
+             */
+            sample_id: string;
+            /** Sample Name */
+            sample_name: string;
         };
         /**
          * SubjectImport
@@ -3369,6 +3479,42 @@ export interface operations {
             };
         };
     };
+    list_subject_assays_api_v1_subjects__subject_id__assays_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A personal API token, as Bearer <token> */
+                authorization?: string | null;
+            };
+            path: {
+                subject_id: string;
+            };
+            cookie?: {
+                protolims_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SubjectAssayRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_data_files_api_v1_projects__project_code__studies__study_code__data_files_get: {
         parameters: {
             query?: {
@@ -3719,6 +3865,42 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SampleDataFileRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_subject_data_files_api_v1_subjects__subject_id__data_files_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A personal API token, as Bearer <token> */
+                authorization?: string | null;
+            };
+            path: {
+                subject_id: string;
+            };
+            cookie?: {
+                protolims_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SubjectDataFileRead"][];
                 };
             };
             /** @description Validation Error */

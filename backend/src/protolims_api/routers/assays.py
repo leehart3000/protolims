@@ -18,7 +18,15 @@ from sqlalchemy.orm import InstrumentedAttribute
 from protolims_api.audit import record_event
 from protolims_api.conflicts import external_id_conflict, is_external_id_conflict
 from protolims_api.db import SessionDep
-from protolims_api.models import Assay, AssaySample, Project, Sample, Study
+from protolims_api.models import (
+    Assay,
+    AssaySample,
+    DataFile,
+    DataFileSample,
+    Project,
+    Sample,
+    Study,
+)
 from protolims_api.permissions import (
     Actor,
     ActorDep,
@@ -28,6 +36,7 @@ from protolims_api.permissions import (
     visible_studies,
 )
 from protolims_api.routers.studies import get_study_or_404
+from protolims_api.routers.subjects import get_subject_or_404
 from protolims_api.schemas.assay import (
     AssayCreate,
     AssayFields,
@@ -36,6 +45,7 @@ from protolims_api.schemas.assay import (
     AssaySampleRead,
     AssayUpdate,
     SampleAssayRead,
+    SubjectAssayRead,
 )
 from protolims_api.schemas.common import Page
 
@@ -46,6 +56,22 @@ SAMPLE_COUNT = (
     select(func.count())
     .select_from(AssaySample)
     .where(AssaySample.assay_id == Assay.id)
+    .correlate(Assay)
+    .scalar_subquery()
+)
+
+# How many of each assay's data files have no samples of their own. Such a file holds the
+# data of all the assay's samples (as each of a TMT plex's spectra files holds every channel),
+# so it's listed with each of them, through the assay, rather than linked to each one.
+ASSAY_WIDE_FILES = (
+    select(func.count())
+    .select_from(DataFile)
+    .where(
+        DataFile.assay_id == Assay.id,
+        ~select(DataFileSample.data_file_id)
+        .where(DataFileSample.data_file_id == DataFile.id)
+        .exists(),
+    )
     .correlate(Assay)
     .scalar_subquery()
 )
@@ -442,6 +468,19 @@ async def unlink_sample(
     await session.commit()
 
 
+def sample_assay(assay: Assay, label: str | None, assay_wide_files: int) -> dict[str, Any]:
+    """The fields of an assay a sample was measured in."""
+    return {
+        "assay_id": assay.id,
+        "assay_name": assay.name,
+        "measurement_type": assay.measurement_type,
+        "technology_type": assay.technology_type,
+        "platform": assay.platform,
+        "label": label,
+        "assay_wide_files": assay_wide_files,
+    }
+
+
 @router.get("/samples/{sample_id}/assays")
 async def list_sample_assays(
     sample_id: uuid.UUID, session: SessionDep, actor: ActorDep
@@ -454,19 +493,33 @@ async def list_sample_assays(
             detail=f"Sample {sample_id} not found",
         )
     result = await session.execute(
-        select(Assay, AssaySample.label)
+        select(Assay, AssaySample.label, ASSAY_WIDE_FILES)
         .join(AssaySample, AssaySample.assay_id == Assay.id)
         .where(AssaySample.sample_id == sample_id)
         .order_by(Assay.name, Assay.id)
     )
+    return [SampleAssayRead(**sample_assay(*row)) for row in result.tuples()]
+
+
+@router.get("/subjects/{subject_id}/assays")
+async def list_subject_assays(
+    subject_id: uuid.UUID, session: SessionDep, actor: ActorDep
+) -> list[SubjectAssayRead]:
+    """List the assays a subject's samples (derived ones included) were measured in, once for
+    each sample, by assay name and then sample name."""
+    await get_subject_or_404(session, subject_id, actor)
+    result = await session.execute(
+        select(Assay, AssaySample.label, ASSAY_WIDE_FILES, Sample.id, Sample.name)
+        .join(AssaySample, AssaySample.assay_id == Assay.id)
+        .join(Sample, AssaySample.sample_id == Sample.id)
+        .where(Sample.subject_id == subject_id)
+        .order_by(Assay.name, Assay.id, Sample.name, Sample.id)
+    )
     return [
-        SampleAssayRead(
-            assay_id=assay.id,
-            assay_name=assay.name,
-            measurement_type=assay.measurement_type,
-            technology_type=assay.technology_type,
-            platform=assay.platform,
-            label=label,
+        SubjectAssayRead(
+            **sample_assay(assay, label, assay_wide_files),
+            sample_id=sample_id,
+            sample_name=sample_name,
         )
-        for assay, label in result
+        for assay, label, assay_wide_files, sample_id, sample_name in result.tuples()
     ]

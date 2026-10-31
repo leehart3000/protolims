@@ -10,6 +10,8 @@ import { PageTitle } from '../components/PageTitle'
 import { SampleTable } from '../components/SampleTable'
 import { SampleAssayTable } from '../components/SampleAssayTable'
 import { SampleDataFileTable } from '../components/SampleDataFileTable'
+import { assaysWithWideFiles } from '../assayWideFiles'
+import { AssayWideFiles } from '../components/AssayWideFiles'
 import { NewButton } from '../components/NewButton'
 import { SectionHeading } from '../components/SectionHeading'
 import { DetailsCard } from '../components/DetailsCard'
@@ -78,13 +80,19 @@ function SampleAssays({ sampleId }: { sampleId: string }) {
   return <SampleAssayTable assays={query.data} />
 }
 
+// The files the sample is in: those it's linked to, and those of its assays that hold the
+// data of all the assay's samples (if its assays can't be loaded, that section says so).
 function SampleDataFiles({ sampleId }: { sampleId: string }) {
   const query = useQuery({
     queryKey: ['samples', sampleId, 'data-files'],
     queryFn: () => fetchSampleDataFiles(sampleId),
   })
+  const assays = useQuery({
+    queryKey: ['samples', sampleId, 'assays'],
+    queryFn: () => fetchSampleAssays(sampleId),
+  })
 
-  if (query.isPending) {
+  if (query.isPending || assays.isPending) {
     return <p className="mt-4 text-muted">Loading data files…</p>
   }
 
@@ -96,11 +104,18 @@ function SampleDataFiles({ sampleId }: { sampleId: string }) {
     )
   }
 
-  if (query.data.length === 0) {
+  const linked = query.data
+  const throughAssays = assays.data ?? []
+  if (linked.length === 0 && assaysWithWideFiles(throughAssays).length === 0) {
     return <p className="mt-4 text-muted">Not in any data files yet.</p>
   }
 
-  return <SampleDataFileTable files={query.data} />
+  return (
+    <>
+      {linked.length > 0 && <SampleDataFileTable files={linked} />}
+      <AssayWideFiles assays={throughAssays} also={linked.length > 0} />
+    </>
+  )
 }
 
 function SampleDetails({ sample }: { sample: Sample }) {

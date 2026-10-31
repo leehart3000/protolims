@@ -199,6 +199,16 @@ An append-only `audit_event` table records who changed what, and when.
 - **Files can contain many samples** (e.g. TMT channels, matrix columns);
   `data_file_sample.label` records where each sample is within the file.
   Linking is `PUT /data-files/{id}/samples/{sample_id}`, safe to repeat.
+- **Files that hold all of an assay's samples** (e.g. each of a TMT plex's
+  spectra files, which has every channel) are given no samples of their own:
+  a file with none holds the data of all its assay's samples. They're shown
+  through the assay rather than stored again for each sample (750 links per
+  plex), so they can't get out of step with it: a file's page then lists its
+  assay's samples, and a sample's or subject's assays give `assay_wide_files`,
+  the number of such files, which the website shows under "Data files".
+- **A subject's assays and data files** (`/subjects/{id}/assays` and
+  `/subjects/{id}/data-files`) are those of all its samples, derived ones
+  included, with which sample each is for.
 - **File provenance:** `data_file_input` records which files a file was made
   from (`PUT /data-files/{id}/inputs/{input_id}`, safe to repeat). A file can't
   be derived from itself or from a file derived from it.
