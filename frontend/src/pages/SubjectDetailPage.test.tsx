@@ -183,10 +183,12 @@ describe('SubjectDetailPage', () => {
       'href',
       `/assays/${plex.assay_id}`,
     )
-    expect(assays.getByRole('cell', { name: 'Tumour-01-protein' })).toBeInTheDocument()
-    expect(assays.getByRole('cell', { name: 'TMT 126' })).toBeInTheDocument()
+    // Each of its samples in the assay is listed in the assay's row, with its label.
+    const protein = assays.getByRole('listitem')
+    expect(protein).toHaveTextContent(/^Tumour-01-protein/)
+    expect(within(protein).getByText('TMT 126')).toBeInTheDocument()
     expect(
-      assays.getByText('Tumour-01-protein · TMT 126 · protein expression profiling'),
+      assays.getByText('Tumour-01-protein (TMT 126) · protein expression profiling'),
     ).toBeInTheDocument()
 
     const files = within(await screen.findByRole('table', { name: 'Data files' }))
@@ -215,9 +217,16 @@ describe('SubjectDetailPage', () => {
     expect(await screen.findByText(/75 files from assay/)).toHaveTextContent(/^In 75 files/)
     expect(screen.getAllByText(/files from assay/)).toHaveLength(1)
     expect(screen.getByText("1 assay, measuring 2 of this subject's samples")).toBeInTheDocument()
-    expect(within(screen.getByRole('table', { name: 'Assays' })).getAllByRole('row')).toHaveLength(
-      3,
-    )
+    // One row for the assay (and one for the headings), listing both samples.
+    const assays = within(screen.getByRole('table', { name: 'Assays' }))
+    expect(assays.getAllByRole('row')).toHaveLength(2)
+    expect(assays.getAllByRole('listitem').map((item) => item.textContent)).toEqual([
+      'Tumour-01-proteinTMT 126',
+      'Tumour-01',
+    ])
+    expect(
+      assays.getByText('Tumour-01-protein (TMT 126), Tumour-01 · protein expression profiling'),
+    ).toBeInTheDocument()
     expect(screen.queryByRole('table', { name: 'Data files' })).not.toBeInTheDocument()
   })
 
