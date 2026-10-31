@@ -199,7 +199,8 @@ def subject(case: Record) -> Record:
 
 def linked_entities(hit: Record) -> list[tuple[Record, Record, Record]]:
     """The (case, sample, entity) chains a GDC file comes from, where the entity is the
-    aliquot (or, for protein arrays, the portion) the file names as its source."""
+    aliquot (or, for protein arrays, the portion) the file names as its source. Each entity
+    is listed once, even where the GDC repeats it."""
     wanted = {entity["entity_id"] for entity in hit.get("associated_entities", [])}
     found = []
     for case in hit.get("cases", []):
@@ -211,7 +212,8 @@ def linked_entities(hit: Record) -> list[tuple[Record, Record, Record]]:
                     for aliquot in analyte.get("aliquots", []):
                         if aliquot["aliquot_id"] in wanted:
                             found.append((case, sample, {**aliquot, "id": aliquot["aliquot_id"]}))
-    return found
+    once = {entity["id"]: (case, sample, entity) for case, sample, entity in found}
+    return list(once.values())
 
 
 def tissue_sample(case: Record, sample: Record) -> Record:
@@ -393,9 +395,17 @@ def describe_where(where: CaseFilter) -> str:
     return f" ({'; '.join(parts)})"
 
 
-def fetch(project: str, where: CaseFilter, kinds: list[str], count: int, out: Path) -> None:
-    """Fetch the first cases (by GDC name), of those matching `where`, that have open files of
-    every chosen kind, with those files, and save them as an import request."""
+def fetch(
+    project: str,
+    where: CaseFilter,
+    kinds: list[str],
+    count: int,
+    out: Path,
+    names: list[str] | None = None,
+) -> None:
+    """Fetch the first cases (by GDC name), of those matching `where` (and, if given, with
+    these names), that have open files of every chosen kind, with those files, and save them
+    as an import request."""
     # Which cases have each kind of data, from the files' own links to cases.
     having: list[set[str]] = []
     for kind in kinds:
@@ -410,9 +420,12 @@ def fetch(project: str, where: CaseFilter, kinds: list[str], count: int, out: Pa
             + ", ".join(kinds)
         )
 
+    chosen_filter = one_of("case_id", sorted(in_all))
+    if names is not None:
+        chosen_filter = all_of(chosen_filter, one_of("submitter_id", names))
     cases = search_gdc(
         "cases",
-        one_of("case_id", sorted(in_all)),
+        chosen_filter,
         [
             "case_id",
             "submitter_id",
@@ -423,6 +436,10 @@ def fetch(project: str, where: CaseFilter, kinds: list[str], count: int, out: Pa
         len(in_all),
     )
     cases = sorted(cases, key=lambda case: case["submitter_id"])[:count]
+    if names is not None:
+        missing = sorted(set(names) - {case["submitter_id"] for case in cases})
+        if missing:
+            print(f"Not fetched (no open files of every kind, or past --cases): {missing}")
     chosen = [case["case_id"] for case in cases]
     files = {
         kind: open_files(project, where, ASSAY_TYPES[kind].data_type, FILE_FIELDS, chosen)
@@ -560,6 +577,11 @@ def main() -> None:
     )
     fetch_command.add_argument("--cases", type=int, default=10, help="how many (default 10)")
     fetch_command.add_argument("--out", type=Path, help="default imports/gdc-<project>.json")
+    fetch_command.add_argument(
+        "--case-names",
+        type=Path,
+        help="only the cases named in this file, one per line (as import_pdc.py saves)",
+    )
     send_command = commands.add_parser("send", help="send a saved file to ProtoLIMS")
     send_command.add_argument("--project", default=PROJECT, help="the ProtoLIMS project code")
     send_command.add_argument("--study", required=True)
@@ -575,7 +597,12 @@ def main() -> None:
         if unknown or not kinds:
             sys.exit(f"Unknown kinds: {', '.join(unknown)}. Known: {', '.join(ASSAY_TYPES)}")
         where = chosen_cases(args)
-        fetch(args.project, where, kinds, args.cases, args.out or default_file(args.project))
+        names = None
+        if args.case_names is not None:
+            names = [line.strip() for line in args.case_names.read_text().splitlines()]
+            names = [name for name in names if name]
+        out = args.out or default_file(args.project)
+        fetch(args.project, where, kinds, args.cases, out, names)
     else:
         path = args.file or default_file(args.project)
         send(path, args.target, args.project, args.study, apply=args.apply)

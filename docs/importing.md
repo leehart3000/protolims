@@ -164,6 +164,53 @@ Where it sends to, and where your token comes from:
   is behind Cloudflare Access, and the import service token isn't allowed
   there yet, so this stops with "Cloudflare Access turned the request away".
 
+## Importing proteomics from the PDC (CPTAC)
+
+`backend/scripts/import_pdc.py` imports mass-spectrometry proteomics from the
+[Proteomic Data Commons](https://pdc.cancer.gov) (PDC), CPTAC's proteomics
+archive. Its default study, `PDC000153`, is the CPTAC lung adenocarcinoma
+discovery proteome: 25 TMT10 plexes, each run as 25 fractions. Many of its
+patients are also in the GDC's CPTAC-3 project, so their proteomics can sit
+beside their RNA, miRNA and methylation data in one study.
+
+```sh
+uv run --directory backend python scripts/import_pdc.py survey
+uv run --directory backend python scripts/import_pdc.py fetch --plexes 2
+uv run --directory backend python scripts/import_pdc.py send --study MULTIOMICS
+```
+
+- **survey** tries each PDC query on the study and prints a little of each
+  answer.
+- **fetch** takes the study's first plexes by name (`--plexes 2` by default):
+  - each **plex** becomes an assay, with the aliquots in its TMT channels as
+    its samples, labelled by channel (such as `TMT 126`);
+  - each **aliquot** becomes a protein sample under its tissue sample and
+    patient. The pooled internal reference has no patient;
+  - **patients and tissue samples are matched by name** (they're sent without
+    external IDs), so ones already imported from the GDC are used, not
+    repeated;
+  - each fraction's **files** are recorded: raw spectra, mzML and peptide
+    spectral matches by default (`--kinds raw,mzml,psm`; `mzid` adds the
+    mzIdentML files). Each mzML file names the raw file it was made from, and
+    each peptide-match file the mzML file, so the chain shows on each file's
+    page;
+  - the PDC only lets files be downloaded with a short-lived signed link, so
+    each file's location is its study's page on the PDC with its file ID, with
+    its MD5 checksum and size kept too.
+- It saves the request to `imports/pdc-pdc000153.json`, and the **patients'
+  names** to `imports/pdc-pdc000153.cases.txt`.
+- **send** works as for the GDC (`--project` is `CPTAC-3` by default).
+
+To give the same patients their GDC data, import them from the GDC first, using
+the PDC's list of names:
+
+```sh
+uv run --directory backend python scripts/import_gdc.py fetch --project CPTAC-3 --kinds rna,mirna,methylation --case-names ../../protolims_resources/imports/pdc-pdc000153.cases.txt --cases 1000
+```
+
+`--case-names` takes only the cases named in the file (one per line), and says
+which of them it couldn't fetch. Paths are relative to `backend`.
+
 ## What a request looks like
 
 ```json
