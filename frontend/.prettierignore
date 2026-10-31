@@ -4,3 +4,4 @@ pnpm-lock.yaml
 worker-configuration.d.ts
 openapi.json
 src/api/schema.d.ts
+public/swagger-ui

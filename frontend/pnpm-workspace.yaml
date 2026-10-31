@@ -1,4 +1,7 @@
 allowBuilds:
+  # Comes with swagger-ui-dist; its install script only reports the download to Scarf (usage
+  # analytics), so it's never run.
+  '@scarf/scarf': false
   esbuild: true
   workerd: true
 

@@ -3,7 +3,8 @@
 import secrets
 
 from fastapi import Depends, FastAPI, HTTPException, Request, Response
-from fastapi.responses import JSONResponse
+from fastapi.openapi.docs import get_swagger_ui_html
+from fastapi.responses import HTMLResponse, JSONResponse
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 from starlette.middleware.base import RequestResponseEndpoint
@@ -35,10 +36,26 @@ app = FastAPI(
     title="ProtoLIMS API",
     version="0.1.0",
     description="Multi-omics LIMS: sample tracking, provenance, assay metadata and results.",
-    docs_url="/api/docs",
+    # The documentation page is served below, with Swagger UI's files from the website itself.
+    docs_url=None,
     redoc_url=None,
     openapi_url="/api/openapi.json",
 )
+
+
+@app.get("/api/docs", include_in_schema=False)
+async def api_docs() -> HTMLResponse:
+    """The API's documentation page (Swagger UI). Its script and styles come from the website
+    (frontend/scripts/copy-swagger-ui.mjs), not from a CDN, so nothing from elsewhere runs on
+    the site's own address, where it could act as a signed-in visitor."""
+    return get_swagger_ui_html(
+        openapi_url="/api/openapi.json",
+        title="ProtoLIMS API",
+        swagger_js_url="/swagger-ui/swagger-ui-bundle.js",
+        swagger_css_url="/swagger-ui/swagger-ui.css",
+        swagger_favicon_url="/favicon.svg",
+    )
+
 
 # Signing in is always open. Everything else needs someone signed in when public reading is off.
 private = [Depends(require_sign_in_when_private)]
