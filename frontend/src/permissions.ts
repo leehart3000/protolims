@@ -40,8 +40,14 @@ export function roleOn(me: Me, project: string, study?: string): Role | null {
   return best
 }
 
+// Why nothing can be changed while the site is read-only (PROTOLIMS_READ_ONLY).
+export const READ_ONLY_REASON = 'This site is read-only at the moment, so nothing can be changed.'
+
 // Why someone can't do something, or null if they can.
 export function refusalReason(me: Me, need: Need): string | null {
+  if (me.read_only) {
+    return READ_ONLY_REASON
+  }
   if (!me.user) {
     return 'Sign in to do this.'
   }

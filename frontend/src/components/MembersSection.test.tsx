@@ -216,4 +216,12 @@ describe('MembersSection', () => {
 
     expect(screen.queryByRole('heading', { name: 'Members' })).not.toBeInTheDocument()
   })
+
+  it('says roles cannot be changed while the site is read-only', () => {
+    renderSection(undefined, { ...siteAdmin, read_only: true })
+
+    expect(screen.getByRole('heading', { name: 'Members' })).toBeInTheDocument()
+    expect(screen.getByText(/read-only at the moment/)).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Add member' })).not.toBeInTheDocument()
+  })
 })

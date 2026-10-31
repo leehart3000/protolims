@@ -77,6 +77,7 @@ def test_a_private_instance_needs_signing_in_for_everything_but_signing_in(
         "user": None,
         "site_admin": False,
         "public_read": False,
+        "read_only": False,
         "roles": [],
     }
     assert anonymous.get(f"{API}/auth/orcid/login", follow_redirects=False).status_code == 302

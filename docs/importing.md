@@ -84,8 +84,10 @@ uv run --directory backend python scripts/import_gdc.py send --study RNASEQ --ap
 - Without `--apply`, it's a dry run: nothing is saved.
 - `--file FILE` sends a file other than the default.
 - `--project CODE` sends to a project other than TCGA-BRCA.
-- If ProtoLIMS refuses the token (401) or you aren't an editor of the study
-  (403), the script says so, and nothing is imported.
+- If ProtoLIMS refuses the token (401), you aren't an editor of the study
+  (403), or the site is read-only (423, see `docs/read-only.md`), the script
+  says so, and nothing is imported. A dry run works even while the site is
+  read-only.
 
 Where it sends to, and where your token comes from:
 

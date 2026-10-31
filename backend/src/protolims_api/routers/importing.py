@@ -13,6 +13,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from protolims_api.audit import record_event
+from protolims_api.config import get_settings
 from protolims_api.db import SessionDep
 from protolims_api.models import (
     Assay,
@@ -25,6 +26,7 @@ from protolims_api.models import (
     Subject,
 )
 from protolims_api.permissions import ActorDep, require_study_role
+from protolims_api.read_only import read_only_refusal
 from protolims_api.routers.studies import get_study_or_404
 from protolims_api.schemas.importing import (
     AssayImport,
@@ -747,9 +749,12 @@ async def import_records(
     - **Who can import:** the study's editors and admins.
     - **Audit trail:** each new record and link is recorded as made by whoever imported it,
       and each new record's audit entry names the import's `source`.
+    - **Read-only:** while the site is read-only, only a dry run is allowed (423 otherwise).
     """
     study = await get_study_or_404(session, project_code, study_code, actor)
     await require_study_role(session, actor, study, "editor")
+    if get_settings().read_only and not payload.dry_run:
+        raise read_only_refusal()
     problems: list[str] = []
     for kind, items in (
         ("subjects", payload.subjects),

@@ -641,6 +641,7 @@ export interface paths {
          *     - **Who can import:** the study's editors and admins.
          *     - **Audit trail:** each new record and link is recorded as made by whoever imported it,
          *       and each new record's audit entry names the import's `source`.
+         *     - **Read-only:** while the site is read-only, only a dry run is allowed (423 otherwise).
          */
         post: operations["import_records_api_v1_projects__project_code__studies__study_code__import_post"];
         delete?: never;
@@ -1553,6 +1554,8 @@ export interface components {
             site_admin: boolean;
             /** Public Read */
             public_read: boolean;
+            /** Read Only */
+            read_only: boolean;
             /** Roles */
             roles: components["schemas"]["RoleRead"][];
         };

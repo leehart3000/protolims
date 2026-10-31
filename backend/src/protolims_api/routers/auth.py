@@ -63,6 +63,8 @@ class Me(BaseModel):
     site_admin: bool
     # Whether people who aren't signed in can read everything here.
     public_read: bool
+    # Whether the site is read-only at the moment, so nothing can be changed.
+    read_only: bool
     # Their roles, so the website can show what they can do: project roles, then study roles.
     # A study role adds to any role on its project; site administrators can do everything.
     roles: list[RoleRead]
@@ -284,6 +286,7 @@ async def who_am_i(session: SessionDep, actor: ActorDep) -> Me:
         user=None if user is None else SignedInUser.model_validate(user),
         site_admin=actor.site_admin,
         public_read=get_settings().public_read,
+        read_only=get_settings().read_only,
         roles=[] if user is None else (await roles_of_users(session, [user.id]))[user.id],
     )
 

@@ -48,6 +48,10 @@ class Settings(BaseSettings):
     # default, so a new instance starts private; on for protolims.org, whose data is all open.
     public_read: bool = False
 
+    # The read-only lock (PROTOLIMS_READ_ONLY): when on, nothing can be changed, by anyone,
+    # until whoever runs the server turns it off. See read_only.py.
+    read_only: bool = False
+
     # Cloud Run sets K_SERVICE on its services (not on jobs, such as migrations).
     cloud_run_service: str | None = Field(default=None, validation_alias="K_SERVICE")
 

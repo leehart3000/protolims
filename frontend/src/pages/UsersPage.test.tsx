@@ -4,7 +4,7 @@ import { Route, Routes } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 
 import type { components } from '../api/schema'
-import { signedInWith } from '../test/people'
+import { signedInWith, siteAdmin } from '../test/people'
 import { TestProviders } from '../test/TestProviders'
 import UsersPage from './UsersPage'
 
@@ -214,5 +214,16 @@ describe('UsersPage', () => {
     expect(
       screen.getByText('Only site administrators can see the list of users.'),
     ).toBeInTheDocument()
+  })
+
+  it('offers to remove nobody while the site is read-only', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => Promise.resolve(Response.json({ items: [lee, alice, ben, carol], total: 4 }))),
+    )
+    renderPage({ ...siteAdmin, read_only: true })
+
+    expect(await screen.findByText('0000-0001-1111-1118')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^Remove/ })).not.toBeInTheDocument()
   })
 })

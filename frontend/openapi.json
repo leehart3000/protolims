@@ -4338,7 +4338,7 @@
           "import"
         ],
         "summary": "Import Records",
-        "description": "Import subjects, samples, assays and data files into a study, safely and repeatably.\n\n- **Matching:** each record is matched to one already in the study by its external ID (its\n  ID in the source) if it has one, otherwise by its name (a data file's location, `uri`, as\n  file names often repeat). An ambiguous match is refused: for example, an external ID\n  that belongs to one record while the name belongs to another.\n- **Existing records are never changed.** A matched record that differs from the import is\n  left as it is, and the reply lists the differences for you to review. Only the fields the\n  import sends are compared.\n- **New records are created.** A sample's `subject` and `parent` are names, of a record in\n  the same request or one already in the study, in any order.\n- **Assays and their samples:** an assay lists the samples it measured by name, each with\n  an optional label. A missing link is added, even to an existing assay. An existing link\n  with a different label is reported, not changed. Links the import doesn't mention are\n  left alone.\n- **Data files:** a file gives its `assay` and `samples` by name, and the files it was made\n  from (`inputs`) by location. Links follow the same rules as an assay's. A file can't be\n  derived from itself, directly or through other files.\n- **All or nothing:** if anything is wrong, nothing is saved, and the reply (422) lists every\n  problem found.\n- **Dry run:** `dry_run` must be given. With `true`, everything is checked and the reply says\n  what would happen, but nothing is saved. Do a dry run first.\n- **Limits:** at most 5,000 records and links per request; send bigger studies in batches.\n  An import never creates projects or studies.\n- **Who can import:** the study's editors and admins.\n- **Audit trail:** each new record and link is recorded as made by whoever imported it,\n  and each new record's audit entry names the import's `source`.",
+        "description": "Import subjects, samples, assays and data files into a study, safely and repeatably.\n\n- **Matching:** each record is matched to one already in the study by its external ID (its\n  ID in the source) if it has one, otherwise by its name (a data file's location, `uri`, as\n  file names often repeat). An ambiguous match is refused: for example, an external ID\n  that belongs to one record while the name belongs to another.\n- **Existing records are never changed.** A matched record that differs from the import is\n  left as it is, and the reply lists the differences for you to review. Only the fields the\n  import sends are compared.\n- **New records are created.** A sample's `subject` and `parent` are names, of a record in\n  the same request or one already in the study, in any order.\n- **Assays and their samples:** an assay lists the samples it measured by name, each with\n  an optional label. A missing link is added, even to an existing assay. An existing link\n  with a different label is reported, not changed. Links the import doesn't mention are\n  left alone.\n- **Data files:** a file gives its `assay` and `samples` by name, and the files it was made\n  from (`inputs`) by location. Links follow the same rules as an assay's. A file can't be\n  derived from itself, directly or through other files.\n- **All or nothing:** if anything is wrong, nothing is saved, and the reply (422) lists every\n  problem found.\n- **Dry run:** `dry_run` must be given. With `true`, everything is checked and the reply says\n  what would happen, but nothing is saved. Do a dry run first.\n- **Limits:** at most 5,000 records and links per request; send bigger studies in batches.\n  An import never creates projects or studies.\n- **Who can import:** the study's editors and admins.\n- **Audit trail:** each new record and link is recorded as made by whoever imported it,\n  and each new record's audit entry names the import's `source`.\n- **Read-only:** while the site is read-only, only a dry run is allowed (423 otherwise).",
         "operationId": "import_records_api_v1_projects__project_code__studies__study_code__import_post",
         "parameters": [
           {
@@ -7338,6 +7338,10 @@
             "type": "boolean",
             "title": "Public Read"
           },
+          "read_only": {
+            "type": "boolean",
+            "title": "Read Only"
+          },
           "roles": {
             "items": {
               "$ref": "#/components/schemas/RoleRead"
@@ -7351,6 +7355,7 @@
           "user",
           "site_admin",
           "public_read",
+          "read_only",
           "roles"
         ],
         "title": "Me",

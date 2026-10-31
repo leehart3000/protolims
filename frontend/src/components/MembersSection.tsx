@@ -6,7 +6,7 @@ import type { components } from '../api/schema'
 import { text } from '../forms'
 import { AddPersonIcon, MembersIcon, RemovePersonIcon, SaveIcon } from '../icons'
 import { changeRole, orcidPattern, type Place, type Role, ROLE_OPTIONS } from '../members'
-import { roleOn } from '../permissions'
+import { READ_ONLY_REASON, roleOn } from '../permissions'
 import {
   dangerButton,
   errorBox,
@@ -33,6 +33,14 @@ export function MembersSection(place: Place) {
   const { data: me } = useMe()
   if (me === undefined || roleOn(me, projectCode, studyCode) !== 'admin') {
     return null
+  }
+  if (me.read_only) {
+    return (
+      <section className="mt-10">
+        <SectionHeading icon={MembersIcon}>Members</SectionHeading>
+        <p className="mt-2 max-w-3xl text-muted">{READ_ONLY_REASON}</p>
+      </section>
+    )
   }
   // Only someone at the level above can give or take away an admin role: a site administrator
   // for project admins, and a project admin for study admins (the API checks this too).

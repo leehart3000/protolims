@@ -320,6 +320,8 @@ REFUSALS = {
     "new one on your profile page, and store it again (see docs/importing.md).",
     403: "Your API token works, but you can't import into this study: you need to be an "
     "editor of it.",
+    423: "This site is read-only at the moment, so only a dry run is possible (see "
+    "docs/read-only.md).",
 }
 
 

@@ -11,6 +11,7 @@ from starlette.middleware.base import RequestResponseEndpoint
 from protolims_api.config import get_settings
 from protolims_api.db import SessionDep
 from protolims_api.permissions import require_sign_in_when_private
+from protolims_api.read_only import READ_ONLY_MESSAGE, allowed_while_read_only
 from protolims_api.routers import (
     assays,
     auth,
@@ -54,6 +55,17 @@ app.include_router(members.router, prefix="/api/v1", dependencies=private)
 app.include_router(users.router, prefix="/api/v1", dependencies=private)
 
 
+@app.middleware("http")
+async def refuse_changes_when_read_only(
+    request: Request, call_next: RequestResponseEndpoint
+) -> Response:
+    """When the site is read-only, refuse anything that would change something."""
+    if get_settings().read_only and not allowed_while_read_only(request.method, request.url.path):
+        return JSONResponse({"detail": READ_ONLY_MESSAGE}, status_code=423)
+    return await call_next(request)
+
+
+# Added last, so it runs first: requests without the proxy key never get further.
 @app.middleware("http")
 async def require_proxy_key(request: Request, call_next: RequestResponseEndpoint) -> Response:
     """When a proxy key is set, refuse requests that didn't come through the website."""

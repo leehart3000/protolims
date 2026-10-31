@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { editorOf, refusalReason, roleOn } from './permissions'
+import { editorOf, READ_ONLY_REASON, refusalReason, roleOn } from './permissions'
 import { nobody, siteAdmin, signedInWith } from './test/people'
 
 describe('roleOn', () => {
@@ -28,6 +28,12 @@ describe('roleOn', () => {
 })
 
 describe('refusalReason', () => {
+  it('refuses everything, even to site administrators, while the site is read-only', () => {
+    const me = { ...siteAdmin, read_only: true }
+    expect(refusalReason(me, { siteAdmin: true })).toBe(READ_ONLY_REASON)
+    expect(refusalReason(me, editorOf('P1', 'S1'))).toBe(READ_ONLY_REASON)
+  })
+
   it('asks people to sign in', () => {
     expect(refusalReason(nobody, { siteAdmin: true })).toBe('Sign in to do this.')
   })

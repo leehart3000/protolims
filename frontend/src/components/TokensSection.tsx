@@ -6,6 +6,7 @@ import type { components } from '../api/schema'
 import { formatDate } from '../format'
 import { text } from '../forms'
 import { TokenIcon } from '../icons'
+import { READ_ONLY_REASON } from '../permissions'
 import {
   dangerButton,
   errorBox,
@@ -18,6 +19,7 @@ import {
   tableWrapper,
 } from '../styles'
 import { createToken, revokeToken, TOKEN_LIFETIMES } from '../tokens'
+import { useMe } from '../useMe'
 import { SelectField, TextField } from './FormFields'
 import { SectionHeading } from './SectionHeading'
 
@@ -208,6 +210,8 @@ function TokenList() {
 // expires and was last used, and revoke them.
 export function TokensSection() {
   const queryClient = useQueryClient()
+  // No new tokens while the site is read-only; revoking one is still allowed.
+  const readOnly = useMe().data?.read_only ?? false
   const [made, setMade] = useState<NewToken | null>(null)
   const making = useMutation({
     mutationFn: createToken,
@@ -230,35 +234,42 @@ export function TokensSection() {
         like a password, and revoke it if it might have been seen by anyone else.
       </p>
 
-      <form
-        className="mt-4 flex max-w-2xl flex-wrap items-end gap-3"
-        onSubmit={(event) => {
-          event.preventDefault()
-          const form = new FormData(event.currentTarget)
-          making.mutate({ name: text(form, 'token-name'), days: Number(text(form, 'token-days')) })
-          event.currentTarget.reset()
-        }}
-      >
-        <div className="min-w-48 flex-1">
-          <TextField
-            label="What it's for"
-            name="token-name"
-            placeholder="GDC imports"
+      {readOnly ? (
+        <p className="mt-4 max-w-2xl text-muted">{READ_ONLY_REASON} Tokens can still be revoked.</p>
+      ) : (
+        <form
+          className="mt-4 flex max-w-2xl flex-wrap items-end gap-3"
+          onSubmit={(event) => {
+            event.preventDefault()
+            const form = new FormData(event.currentTarget)
+            making.mutate({
+              name: text(form, 'token-name'),
+              days: Number(text(form, 'token-days')),
+            })
+            event.currentTarget.reset()
+          }}
+        >
+          <div className="min-w-48 flex-1">
+            <TextField
+              label="What it's for"
+              name="token-name"
+              placeholder="GDC imports"
+              required
+              maxLength={100}
+            />
+          </div>
+          <SelectField
+            label="Lasts"
+            name="token-days"
+            options={TOKEN_LIFETIMES}
+            defaultValue="90"
             required
-            maxLength={100}
           />
-        </div>
-        <SelectField
-          label="Lasts"
-          name="token-days"
-          options={TOKEN_LIFETIMES}
-          defaultValue="90"
-          required
-        />
-        <button type="submit" disabled={making.isPending} className={primaryButton}>
-          {making.isPending ? 'Making…' : 'Make token'}
-        </button>
-      </form>
+          <button type="submit" disabled={making.isPending} className={primaryButton}>
+            {making.isPending ? 'Making…' : 'Make token'}
+          </button>
+        </form>
+      )}
       {making.isError && (
         <p role="alert" className={`mt-4 ${errorBox}`}>
           {making.error.message}

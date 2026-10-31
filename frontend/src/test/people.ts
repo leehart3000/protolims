@@ -14,11 +14,18 @@ export const siteAdmin: Me = {
   },
   site_admin: true,
   public_read: true,
+  read_only: false,
   roles: [],
 }
 
 // Nobody signed in.
-export const nobody: Me = { user: null, site_admin: false, public_read: true, roles: [] }
+export const nobody: Me = {
+  user: null,
+  site_admin: false,
+  public_read: true,
+  read_only: false,
+  roles: [],
+}
 
 // Signed in, with just these roles.
 export function signedInWith(roles: Me['roles']): Me {

@@ -8,7 +8,13 @@ import AccountMenu from './AccountMenu'
 
 type Me = components['schemas']['Me']
 
-const nobody: Me = { user: null, site_admin: false, public_read: true, roles: [] }
+const nobody: Me = {
+  user: null,
+  site_admin: false,
+  public_read: true,
+  read_only: false,
+  roles: [],
+}
 
 type User = components['schemas']['SignedInUser']
 
@@ -21,7 +27,13 @@ const joUser: User = {
   last_signed_in_at: '2026-10-30T09:15:00Z',
 }
 
-const jo: Me = { user: joUser, site_admin: false, public_read: true, roles: [] }
+const jo: Me = {
+  user: joUser,
+  site_admin: false,
+  public_read: true,
+  read_only: false,
+  roles: [],
+}
 
 // Answers /auth/me with each of `answers` in turn (the last one from then on), and signing
 // out with `signOutStatus`. Returns the requests made, as "METHOD path".

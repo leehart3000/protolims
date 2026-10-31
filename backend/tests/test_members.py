@@ -212,6 +212,7 @@ def test_me_says_whether_someone_is_a_site_administrator(
         "user": None,
         "site_admin": False,
         "public_read": True,
+        "read_only": False,
         "roles": [],
     }
     assert client.get(f"{API}/auth/me", headers=sign_in_as(SITE_ADMIN)).json()["site_admin"]

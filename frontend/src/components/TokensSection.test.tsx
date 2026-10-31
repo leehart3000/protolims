@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 
 import type { components } from '../api/schema'
+import { siteAdmin } from '../test/people'
 import { TestProviders } from '../test/TestProviders'
 import { TokensSection } from './TokensSection'
 
@@ -62,9 +63,9 @@ function stubTokens(tokens: Token[], { makeStatus = 201, revokeStatus = 204 } = 
   return requests
 }
 
-function renderSection() {
+function renderSection(me = siteAdmin) {
   render(
-    <TestProviders>
+    <TestProviders me={me}>
       <TokensSection />
     </TestProviders>,
   )
@@ -181,5 +182,19 @@ describe('TokensSection', () => {
     renderSection()
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Could not load your API tokens')
+  })
+
+  it('makes no new tokens while the site is read-only, but still revokes them', async () => {
+    const requests = stubTokens([imports])
+    const user = userEvent.setup()
+    renderSection({ ...siteAdmin, read_only: true })
+
+    expect(screen.getByText(/read-only at the moment/)).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Make token' })).not.toBeInTheDocument()
+    await user.click(await screen.findByRole('button', { name: 'Revoke GDC imports' }))
+    await user.click(screen.getByRole('button', { name: 'Yes, revoke' }))
+    await waitFor(() => {
+      expect(requests).toContain(`DELETE /api/v1/auth/me/tokens/${imports.id}`)
+    })
   })
 })

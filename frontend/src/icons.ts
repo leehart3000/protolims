@@ -8,6 +8,7 @@ export {
   FileChartColumn as DataFileIcon,
   Folders as ProjectIcon,
   KeyRound as TokenIcon,
+  Lock as ReadOnlyIcon,
   LogIn as SignInIcon,
   Microscope as AssayIcon,
   PencilLine as EditIcon,

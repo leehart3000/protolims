@@ -40,8 +40,12 @@ export function externalIdError(error: Error | null) {
 }
 
 // The error to show when the API refuses a change for a reason the form can't fix: nobody is
-// signed in (401), they don't have permission (403), or something unexpected (`otherwise`).
+// signed in (401), they don't have permission (403), the site is read-only (423), or something
+// unexpected (`otherwise`).
 export function refusal(status: number, otherwise: string) {
+  if (status === 423) {
+    return new Error('Nothing was saved, because this site is read-only at the moment.')
+  }
   if (status === 401) {
     return new Error(
       "Nothing was saved, because you're not signed in. Sign in (top right), then try again.",

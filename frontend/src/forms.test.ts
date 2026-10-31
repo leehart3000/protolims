@@ -41,6 +41,10 @@ describe('refusal', () => {
     expect(refusal(403, 'Could not save.').message).toContain("you don't have permission")
   })
 
+  it('says when the site is read-only', () => {
+    expect(refusal(423, 'Could not save.').message).toContain('this site is read-only')
+  })
+
   it('otherwise gives the message it was given', () => {
     expect(refusal(500, 'Could not save.').message).toBe('Could not save.')
   })

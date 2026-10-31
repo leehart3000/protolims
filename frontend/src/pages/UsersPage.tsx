@@ -46,6 +46,8 @@ function RoleLink({ role }: { role: RoleRead }) {
 }
 
 function UserList() {
+  // Nobody can be removed while the site is read-only.
+  const readOnly = useMe().data?.read_only ?? false
   const controls = useListControls<UserSort>('name')
   const { search, q, sort, offset, limit, changeSearch, changeSort } = controls
   const query = useQuery({
@@ -158,7 +160,8 @@ function UserList() {
                     </td>
                     <td className={tableCell}>
                       {/* Only people who never signed in and have no roles can be removed. */}
-                      {!user.site_admin &&
+                      {!readOnly &&
+                        !user.site_admin &&
                         user.roles.length === 0 &&
                         user.last_signed_in_at === null && (
                           <button

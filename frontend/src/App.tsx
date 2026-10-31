@@ -3,6 +3,7 @@ import { Link, NavLink, Route, Routes } from 'react-router'
 
 import AccountMenu from './components/AccountMenu'
 import { EnvironmentBadge } from './components/EnvironmentBadge'
+import { ReadOnlyBadge } from './components/ReadOnlyBadge'
 import ThemeToggle from './components/ThemeToggle'
 import {
   AssayIcon,
@@ -77,6 +78,7 @@ export default function App() {
             </span>
           </Link>
           <EnvironmentBadge />
+          <ReadOnlyBadge />
           <div className="ml-auto flex items-center gap-1">
             <AccountMenu />
             <ThemeToggle />
