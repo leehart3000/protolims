@@ -193,7 +193,9 @@ uv run --directory backend python scripts/import_pdc.py send --study MULTIOMICS
     spectral matches by default (`--kinds raw,mzml,psm`; `mzid` adds the
     mzIdentML files). Each mzML file names the raw file it was made from, and
     each peptide-match file the mzML file, so the chain shows on each file's
-    page;
+    page. Files are matched to their plex by the number their names start with
+    (not the date, which can differ by a day), and a plex with no files is
+    reported;
   - the PDC only lets files be downloaded with a short-lived signed link, so
     each file's location is its study's page on the PDC with its file ID, with
     its MD5 checksum and size kept too.

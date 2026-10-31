@@ -184,11 +184,13 @@ def fraction_key(name: str) -> str:
     return name.split(".")[0]
 
 
-def plex_key(name: str) -> tuple[str, str] | None:
-    """The plex number and date in a plex's or a file's name, e.g. ("19", "20180730") from
-    "19CPTAC_LUAD_Proteome_BI_20180730" or "19CPTAC_LUAD_W_BI_20180730_KL_f08.raw"."""
-    match = re.match(r"^(\d+)CPTAC.*?_(\d{8})", name)
-    return (match.group(1), match.group(2)) if match else None
+def plex_key(name: str) -> str | None:
+    """The plex number at the start of a plex's or a file's name (without leading zeros), e.g.
+    "19" from "19CPTAC_LUAD_Proteome_BI_20180730" or "19CPTAC_LUAD_W_BI_20180730_KL_f08.raw".
+    Not the date as well: a plex's files can be dated a day after it (plex 17 of PDC000153,
+    named 20180720, has files named 20180721)."""
+    match = re.match(r"^0*(\d+)CPTAC", name)
+    return match.group(1) if match else None
 
 
 def file_uri(study: str, file_id: str) -> str:
@@ -226,6 +228,10 @@ def fetch(study: str, plex_count: int, kinds: list[str], out: Path) -> None:
         f'{{ studyExperimentalDesign(pdc_study_id: "{study}" acceptDUA: true) {{ '
         f"plex_dataset_name experiment_type number_of_fractions {channels} }} }}"
     )
+    # Files are matched to their plex by its number, so each number must be used only once.
+    numbers = [plex_key(plex["plex_dataset_name"]) for plex in design]
+    if None in numbers or len(set(numbers)) != len(numbers):
+        sys.exit(f"Files can't be matched to plexes, as they aren't each numbered once: {numbers}")
     plexes = sorted(design, key=lambda plex: plex["plex_dataset_name"])[:plex_count]
     names = ", ".join(plex["plex_dataset_name"] for plex in plexes)
     print(f"{len(design)} plexes; taking {names}")
