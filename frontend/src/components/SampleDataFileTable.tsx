@@ -61,7 +61,7 @@ export function SampleDataFileTable({ files }: { files: Row[] }) {
         <tbody className="divide-y divide-line">
           {files.map((file) => (
             <tr key={`${file.data_file_id}-${file.sample_id ?? ''}`} className={tableRow}>
-              <td className={tableCell}>
+              <td className={`${tableCell} wrap-anywhere`}>
                 <Link to={`/data-files/${file.data_file_id}`} className={rowLink}>
                   {file.name}
                 </Link>

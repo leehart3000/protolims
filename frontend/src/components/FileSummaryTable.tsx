@@ -39,7 +39,7 @@ export function FileSummaryTable({ files, label }: { files: DataFileSummary[]; l
         <tbody className="divide-y divide-line">
           {files.map((file) => (
             <tr key={file.id} className={tableRow}>
-              <td className={tableCell}>
+              <td className={`${tableCell} wrap-anywhere`}>
                 <Link to={`/data-files/${file.id}`} className={rowLink}>
                   {file.name}
                 </Link>

@@ -57,7 +57,7 @@ export function SampleAssayTable({ assays }: { assays: Row[] }) {
         <tbody className="divide-y divide-line">
           {assays.map((assay) => (
             <tr key={`${assay.assay_id}-${assay.sample_id ?? ''}`} className={tableRow}>
-              <td className={tableCell}>
+              <td className={`${tableCell} wrap-anywhere`}>
                 <Link to={`/assays/${assay.assay_id}`} className={rowLink}>
                   {assay.assay_name}
                 </Link>

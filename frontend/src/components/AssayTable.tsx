@@ -81,7 +81,7 @@ export function AssayTable({
         <tbody className="divide-y divide-line">
           {assays.map((assay) => (
             <tr key={assay.id} className={tableRow}>
-              <td className={tableCell}>
+              <td className={`${tableCell} wrap-anywhere`}>
                 <Link to={`/assays/${assay.id}`} className={rowLink}>
                   {assay.name}
                 </Link>

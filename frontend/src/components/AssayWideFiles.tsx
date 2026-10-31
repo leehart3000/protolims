@@ -13,7 +13,7 @@ export function AssayWideFiles({ assays, also }: { assays: AssayFiles[]; also: b
   }
 
   return (
-    <ul className="mt-4 space-y-1 text-muted">
+    <ul className="mt-4 space-y-1 text-muted wrap-anywhere">
       {shown.map((assay) => {
         const count = assay.assay_wide_files
         return (

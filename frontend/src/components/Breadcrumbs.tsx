@@ -14,7 +14,10 @@ export function Breadcrumbs({ items }: { items: Crumb[] }) {
     <nav aria-label="Breadcrumb" className="mb-4 text-sm">
       <ol className="flex flex-wrap items-center gap-x-2 gap-y-1">
         {items.map((item, index) => (
-          <li key={`${String(index)}-${item.label}`} className="flex items-center gap-x-2">
+          <li
+            key={`${String(index)}-${item.label}`}
+            className="flex min-w-0 items-center gap-x-2 wrap-anywhere"
+          >
             {index > 0 && (
               <span aria-hidden="true" className="text-muted">
                 ›

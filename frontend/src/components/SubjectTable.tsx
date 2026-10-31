@@ -67,7 +67,7 @@ export function SubjectTable({
         <tbody className="divide-y divide-line">
           {subjects.map((subject) => (
             <tr key={subject.id} className={tableRow}>
-              <td className={tableCell}>
+              <td className={`${tableCell} wrap-anywhere`}>
                 <Link to={`/subjects/${subject.id}`} className={rowLink}>
                   {subject.name}
                 </Link>

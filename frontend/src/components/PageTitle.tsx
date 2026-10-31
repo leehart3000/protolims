@@ -21,7 +21,8 @@ export function PageTitle({
           className="mt-0.5 size-6 shrink-0 text-primary sm:mt-1 sm:size-7"
         />
       )}
-      <span>
+      {/* Long names with no spaces (such as plex names) wrap rather than overflow. */}
+      <span className="min-w-0 wrap-anywhere">
         {label && (
           <>
             <span className="font-normal text-fg">{label}:</span>{' '}

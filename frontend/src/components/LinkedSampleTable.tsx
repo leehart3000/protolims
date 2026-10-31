@@ -69,7 +69,7 @@ export function LinkedSampleTable({
         <tbody className="divide-y divide-line">
           {samples.map((sample) => (
             <tr key={sample.sample_id} className={tableRow}>
-              <td className={tableCell}>
+              <td className={`${tableCell} wrap-anywhere`}>
                 <Link to={`/samples/${sample.sample_id}`} className={rowLink}>
                   {sample.sample_name}
                 </Link>
