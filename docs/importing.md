@@ -59,12 +59,18 @@ A script signs in as you with a personal API token, sent with each request as
 each. It works in steps, so you can read exactly what will be imported before
 anything is sent.
 
-**0. Survey** (optional): list a project's open-access files by data type and
-workflow, to see what's there:
+**0. Survey** (optional): list a project's cases by primary site and disease
+type, and its open-access files by data type and workflow, to see what's there:
 
 ```sh
 uv run --directory backend python scripts/import_gdc.py survey --project TCGA-BRCA
 ```
+
+**Only some cases:** a project such as CPTAC-3 covers several cancers.
+`--primary-site` and `--disease-type` (on `survey` and `fetch`) take only the
+cases with that value, as the survey spells it, for example
+`--primary-site "Bronchus and lung"`. Both together take cases matching both.
+The import's `source` names the choice.
 
 **1. Fetch** from the GDC's public API (no account needed) and save the import
 request to a file:

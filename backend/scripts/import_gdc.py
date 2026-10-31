@@ -301,12 +301,30 @@ def build_request(project: str, cases: list[Record], files: dict[str, list[Recor
     }
 
 
-def open_files(
-    project: str, data_type: str, fields: list[str], cases: list[str] | None = None
-) -> list[Record]:
-    """The project's open-access files of one data type (only those of the given cases)."""
-    filters = [
+# Which of a project's cases to take, as GDC case fields and values, such as
+# {"primary_site": "Bronchus and lung"}. Empty means all of them.
+CaseFilter = dict[str, str]
+
+
+def case_filters(project: str, where: CaseFilter) -> list[Record]:
+    """GDC filters on files for the project's cases that match `where`."""
+    return [
         equals("cases.project.project_id", project),
+        *(equals(f"cases.{field}", value) for field, value in where.items()),
+    ]
+
+
+def open_files(
+    project: str,
+    where: CaseFilter,
+    data_type: str,
+    fields: list[str],
+    cases: list[str] | None = None,
+) -> list[Record]:
+    """The project's open-access files of one data type, from the cases matching `where`
+    (only those of the given cases, if any)."""
+    filters = [
+        *case_filters(project, where),
         equals("data_type", data_type),
         equals("access", "open"),
     ]
@@ -315,23 +333,33 @@ def open_files(
     return search_gdc("files", all_of(*filters), fields, MAX_FILES)
 
 
-def survey(project: str) -> None:
-    """Print how many open-access files the project has, by data type and workflow."""
-    body = {
-        "filters": all_of(equals("cases.project.project_id", project), equals("access", "open")),
-        "facets": "data_type,analysis.workflow_type",
-        "size": 0,
-        "format": "json",
-    }
-    status, reply = post_json(f"{GDC_API}/files", body)
+def print_facets(endpoint: str, filters: list[Record], facets: str, what: str) -> None:
+    """Print how many of the endpoint's records match, by each facet."""
+    body = {"filters": all_of(*filters), "facets": facets, "size": 0, "format": "json"}
+    status, reply = post_json(f"{GDC_API}/{endpoint}", body)
     if status != 200:
         sys.exit(f"The GDC replied {status}: {reply}")
-    total = reply["data"]["pagination"]["total"]
-    print(f"{project}: {total} open-access files")
+    print(f"{reply['data']['pagination']['total']} {what}")
     for facet, buckets in reply["data"]["aggregations"].items():
         print(f"\nBy {facet}:")
         for bucket in buckets["buckets"]:
             print(f"  {bucket['doc_count']:>6}  {bucket['key']}")
+
+
+def survey(project: str, where: CaseFilter) -> None:
+    """Print the project's cases (matching `where`) by primary site and disease type, and
+    their open-access files by data type and workflow."""
+    case_fields = [equals("project.project_id", project)]
+    case_fields += [equals(field, value) for field, value in where.items()]
+    print(f"{project}{describe_where(where)}: ", end="")
+    print_facets("cases", case_fields, "primary_site,disease_type", "cases")
+    print(f"\n{project}{describe_where(where)}: ", end="")
+    print_facets(
+        "files",
+        [*case_filters(project, where), equals("access", "open")],
+        "data_type,analysis.workflow_type",
+        "open-access files",
+    )
     known = {assay_type.data_type: kind for kind, assay_type in ASSAY_TYPES.items()}
     print("\n--kinds this script can fetch: " + ", ".join(f"{k} ({v})" for v, k in known.items()))
 
@@ -357,19 +385,30 @@ FILE_FIELDS = [
 ]
 
 
-def fetch(project: str, kinds: list[str], count: int, out: Path) -> None:
-    """Fetch the first cases (by GDC name) that have open files of every chosen kind, with
-    those files, and save them as an import request."""
+def describe_where(where: CaseFilter) -> str:
+    """The case filter in words, as in " (primary site: Bronchus and lung)"."""
+    if not where:
+        return ""
+    parts = [f"{field.replace('_', ' ')}: {value}" for field, value in where.items()]
+    return f" ({'; '.join(parts)})"
+
+
+def fetch(project: str, where: CaseFilter, kinds: list[str], count: int, out: Path) -> None:
+    """Fetch the first cases (by GDC name), of those matching `where`, that have open files of
+    every chosen kind, with those files, and save them as an import request."""
     # Which cases have each kind of data, from the files' own links to cases.
     having: list[set[str]] = []
     for kind in kinds:
-        hits = open_files(project, ASSAY_TYPES[kind].data_type, ["cases.case_id"])
+        hits = open_files(project, where, ASSAY_TYPES[kind].data_type, ["cases.case_id"])
         case_ids = {case["case_id"] for hit in hits for case in hit.get("cases", [])}
         print(f"{kind}: {len(hits)} open files, from {len(case_ids)} cases")
         having.append(case_ids)
     in_all = set.intersection(*having) if having else set()
     if not in_all:
-        sys.exit(f"No case in {project} has open files of every kind: {', '.join(kinds)}")
+        sys.exit(
+            f"No case in {project}{describe_where(where)} has open files of every kind: "
+            + ", ".join(kinds)
+        )
 
     cases = search_gdc(
         "cases",
@@ -386,10 +425,10 @@ def fetch(project: str, kinds: list[str], count: int, out: Path) -> None:
     cases = sorted(cases, key=lambda case: case["submitter_id"])[:count]
     chosen = [case["case_id"] for case in cases]
     files = {
-        kind: open_files(project, ASSAY_TYPES[kind].data_type, FILE_FIELDS, chosen)
+        kind: open_files(project, where, ASSAY_TYPES[kind].data_type, FILE_FIELDS, chosen)
         for kind in kinds
     }
-    request = build_request(project, cases, files)
+    request = build_request(f"{project}{describe_where(where)}", cases, files)
     ImportRequest.model_validate(request)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(request, indent=2) + "\n")
@@ -491,13 +530,29 @@ def default_file(project: str) -> Path:
     return IMPORTS / f"gdc-{project.lower()}.json"
 
 
+def add_case_filters(command: argparse.ArgumentParser) -> None:
+    """Options for taking only some of a project's cases, as "survey" lists them."""
+    command.add_argument("--primary-site", help='only these cases, e.g. "Bronchus and lung"')
+    command.add_argument(
+        "--disease-type", help='only these cases, e.g. "Adenomas and Adenocarcinomas"'
+    )
+
+
+def chosen_cases(args: argparse.Namespace) -> CaseFilter:
+    """The case filter from the --primary-site and --disease-type options."""
+    where = {"primary_site": args.primary_site, "disease_type": args.disease_type}
+    return {field: value for field, value in where.items() if value}
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     commands = parser.add_subparsers(dest="command", required=True)
     survey_command = commands.add_parser("survey", help="list a GDC project's open files")
     survey_command.add_argument("--project", default=PROJECT, help=f"default {PROJECT}")
+    add_case_filters(survey_command)
     fetch_command = commands.add_parser("fetch", help="fetch from the GDC and save to a file")
     fetch_command.add_argument("--project", default=PROJECT, help=f"default {PROJECT}")
+    add_case_filters(fetch_command)
     fetch_command.add_argument(
         "--kinds",
         default=",".join(ASSAY_TYPES),
@@ -513,13 +568,14 @@ def main() -> None:
     send_command.add_argument("--apply", action="store_true", help="save (default: dry run)")
     args = parser.parse_args()
     if args.command == "survey":
-        survey(args.project)
+        survey(args.project, chosen_cases(args))
     elif args.command == "fetch":
         kinds = [kind.strip() for kind in args.kinds.split(",") if kind.strip()]
         unknown = [kind for kind in kinds if kind not in ASSAY_TYPES]
         if unknown or not kinds:
             sys.exit(f"Unknown kinds: {', '.join(unknown)}. Known: {', '.join(ASSAY_TYPES)}")
-        fetch(args.project, kinds, args.cases, args.out or default_file(args.project))
+        where = chosen_cases(args)
+        fetch(args.project, where, kinds, args.cases, args.out or default_file(args.project))
     else:
         path = args.file or default_file(args.project)
         send(path, args.target, args.project, args.study, apply=args.apply)
