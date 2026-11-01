@@ -3,7 +3,6 @@
 import secrets
 
 from fastapi import Depends, FastAPI, HTTPException, Request, Response
-from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.responses import HTMLResponse, JSONResponse
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
@@ -43,18 +42,32 @@ app = FastAPI(
 )
 
 
+# The API's documentation page (Swagger UI). Its script, styles and start-up script all come
+# from the website itself (frontend/public: swagger-ui/, copied by
+# frontend/scripts/copy-swagger-ui.mjs, and swagger-ui-start.js), not from a CDN or inline, so
+# the security policy can allow only the site's own scripts (frontend/public/_headers).
+API_DOCS_PAGE = """<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ProtoLIMS API</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="stylesheet" href="/swagger-ui/swagger-ui.css">
+  </head>
+  <body>
+    <div id="swagger-ui"></div>
+    <script src="/swagger-ui/swagger-ui-bundle.js"></script>
+    <script src="/swagger-ui-start.js"></script>
+  </body>
+</html>
+"""
+
+
 @app.get("/api/docs", include_in_schema=False)
 async def api_docs() -> HTMLResponse:
-    """The API's documentation page (Swagger UI). Its script and styles come from the website
-    (frontend/scripts/copy-swagger-ui.mjs), not from a CDN, so nothing from elsewhere runs on
-    the site's own address, where it could act as a signed-in visitor."""
-    return get_swagger_ui_html(
-        openapi_url="/api/openapi.json",
-        title="ProtoLIMS API",
-        swagger_js_url="/swagger-ui/swagger-ui-bundle.js",
-        swagger_css_url="/swagger-ui/swagger-ui.css",
-        swagger_favicon_url="/favicon.svg",
-    )
+    """The API's documentation page."""
+    return HTMLResponse(API_DOCS_PAGE)
 
 
 # Signing in is always open. Everything else needs someone signed in when public reading is off.

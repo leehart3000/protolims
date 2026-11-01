@@ -3,6 +3,7 @@ import { Link, NavLink, Route, Routes } from 'react-router'
 
 import AccountMenu from './components/AccountMenu'
 import { EnvironmentBadge } from './components/EnvironmentBadge'
+import { ExternalLink } from './components/ExternalLink'
 import { ReadOnlyBadge } from './components/ReadOnlyBadge'
 import { ScrollToTop } from './components/ScrollToTop'
 import ThemeToggle from './components/ThemeToggle'
@@ -15,8 +16,11 @@ import {
   StudyIcon,
   SubjectIcon,
 } from './icons'
+import { SITE } from './site'
 import { useMe } from './useMe'
+import AboutPage from './pages/AboutPage'
 import HomePage from './pages/HomePage'
+import PrivacyPage from './pages/PrivacyPage'
 import NewProjectPage from './pages/NewProjectPage'
 import NewStudyPage from './pages/NewStudyPage'
 import NotFoundPage from './pages/NotFoundPage'
@@ -104,10 +108,17 @@ export default function App() {
 
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 pt-6 pb-10">
         {mustSignIn ? (
-          <SignInPage />
+          // On a private site, only these two pages can be read before signing in.
+          <Routes>
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/privacy" element={<PrivacyPage />} />
+            <Route path="*" element={<SignInPage />} />
+          </Routes>
         ) : (
           <Routes>
             <Route path="/" element={<HomePage />} />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/privacy" element={<PrivacyPage />} />
             <Route path="/projects" element={<ProjectsPage />} />
             <Route path="/projects/new" element={<NewProjectPage />} />
             <Route path="/projects/:code" element={<ProjectDetailPage />} />
@@ -155,22 +166,20 @@ export default function App() {
       <footer className="border-t border-line">
         <div className="mx-auto flex max-w-6xl flex-wrap justify-between gap-x-6 gap-y-2 px-4 py-6 text-sm text-muted">
           <p>
-            ProtoLIMS is{' '}
-            <a
-              className="text-link underline hover:no-underline"
-              href="https://github.com/leehart3000/protolims"
-            >
-              free software
-            </a>{' '}
-            under the{' '}
-            <a
-              className="text-link underline hover:no-underline"
-              href="https://www.gnu.org/licenses/agpl-3.0.html"
-            >
+            ProtoLIMS is <ExternalLink href={SITE.sourceUrl}>free software</ExternalLink> under the{' '}
+            <ExternalLink href="https://www.gnu.org/licenses/agpl-3.0.html">
               GNU AGPL v3
-            </a>
+            </ExternalLink>
             .
           </p>
+          <nav aria-label="About this site" className="flex gap-4">
+            <Link to="/about" className="text-link underline hover:no-underline">
+              About
+            </Link>
+            <Link to="/privacy" className="text-link underline hover:no-underline">
+              Privacy
+            </Link>
+          </nav>
           <p>
             Version {import.meta.env.VITE_APP_VERSION}/{import.meta.env.VITE_APP_COMMIT}
           </p>

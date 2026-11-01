@@ -58,7 +58,8 @@ export default defineConfig({
   server: {
     host: '127.0.0.1',
     proxy: {
-      '/api': 'http://127.0.0.1:8000',
+      // Only /api/... (not, say, /api-something.js, a file of the website's own).
+      '^/api/': 'http://127.0.0.1:8000',
     },
   },
 })

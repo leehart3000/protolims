@@ -42,10 +42,9 @@ describe('App', () => {
   it('links to the source code and shows the version', () => {
     renderApp()
 
-    expect(screen.getByRole('link', { name: 'free software' })).toHaveAttribute(
-      'href',
-      'https://github.com/leehart3000/protolims',
-    )
+    const source = screen.getByRole('link', { name: 'free software (opens in a new tab)' })
+    expect(source).toHaveAttribute('href', 'https://github.com/leehart3000/protolims')
+    expect(source).toHaveAttribute('target', '_blank')
     expect(screen.getByText(/^Version .+\/[0-9a-f]{7}$/)).toBeInTheDocument()
   })
 
@@ -127,6 +126,35 @@ describe('App', () => {
     vi.stubEnv('VITE_APP_ENVIRONMENT', '')
     renderApp()
     expect(screen.queryByText('Staging')).not.toBeInTheDocument()
+  })
+
+  it('links to the About and Privacy pages from every page', async () => {
+    const user = userEvent.setup()
+    renderApp()
+
+    const footer = within(screen.getByRole('navigation', { name: 'About this site' }))
+    await user.click(footer.getByRole('link', { name: 'Privacy' }))
+    expect(screen.getByRole('heading', { name: 'Privacy notice' })).toBeInTheDocument()
+    expect(screen.getAllByRole('link', { name: 'privacy@protolims.org' })[0]).toHaveAttribute(
+      'href',
+      'mailto:privacy@protolims.org',
+    )
+
+    await user.click(footer.getByRole('link', { name: 'About' }))
+    expect(screen.getByRole('heading', { name: 'About ProtoLIMS' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'privacy notice' })).toHaveAttribute('href', '/privacy')
+  })
+
+  it('lets the About and Privacy pages be read before signing in on a private site', async () => {
+    stubEmptyApi(false)
+    renderApp('/privacy')
+
+    expect(await screen.findByRole('heading', { name: 'Privacy notice' })).toBeInTheDocument()
+    expect(screen.getByText(/run by Lee Hart, personally/)).toBeInTheDocument()
+    cleanup()
+
+    renderApp('/about')
+    expect(await screen.findByRole('heading', { name: 'About ProtoLIMS' })).toBeInTheDocument()
   })
 
   it('shows a not-found page for unknown addresses', () => {

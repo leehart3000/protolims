@@ -1,7 +1,8 @@
 // @vitest-environment node
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import worker, { isApiPath, PROXY_KEY_HEADER } from './index'
+import headersFile from '../public/_headers?raw'
+import worker, { isApiPath, PROXY_KEY_HEADER, SECURITY_HEADERS } from './index'
 
 const API_ORIGIN = 'https://api.example.run.app'
 
@@ -71,5 +72,42 @@ describe('worker', () => {
     await worker.fetch(new Request('https://protolims.org/api/v1/projects'), env)
 
     expect(fetchMock.mock.calls[0][0].headers.get(PROXY_KEY_HEADER)).toBe('secret')
+  })
+
+  it("adds the security headers to the API's responses, redirects included", async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() =>
+        Promise.resolve(
+          new Response(null, { status: 302, headers: { Location: 'https://orcid.org/x' } }),
+        ),
+      ),
+    )
+    const { env } = makeEnv()
+
+    const response = await worker.fetch(new Request('https://protolims.org/api/v1/auth/x'), env)
+
+    expect(response.status).toBe(302)
+    expect(response.headers.get('Location')).toBe('https://orcid.org/x')
+    for (const [name, value] of Object.entries(SECURITY_HEADERS)) {
+      expect(response.headers.get(name)).toBe(value)
+    }
+  })
+})
+
+describe('public/_headers', () => {
+  it("gives the website's own files the same security headers as the API's", () => {
+    const lines = headersFile.split('\n').map((line) => line.trim())
+    expect(lines).toContain('/*')
+    for (const [name, value] of Object.entries(SECURITY_HEADERS)) {
+      expect(lines).toContain(`${name}: ${value}`)
+    }
+  })
+
+  it("lets pages run only the site's own scripts", () => {
+    const policy = SECURITY_HEADERS['Content-Security-Policy']
+    expect(policy).toContain("script-src 'self';")
+    expect(policy).not.toMatch(/script-src[^;]*'unsafe-inline'/)
+    expect(policy).toContain("frame-ancestors 'none'")
   })
 })

@@ -1,0 +1,13 @@
+# protolims.org: open data, read-only. Crawlers are welcome to the home, project and study
+# pages and the lists; the thousands of individual records, and the API, are left out, to
+# keep the load (and the database's running time) down. Everything is linked from the
+# project and study pages for anyone who wants it.
+User-agent: *
+Disallow: /api/
+Disallow: /subjects/
+Disallow: /samples/
+Disallow: /assays/
+Disallow: /data-files/
+Disallow: /profile
+Disallow: /users
+Crawl-delay: 10

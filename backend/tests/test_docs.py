@@ -15,14 +15,14 @@ def test_swagger_page_is_served_under_api(client: TestClient) -> None:
     assert "swagger" in response.text.lower()
 
 
-def test_swagger_page_loads_nothing_from_elsewhere(client: TestClient) -> None:
+def test_swagger_page_loads_only_the_sites_own_files(client: TestClient) -> None:
     page = client.get("/api/docs").text
-    assert '"/swagger-ui/swagger-ui-bundle.js"' in page
-    assert '"/swagger-ui/swagger-ui.css"' in page
-    assert '"/favicon.svg"' in page
-    # FastAPI's defaults, which this replaces.
-    assert "cdn.jsdelivr.net" not in page
-    assert "fastapi.tiangolo.com" not in page
+    assert '<script src="/swagger-ui/swagger-ui-bundle.js"></script>' in page
+    assert '<script src="/swagger-ui-start.js"></script>' in page
+    assert '<link rel="stylesheet" href="/swagger-ui/swagger-ui.css">' in page
+    # Nothing from elsewhere, and no inline script, which the security policy would block.
+    assert "https://" not in page
+    assert "<script>" not in page
 
 
 def test_old_documentation_paths_are_gone(client: TestClient) -> None:
