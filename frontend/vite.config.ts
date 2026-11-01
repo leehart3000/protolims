@@ -45,6 +45,13 @@ process.env.VITE_APP_ENVIRONMENT ??= process.env.CI || process.env.VITEST ? '' :
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  build: {
+    // Keep fonts as files of their own, never written into the CSS as data: addresses, which
+    // the security policy (public/_headers: font-src 'self') blocks. Vite would otherwise
+    // inline the smallest ones (some of each font's character sets).
+    assetsInlineLimit: (file) =>
+      file.endsWith('.woff2') || file.endsWith('.woff') ? false : undefined,
+  },
   test: {
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
